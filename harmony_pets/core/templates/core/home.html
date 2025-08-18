@@ -1,0 +1,157 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Harmony Pets - Onde a felicidade encontra um lar{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        color: white;
+        margin: -30px -15px 30px -15px;
+        border-radius: 0 0 15px 15px;
+    }
+    .hero-content {
+        text-align: center;
+        padding: 50px 0;
+    }
+    .hero-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .btn-custom {
+            padding: 12px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .btn-primary-custom {
+            background: white;
+            color: #667eea;
+            border: 2px solid white;
+        }
+        .btn-primary-custom:hover {
+            background: transparent;
+            color: white;
+        }
+        .btn-outline-custom {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        .btn-outline-custom:hover {
+            background: white;
+            color: #667eea;
+        }
+        .pet-icon {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="pet-icon">🐾</div>
+                <h1 class="hero-title">Bem-vindo ao Harmony Pets!</h1>
+                <p class="hero-subtitle">Onde a felicidade de um pet encontra a alegria de uma família.</p>
+                
+                <div class="mt-4">
+                    {% if user.is_authenticated %}
+                        {% if user.localadocao %}
+                            <p class="mb-4">Olá, {{ user.first_name|default:user.username }}! Gerencie seus pets 🎉</p>
+                            <a href="{% url 'gerenciar_pets' %}" class="btn btn-custom btn-primary-custom">🐾 Meus Pets</a>
+                            <a href="{% url 'solicitacoes_adocao' %}" class="btn btn-custom btn-outline-custom">📨 Solicitações</a>
+                            <a href="{% url 'adicionar_pet' %}" class="btn btn-custom btn-outline-custom">➕ Adicionar Pet</a>
+                        {% elif user.interessadoadocao %}
+                            <p class="mb-4">Olá, {{ user.first_name|default:user.username }}! 🎉</p>
+                            <a href="{% url 'pets_list' %}" class="btn btn-custom btn-primary-custom">Ver Pets para Adoção</a>
+                            <a href="{% url 'pets_proximos' %}" class="btn btn-custom btn-outline-custom">🗺️ Pets Próximos</a>
+                            <a href="{% url 'profile' %}" class="btn btn-custom btn-outline-custom">Meu Perfil</a>
+                        {% else %}
+                            <p class="mb-4">Olá, {{ user.first_name|default:user.username }}! 🎉</p>
+                            <a href="{% url 'pets_list' %}" class="btn btn-custom btn-primary-custom">Ver Pets para Adoção</a>
+                            <a href="{% url 'profile' %}" class="btn btn-custom btn-outline-custom">Meu Perfil</a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'pets_list' %}" class="btn btn-custom btn-primary-custom">Ver Pets para Adoção</a>
+                        <a href="{% url 'register' %}" class="btn btn-custom btn-outline-custom">Cadastrar-se</a>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="mt-4">
+                        <a href="{% url 'logout' %}" class="text-white" style="text-decoration: none; opacity: 0.8;">
+                            Sair da conta
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Seção de pets em destaque -->
+    {% if pets_destaque %}
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 style="color: #667eea;">🐾 Pets Esperando por Você</h2>
+            <p class="text-muted">Conheça alguns dos nossos amiguinhos que estão procurando um lar</p>
+        </div>
+        
+        <div class="row">
+            {% for pet in pets_destaque %}
+            <div class="col-md-4 col-lg-2 mb-4">
+                <div class="card h-100" style="border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                    <div class="card-body text-center">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">{{ pet.emoji }}</div>
+                        <h5 class="card-title" style="color: #667eea;">{{ pet.nome }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">{{ pet.get_especie_display }} • {{ pet.get_idade_display }}</small>
+                        </p>
+                        <a href="{% url 'pet_detail' pet.id %}" class="btn btn-sm" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border-radius: 20px;">
+                            Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'pets_list' %}" class="btn btn-custom btn-primary-custom">Ver Todos os Pets</a>
+        </div>
+    </div>
+    {% endif %}
+    
+    </div> <!-- Fechando div container -->
+</div> <!-- Fechando div hero-section -->
+{% endblock %}

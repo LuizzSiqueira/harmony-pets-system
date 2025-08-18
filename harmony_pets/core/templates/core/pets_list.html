@@ -1,0 +1,258 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Pets para Adoção - Harmony Pets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+        margin: -30px -15px 30px -15px;
+        border-radius: 0 0 15px 15px;
+    }
+    .pet-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 30px;
+    }
+    .pet-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .pet-emoji {
+        font-size: 4rem;
+        margin-bottom: 15px;
+    }
+    .pet-name {
+        color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .pet-info {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .btn-primary-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 20px;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        .filters-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .filter-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin: 5px 3px;
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+        }
+        .filter-section h6 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #495057;
+        }
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .status-badge {
+            background: #28a745;
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+        .no-pets {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Header -->
+    <div class="hero-header">
+        <div class="container">
+            <div class="text-center">
+                <h1>🐾 Pets para Adoção</h1>
+                <p class="lead">Encontre seu novo melhor amigo</p>
+                <a href="{% url 'home' %}" class="btn btn-outline-light">← Voltar ao Início</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <!-- Filtros -->
+        <div class="filters-card">
+            <h4 class="mb-3">🔍 Filtrar Pets</h4>
+            
+            <!-- Barra de busca -->
+            <form method="GET" class="mb-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por nome, raça ou descrição..." value="{{ search_atual }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary-custom w-100">Buscar</button>
+                    </div>
+                </div>
+                
+                <!-- Filtros ocultos para manter outros filtros ativos -->
+                {% if especie_atual %}<input type="hidden" name="especie" value="{{ especie_atual }}">{% endif %}
+                {% if porte_atual %}<input type="hidden" name="porte" value="{{ porte_atual }}">{% endif %}
+                {% if sexo_atual %}<input type="hidden" name="sexo" value="{{ sexo_atual }}">{% endif %}
+            </form>
+            
+            <!-- Filtros por categoria -->
+            <div class="row">
+                <div class="col-md-4 filter-section">
+                    <h6>Espécie:</h6>
+                    <div class="filter-buttons">
+                        <a href="?{% if porte_atual %}porte={{ porte_atual }}&{% endif %}{% if sexo_atual %}sexo={{ sexo_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}{% endif %}" 
+                           class="filter-btn {% if not especie_atual %}active{% endif %}">Todas</a>
+                        {% for value, label in especies_choices %}
+                            <a href="?especie={{ value }}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}" 
+                               class="filter-btn {% if especie_atual == value %}active{% endif %}">{{ label }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 filter-section">
+                    <h6>Porte:</h6>
+                    <div class="filter-buttons">
+                        <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if sexo_atual %}sexo={{ sexo_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}{% endif %}" 
+                           class="filter-btn {% if not porte_atual %}active{% endif %}">Todos</a>
+                        {% for value, label in portes_choices %}
+                            <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}porte={{ value }}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}" 
+                               class="filter-btn {% if porte_atual == value %}active{% endif %}">{{ label }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 filter-section">
+                    <h6>Sexo:</h6>
+                    <div class="filter-buttons">
+                        <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if porte_atual %}porte={{ porte_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}{% endif %}" 
+                           class="filter-btn {% if not sexo_atual %}active{% endif %}">Todos</a>
+                        {% for value, label in sexos_choices %}
+                            <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if porte_atual %}porte={{ porte_atual }}&{% endif %}sexo={{ value }}{% if search_atual %}&search={{ search_atual }}{% endif %}" 
+                               class="filter-btn {% if sexo_atual == value %}active{% endif %}">{{ label }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Pets -->
+        {% if page_obj %}
+            <div class="row">
+                {% for pet in page_obj %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card pet-card h-100">
+                        <div class="card-body text-center">
+                            <div class="pet-emoji">{{ pet.emoji }}</div>
+                            <h5 class="pet-name">{{ pet.nome }}</h5>
+                            
+                            <div class="pet-info mb-3">
+                                <p class="mb-1">{{ pet.get_especie_display }} • {{ pet.get_porte_display }}</p>
+                                <p class="mb-1">{{ pet.get_idade_display }}</p>
+                                {% if pet.raca %}
+                                    <p class="mb-1">{{ pet.raca }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <span class="status-badge">Disponível</span>
+                                {% if pet.castrado %}
+                                    <span class="badge bg-info text-dark">Castrado</span>
+                                {% endif %}
+                                {% if pet.vacinado %}
+                                    <span class="badge bg-success">Vacinado</span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="card-text" style="font-size: 0.9rem; color: #666;">
+                                {{ pet.descricao|truncatewords:15 }}
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <a href="{% url 'pet_detail' pet.id %}" class="btn btn-primary-custom">
+                                    Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Navegação de pets">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if especie_atual %}&especie={{ especie_atual }}{% endif %}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}">Primeira</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if especie_atual %}&especie={{ especie_atual }}{% endif %}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}">Anterior</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if especie_atual %}&especie={{ especie_atual }}{% endif %}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}">Próxima</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if especie_atual %}&especie={{ especie_atual }}{% endif %}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}">Última</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="no-pets">
+                <h3>😔 Nenhum pet encontrado</h3>
+                <p>Não encontramos pets com os filtros selecionados.</p>
+                <a href="{% url 'pets_list' %}" class="btn btn-primary-custom">Ver Todos os Pets</a>
+            </div>
+        {% endif %}
+    </div> <!-- Fechando content-container -->
+{% endblock %}

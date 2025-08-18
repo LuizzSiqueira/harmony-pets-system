@@ -1,0 +1,198 @@
+{% extends "core/base.html" %}
+
+{% block title %}Aceitar Termos de Uso - Harmony Pets{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-file-signature me-2"></i>
+                        Aceitar Termos de Uso e Política de Privacidade
+                    </h1>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Para utilizar a plataforma Harmony Pets, você deve aceitar nossos 
+                        Termos de Uso e Política de Privacidade em conformidade com a LGPD.
+                    </div>
+
+                    <form method="post" id="terms-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5 class="text-primary">
+                                <i class="fas fa-file-contract me-2"></i>
+                                Resumo dos Termos Principais
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i> Plataforma gratuita de adoção</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Intermediação entre interessados e organizações</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Localização de pets próximos</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Autenticação segura com 2FA</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-shield-alt text-primary me-2"></i> Proteção de dados conforme LGPD</li>
+                                        <li><i class="fas fa-shield-alt text-primary me-2"></i> Nunca vendemos seus dados</li>
+                                        <li><i class="fas fa-shield-alt text-primary me-2"></i> Você controla seus dados pessoais</li>
+                                        <li><i class="fas fa-shield-alt text-primary me-2"></i> Direitos garantidos pela LGPD</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">
+                                    <i class="fas fa-database me-2"></i>
+                                    Dados que Coletamos (LGPD)
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Dados Básicos:</strong></p>
+                                        <ul class="small">
+                                            <li>Nome, e-mail, telefone</li>
+                                            <li>CPF/CNPJ para identificação</li>
+                                            <li>Endereço para localização</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Dados Técnicos:</strong></p>
+                                        <ul class="small">
+                                            <li>IP de acesso</li>
+                                            <li>Localização (quando permitido)</li>
+                                            <li>Logs de segurança</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox de Termos de Uso -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="termos_uso" name="termos_uso" required>
+                            <label class="form-check-label" for="termos_uso">
+                                <strong>Aceito os Termos de Uso</strong><br>
+                                <small class="text-muted">
+                                    Li e concordo com as condições de uso da plataforma, incluindo responsabilidades 
+                                    e limitações do serviço.
+                                    <a href="{% url 'termos_uso' %}" target="_blank" class="text-primary">
+                                        <i class="fas fa-external-link-alt"></i> Ler termos completos
+                                    </a>
+                                </small>
+                            </label>
+                        </div>
+
+                        <!-- Checkbox de LGPD -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="lgpd" name="lgpd" required>
+                            <label class="form-check-label" for="lgpd">
+                                <strong>Aceito a Política de Privacidade (LGPD)</strong><br>
+                                <small class="text-muted">
+                                    Autorizo o tratamento dos meus dados pessoais conforme descrito na Política de 
+                                    Privacidade, em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+                                    <a href="{% url 'termos_uso' %}#lgpd" target="_blank" class="text-primary">
+                                        <i class="fas fa-external-link-alt"></i> Ler política completa
+                                    </a>
+                                </small>
+                            </label>
+                        </div>
+
+                        <!-- Informações de rastreamento -->
+                        <div class="card bg-info text-white mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informações de Aceitação (LGPD)
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small>
+                                            <strong>Data/Hora:</strong> <span id="current-datetime"></span><br>
+                                            <strong>Versão dos Termos:</strong> 1.0
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small>
+                                            <strong>IP de Acesso:</strong> {{ request.META.REMOTE_ADDR }}<br>
+                                            <strong>Navegador:</strong> <span id="user-agent"></span>
+                                        </small>
+                                    </div>
+                                </div>
+                                <small class="mt-2 d-block">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Estas informações são registradas para fins de auditoria e cumprimento da LGPD.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="submit" class="btn btn-success btn-lg me-md-2" id="accept-btn" disabled>
+                                <i class="fas fa-check-circle me-2"></i>
+                                Aceitar e Continuar
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-danger btn-lg">
+                                <i class="fas fa-times-circle me-2"></i>
+                                Não Aceitar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Atualizar data/hora atual
+    const now = new Date();
+    document.getElementById('current-datetime').textContent = now.toLocaleString('pt-BR');
+    
+    // Mostrar user agent (simplificado)
+    const userAgent = navigator.userAgent;
+    const browser = userAgent.includes('Chrome') ? 'Chrome' : 
+                   userAgent.includes('Firefox') ? 'Firefox' : 
+                   userAgent.includes('Safari') ? 'Safari' : 'Outro';
+    document.getElementById('user-agent').textContent = browser;
+    
+    // Controlar habilitação do botão
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const acceptBtn = document.getElementById('accept-btn');
+    
+    function updateButtonState() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        acceptBtn.disabled = !allChecked;
+    }
+    
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateButtonState);
+    });
+    
+    // Validação do formulário
+    document.getElementById('terms-form').addEventListener('submit', function(e) {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        if (!allChecked) {
+            e.preventDefault();
+            alert('Você deve aceitar todos os termos para continuar.');
+        }
+    });
+});
+</script>
+{% endblock %}

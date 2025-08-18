@@ -1,0 +1,223 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Gerenciar Pets - {{ local.nome_fantasia|default:local.usuario.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .pet-management-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .pet-management-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .status-badge {
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-disponivel { background-color: #28a745; color: white; }
+    .status-adotado { background-color: #6c757d; color: white; }
+    .status-reservado { background-color: #ffc107; color: #000; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm-custom {
+        border-radius: 15px;
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>🐾 Gerenciar Pets</h2>
+            <p class="text-muted">{{ local.nome_fantasia|default:local.usuario.username }}</p>
+        </div>
+        <a href="{% url 'adicionar_pet' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Adicionar Pet
+        </a>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.total }}</h3>
+                <p class="mb-0">Total de Pets</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.disponiveis }}</h3>
+                <p class="mb-0">Disponíveis</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.reservados }}</h3>
+                <p class="mb-0">Reservados</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ stats.adotados }}</h3>
+                <p class="mb-0">Adotados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Pets -->
+    {% if pets %}
+        <div class="row">
+            {% for pet in pets %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card pet-management-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div style="font-size: 2.5rem;">{{ pet.emoji }}</div>
+                            <span class="status-badge status-{{ pet.status }}">
+                                {{ pet.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        <h5 class="card-title" style="color: #667eea;">{{ pet.nome }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {{ pet.get_especie_display }} • {{ pet.get_porte_display }} • {{ pet.get_idade_display }}
+                            </small>
+                        </p>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> Cadastrado em {{ pet.data_cadastro|date:"d/m/Y" }}
+                            </small>
+                        </div>
+                        
+                        <!-- Botões de Ação -->
+                        <div class="action-buttons">
+                            <a href="{% url 'pet_detail' pet.id %}" class="btn btn-outline-primary btn-sm-custom">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <a href="{% url 'editar_pet' pet.id %}" class="btn btn-outline-warning btn-sm-custom">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            
+                            <!-- Botão de Status -->
+                            <div class="dropdown">
+                                <button class="btn btn-outline-info btn-sm-custom dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-sync"></i> Status
+                                </button>
+                                <ul class="dropdown-menu">
+                                    {% if pet.status != 'disponivel' %}
+                                    <li>
+                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="disponivel">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-check-circle text-success"></i> Disponível
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                    {% if pet.status != 'reservado' %}
+                                    <li>
+                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="reservado">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-clock text-warning"></i> Reservado
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                    {% if pet.status != 'adotado' %}
+                                    <li>
+                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="adotado">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-heart text-secondary"></i> Adotado
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            
+                            <a href="{% url 'excluir_pet' pet.id %}" class="btn btn-outline-danger btn-sm-custom">
+                                <i class="fas fa-trash"></i> Excluir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% if pets.has_other_pages %}
+        <nav aria-label="Navegação de pets">
+            <ul class="pagination justify-content-center">
+                {% if pets.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pets.previous_page_number }}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in pets.paginator.page_range %}
+                    {% if pets.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pets.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pets.next_page_number }}">Próximo</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <h3>📝 Nenhum pet cadastrado</h3>
+            <p class="text-muted">Comece adicionando pets para adoção!</p>
+            <a href="{% url 'adicionar_pet' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar Primeiro Pet
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

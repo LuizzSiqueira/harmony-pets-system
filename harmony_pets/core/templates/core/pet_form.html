@@ -1,0 +1,244 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ title }} - Harmony Pets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .form-section h5 {
+        color: #667eea;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 5px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .preview-emoji {
+        font-size: 3rem;
+        text-align: center;
+        margin: 10px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ title }}</h2>
+            <p class="text-muted">Preencha as informações sobre o pet</p>
+        </div>
+        <a href="{% url 'gerenciar_pets' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <!-- Informações Básicas -->
+        <div class="form-section">
+            <h5><i class="fas fa-paw"></i> Informações Básicas</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                            <div class="text-danger mt-1">{{ form.nome.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.emoji.id_for_label }}" class="form-label">{{ form.emoji.label }}</label>
+                        {{ form.emoji }}
+                        <div class="preview-emoji" id="emoji-preview">{{ form.emoji.value|default:"🐕" }}</div>
+                        {% if form.emoji.errors %}
+                            <div class="text-danger mt-1">{{ form.emoji.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.especie.id_for_label }}" class="form-label">{{ form.especie.label }}</label>
+                        {{ form.especie }}
+                        {% if form.especie.errors %}
+                            <div class="text-danger mt-1">{{ form.especie.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.sexo.id_for_label }}" class="form-label">{{ form.sexo.label }}</label>
+                        {{ form.sexo }}
+                        {% if form.sexo.errors %}
+                            <div class="text-danger mt-1">{{ form.sexo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.porte.id_for_label }}" class="form-label">{{ form.porte.label }}</label>
+                        {{ form.porte }}
+                        {% if form.porte.errors %}
+                            <div class="text-danger mt-1">{{ form.porte.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.raca.id_for_label }}" class="form-label">{{ form.raca.label }}</label>
+                        {{ form.raca }}
+                        {% if form.raca.errors %}
+                            <div class="text-danger mt-1">{{ form.raca.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.idade.id_for_label }}" class="form-label">{{ form.idade.label }}</label>
+                        {{ form.idade }}
+                        <small class="form-text text-muted">{{ form.idade.help_text }}</small>
+                        {% if form.idade.errors %}
+                            <div class="text-danger mt-1">{{ form.idade.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.peso.id_for_label }}" class="form-label">{{ form.peso.label }}</label>
+                        {{ form.peso }}
+                        <small class="form-text text-muted">{{ form.peso.help_text }}</small>
+                        {% if form.peso.errors %}
+                            <div class="text-danger mt-1">{{ form.peso.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.cor.id_for_label }}" class="form-label">{{ form.cor.label }}</label>
+                {{ form.cor }}
+                {% if form.cor.errors %}
+                    <div class="text-danger mt-1">{{ form.cor.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Informações de Saúde -->
+        <div class="form-section">
+            <h5><i class="fas fa-heart"></i> Informações de Saúde</h5>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    {{ form.castrado }}
+                    <label for="{{ form.castrado.id_for_label }}">{{ form.castrado.label }}</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.vacinado }}
+                    <label for="{{ form.vacinado.id_for_label }}">{{ form.vacinado.label }}</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.vermifugado }}
+                    <label for="{{ form.vermifugado.id_for_label }}">{{ form.vermifugado.label }}</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temperamento -->
+        <div class="form-section">
+            <h5><i class="fas fa-smile"></i> Temperamento</h5>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    {{ form.docil }}
+                    <label for="{{ form.docil.id_for_label }}">{{ form.docil.label }}</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.brincalhao }}
+                    <label for="{{ form.brincalhao.id_for_label }}">{{ form.brincalhao.label }}</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.calmo }}
+                    <label for="{{ form.calmo.id_for_label }}">{{ form.calmo.label }}</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Descrição e Foto -->
+        <div class="form-section">
+            <h5><i class="fas fa-file-alt"></i> Descrição e Foto</h5>
+            <div class="mb-3">
+                <label for="{{ form.descricao.id_for_label }}" class="form-label">{{ form.descricao.label }}</label>
+                {{ form.descricao }}
+                {% if form.descricao.errors %}
+                    <div class="text-danger mt-1">{{ form.descricao.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.cuidados_especiais.id_for_label }}" class="form-label">{{ form.cuidados_especiais.label }}</label>
+                {{ form.cuidados_especiais }}
+                {% if form.cuidados_especiais.errors %}
+                    <div class="text-danger mt-1">{{ form.cuidados_especiais.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.foto_url.id_for_label }}" class="form-label">{{ form.foto_url.label }}</label>
+                {{ form.foto_url }}
+                <small class="form-text text-muted">{{ form.foto_url.help_text }}</small>
+                {% if form.foto_url.errors %}
+                    <div class="text-danger mt-1">{{ form.foto_url.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'gerenciar_pets' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {{ button_text }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Preview do emoji em tempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const emojiInput = document.getElementById('{{ form.emoji.id_for_label }}');
+    const emojiPreview = document.getElementById('emoji-preview');
+    
+    if (emojiInput && emojiPreview) {
+        emojiInput.addEventListener('input', function() {
+            emojiPreview.textContent = this.value || '🐕';
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pet.nome }} - Harmony Pets</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+        }
+        .pet-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-top: -100px;
+            position: relative;
+            z-index: 1;
+        }
+        .pet-emoji {
+            font-size: 6rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .pet-name {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .pet-species {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        .info-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .info-section h4 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .info-value {
+            color: #6c757d;
+        }
+        .badge-custom {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin: 5px;
+        }
+        .btn-adopt {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-adopt:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        .btn-secondary-custom {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-secondary-custom:hover {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+        .contact-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+        .personality-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .personality-tag {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .alert-custom {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="text-center">
+                <h1>Conheça {{ pet.nome }}!</h1>
+                <p class="lead">Um amiguinho especial esperando por você</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <div class="pet-card">
+            <!-- Cabeçalho do Pet -->
+            <div class="pet-emoji">{{ pet.emoji }}</div>
+            <h1 class="pet-name">{{ pet.nome }}</h1>
+            <p class="pet-species">{{ pet.get_especie_display }} • {{ pet.get_idade_display }}</p>
+
+            <!-- Status do Pet -->
+            <div class="text-center mb-4">
+                {% if pet.status == 'disponivel' %}
+                    <span class="badge-custom">✅ Disponível para Adoção</span>
+                {% elif pet.status == 'adotado' %}
+                    <span class="badge bg-success">❤️ Já foi Adotado</span>
+                {% else %}
+                    <span class="badge bg-warning">⏳ Reservado</span>
+                {% endif %}
+                
+                {% if pet.castrado %}
+                    <span class="badge-custom">✂️ Castrado</span>
+                {% endif %}
+                {% if pet.vacinado %}
+                    <span class="badge-custom">💉 Vacinado</span>
+                {% endif %}
+                {% if pet.vermifugado %}
+                    <span class="badge-custom">💊 Vermifugado</span>
+                {% endif %}
+            </div>
+
+            <!-- Informações Básicas -->
+            <div class="info-section">
+                <h4>📋 Informações Básicas</h4>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Espécie:</span>
+                        <span class="info-value">{{ pet.get_especie_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Raça:</span>
+                        <span class="info-value">{{ pet.raca|default:"Sem raça definida" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Idade:</span>
+                        <span class="info-value">{{ pet.get_idade_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sexo:</span>
+                        <span class="info-value">{{ pet.get_sexo_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Porte:</span>
+                        <span class="info-value">{{ pet.get_porte_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cor:</span>
+                        <span class="info-value">{{ pet.cor|default:"Não informado" }}</span>
+                    </div>
+                    {% if pet.peso %}
+                    <div class="info-item">
+                        <span class="info-label">Peso:</span>
+                        <span class="info-value">{{ pet.peso }} kg</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Personalidade -->
+            <div class="info-section">
+                <h4>🎭 Personalidade</h4>
+                <div class="personality-tags">
+                    {% if pet.docil %}
+                        <span class="personality-tag">😇 Dócil</span>
+                    {% endif %}
+                    {% if pet.brincalhao %}
+                        <span class="personality-tag">🎾 Brincalhão</span>
+                    {% endif %}
+                    {% if pet.calmo %}
+                        <span class="personality-tag">😌 Calmo</span>
+                    {% endif %}
+                    {% if not pet.docil and not pet.brincalhao and not pet.calmo %}
+                        <span class="text-muted">Personalidade não informada</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="info-section">
+                <h4>📝 Sobre {{ pet.nome }}</h4>
+                <p style="line-height: 1.6; color: #495057;">{{ pet.descricao }}</p>
+            </div>
+
+            <!-- Cuidados Especiais -->
+            {% if pet.cuidados_especiais %}
+            <div class="info-section">
+                <h4>🏥 Cuidados Especiais</h4>
+                <p style="line-height: 1.6; color: #495057;">{{ pet.cuidados_especiais }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="text-center mt-4">
+                {% if pet.status == 'disponivel' %}
+                    {% if user.is_authenticated %}
+                        {% if interessado %}
+                            {% if not ja_solicitou %}
+                                <a href="{% url 'solicitar_adocao' pet.id %}" class="btn-adopt">
+                                    ❤️ Quero Adotar {{ pet.nome }}
+                                </a>
+                            {% else %}
+                                <div class="alert-custom">
+                                    <strong>✅ Solicitação Enviada!</strong><br>
+                                    Você já solicitou a adoção de {{ pet.nome }}. O local de adoção entrará em contato em breve.
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert-custom">
+                                <strong>ℹ️ Atenção:</strong><br>
+                                Apenas interessados em adoção podem solicitar a adoção de pets. 
+                                <a href="{% url 'register_interessado' %}">Cadastre-se como interessado</a> para continuar.
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn-adopt">
+                            ❤️ Fazer Login para Adotar
+                        </a>
+                        <p class="mt-3 text-muted">
+                            Não tem conta? <a href="{% url 'register_interessado' %}">Cadastre-se como interessado em adoção</a>
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <div class="alert-custom">
+                        <strong>😊 {{ pet.nome }} não está mais disponível</strong><br>
+                        Este pet já encontrou uma família! Que tal conhecer outros amiguinhos?
+                    </div>
+                {% endif %}
+                
+                <a href="{% url 'pets_list' %}" class="btn-secondary-custom ml-3">
+                    ← Ver Outros Pets
+                </a>
+            </div>
+
+            <!-- Informações do Local de Adoção -->
+            <div class="contact-info">
+                <h4 style="color: #667eea; margin-bottom: 15px;">🏢 Local de Adoção</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nome:</strong> {{ pet.local_adocao.nome_fantasia|default:pet.local_adocao.usuario.get_full_name }}</p>
+                        {% if pet.local_adocao.telefone %}
+                            <p><strong>Telefone:</strong> {{ pet.local_adocao.telefone }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>E-mail:</strong> {{ pet.local_adocao.usuario.email }}</p>
+                        {% if pet.local_adocao.endereco %}
+                            <p><strong>Endereço:</strong> {{ pet.local_adocao.endereco }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
