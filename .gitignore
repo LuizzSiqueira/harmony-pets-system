@@ -3,6 +3,25 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # Django
 *.log
@@ -10,25 +29,127 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
+staticfiles/
+static_root/
+
+# Cache directories
+.cache/
+.pytest_cache/
+.coverage
+.tox/
+.nox/
+htmlcov/
+.sass-cache/
+.webassets-cache/
 
 # Virtual Environment
 venv/
 env/
 ENV/
+env.bak/
+venv.bak/
+.venv/
 
-# IDE
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.project
+.pydevproject
+.spyderproject
+.spyproject
+.rope_project_folder/
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Arquivos sensíveis
 .env
 .env.local
+.env.production
+.env.staging
+secrets.json
+config.ini
+
+# Logs e temporários
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+logs/
+temp/
+tmp/
+
+# Node.js (caso use npm/yarn para frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+.coverage
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
 # Migrations específicas (mantém apenas __init__.py)
 */migrations/[0-9]*.py
+
+# PostgreSQL
+*.sql
+
+# Redis
+dump.rdb
