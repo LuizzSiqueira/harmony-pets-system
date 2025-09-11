@@ -1,0 +1,28 @@
+/* Estilos do formulário de pet */
+.form-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.form-section h5 {
+    color: #667eea;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 5px;
+}
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.preview-emoji {
+    font-size: 3rem;
+    text-align: center;
+    margin: 10px 0;
+}

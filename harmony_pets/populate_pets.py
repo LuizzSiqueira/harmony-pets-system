@@ -4,8 +4,12 @@ Script para popular o banco de dados com pets de exemplo
 Execute: python manage.py shell < populate_pets.py
 """
 
+
+import os
 from core.models import Pet, LocalAdocao
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.core.files import File
 
 # Buscar um local de adoção existente ou criar um genérico
 try:
@@ -28,6 +32,21 @@ try:
 except Exception as e:
     print(f"Erro ao criar local: {e}")
     exit()
+
+IMAGES_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'core', 'static', 'core', 'images', 'pets'
+)
+
+# Lista de imagens para associar aos pets (ordem deve bater com pets_data)
+images_files = [
+    'dog1.jpg',  # Luna
+    'cat1.jpg',  # Miau
+    'dog2.jpg',  # Rex
+    'cat2.jpg',  # Nila
+    'hamster1.jpg',  # Bolinha
+    'rabbit1.jpg',   # Mel
+]
 
 # Lista de pets para criar
 pets_data = [
@@ -149,13 +168,22 @@ pets_data = [
 
 # Criar os pets
 created_count = 0
-for pet_data in pets_data:
+
+for idx, pet_data in enumerate(pets_data):
     try:
         # Verificar se já existe um pet com esse nome
         if not Pet.objects.filter(nome=pet_data['nome']).exists():
+            pet_kwargs = pet_data.copy()
+            # Adiciona imagem se ativado e arquivo existir
+            if getattr(settings, 'POPULATE_PETS_WITH_IMAGES', False):
+                if idx < len(images_files):
+                    image_path = os.path.join(IMAGES_PATH, images_files[idx])
+                    if os.path.exists(image_path):
+                        with open(image_path, 'rb') as img_file:
+                            pet_kwargs['foto'] = File(img_file, name=images_files[idx])
             Pet.objects.create(
                 local_adocao=local,
-                **pet_data
+                **pet_kwargs
             )
             created_count += 1
             print(f"Pet {pet_data['nome']} criado com sucesso!")

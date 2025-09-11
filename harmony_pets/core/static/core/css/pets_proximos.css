@@ -1,0 +1,47 @@
+/* Emoji do pet */
+.pet-emoji {
+    font-size: 2.5rem;
+}
+
+/* Título do pet */
+.pet-title {
+    color: #667eea;
+}
+/* Estilos para a página de pets próximos */
+.map-container {
+    height: 400px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.pet-distance-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.pet-distance-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.distance-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px;
+    padding: 5px 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.location-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}

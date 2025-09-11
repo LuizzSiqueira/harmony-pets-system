@@ -154,7 +154,13 @@
     <div class="container pb-5">
         <div class="pet-card">
             <!-- Cabeçalho do Pet -->
-            <div class="pet-emoji">{{ pet.emoji }}</div>
+            {% if pet.foto %}
+                <div class="text-center mb-3">
+                    <img src="{{ pet.foto.url }}" alt="Foto de {{ pet.nome }}" class="img-fluid rounded" style="max-height: 320px; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
+                </div>
+            {% else %}
+                <div class="pet-emoji">{{ pet.emoji }}</div>
+            {% endif %}
             <h1 class="pet-name">{{ pet.nome }}</h1>
             <p class="pet-species">{{ pet.get_especie_display }} • {{ pet.get_idade_display }}</p>
 

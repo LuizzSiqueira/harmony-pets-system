@@ -48,6 +48,10 @@
 4. **Filtros Inteligentes**: Apenas pets disponíveis na região
 5. **Navegação Intuitiva**: Botões contextuais baseados no tipo de usuário
 
+---
+**Filtro por Localização via API JSON:**
+O endpoint da API JSON aceita parâmetros de latitude, longitude e raio (em km) na query string (ex: `/api/pets_mapa/?lat=-23.5&lng=-46.6&raio=10`). Assim, retorna apenas os pets disponíveis próximos à localização informada, otimizando o uso do mapa e dos filtros inteligentes.
+
 ## PRÓXIMOS PASSOS:
 
 1. Configurar chave da API do Google Maps

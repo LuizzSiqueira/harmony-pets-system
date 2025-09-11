@@ -224,6 +224,27 @@ class LocalAdocaoForm(UserCreationForm):
         return email
 
 class PetForm(forms.ModelForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        local_adocao = getattr(self.instance, 'local_adocao', None)
+        # Se o local_adocao for passado no form, use ele
+        if not local_adocao:
+            local_adocao = self.initial.get('local_adocao') or self.data.get('local_adocao')
+            if hasattr(local_adocao, 'latitude') and hasattr(local_adocao, 'longitude'):
+                pass
+            else:
+                # Tenta buscar pelo id
+                from .models import LocalAdocao
+                try:
+                    local_adocao = LocalAdocao.objects.get(pk=local_adocao)
+                except Exception:
+                    local_adocao = None
+        if local_adocao:
+            if not (local_adocao.latitude and local_adocao.longitude):
+                raise forms.ValidationError('O local de adoção selecionado precisa ter latitude e longitude cadastradas.')
+        else:
+            raise forms.ValidationError('Selecione um local de adoção válido.')
+        return cleaned_data
     """Formulário para cadastro e edição de pets"""
     
     class Meta:
@@ -231,9 +252,8 @@ class PetForm(forms.ModelForm):
         fields = [
             'nome', 'especie', 'raca', 'idade', 'sexo', 'porte', 'cor', 'peso',
             'castrado', 'vacinado', 'vermifugado', 'docil', 'brincalhao', 'calmo',
-            'descricao', 'cuidados_especiais', 'foto_url', 'emoji'
+            'descricao', 'cuidados_especiais', 'foto', 'foto_url', 'emoji'
         ]
-        
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do pet'}),
             'especie': forms.Select(attrs={'class': 'form-select'}),
@@ -245,10 +265,10 @@ class PetForm(forms.ModelForm):
             'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': 'Peso em kg'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Descreva o pet, seu comportamento, características especiais...'}),
             'cuidados_especiais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Medicamentos, dieta especial, limitações... (opcional)'}),
+            'foto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'foto_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL da foto (opcional)'}),
             'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '🐕', 'maxlength': '10'}),
         }
-        
         labels = {
             'nome': 'Nome do Pet',
             'especie': 'Espécie',
@@ -266,9 +286,21 @@ class PetForm(forms.ModelForm):
             'calmo': 'Calmo',
             'descricao': 'Descrição',
             'cuidados_especiais': 'Cuidados Especiais',
+            'foto': 'Foto do Pet',
             'foto_url': 'URL da Foto',
             'emoji': 'Emoji Representativo',
         }
+    def clean_foto(self):
+        foto = self.cleaned_data.get('foto')
+        if foto:
+            # Validação de tipo de arquivo
+            valid_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+            if hasattr(foto, 'content_type') and foto.content_type not in valid_types:
+                raise forms.ValidationError("Apenas arquivos de imagem (JPEG, PNG, GIF, WebP) são permitidos.")
+            # Limite de tamanho (opcional, ex: 5MB)
+            if foto.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("A imagem deve ter no máximo 5MB.")
+        return foto
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,3 +1,6 @@
+# Nunca suba arquivos de variáveis sensíveis para o controle de versão!
+.env
+*.env
 # Python
 __pycache__/
 *.py[cod]

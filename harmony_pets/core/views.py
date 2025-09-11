@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.forms import AuthenticationForm
@@ -8,6 +9,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse
+from datetime import timedelta
 from .forms import (
     InteressadoAdocaoForm, 
     LocalAdocaoForm, 
@@ -24,6 +26,20 @@ from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoF
 from .utils import calcular_distancia
 import io
 import base64
+
+
+@login_required
+def delete_account_view(request):
+    """View para solicitar exclusão da conta do usuário"""
+    user = request.user
+    if request.method == 'POST':
+        # Marcar usuário como inativo (soft delete)
+        user.is_active = False
+        user.save()
+        logout(request)
+        messages.success(request, 'Sua conta foi marcada para exclusão e será removida definitivamente em até 3 dias.')
+        return redirect('home')
+    return redirect('profile')
 
 def login_view(request):
     if request.method == 'POST':

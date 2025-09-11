@@ -99,8 +99,9 @@ class Pet(models.Model):
     data_cadastro = models.DateTimeField(auto_now_add=True)
     data_adocao = models.DateTimeField(null=True, blank=True)
     
-    # Foto (por enquanto será uma URL ou emoji)
-    foto_url = models.URLField(blank=True, help_text="URL da foto do pet")
+    # Foto (upload seguro e/ou URL)
+    foto = models.ImageField(upload_to='pets/', blank=True, null=True, help_text="Foto do pet (upload)")
+    foto_url = models.URLField(blank=True, help_text="URL da foto do pet (opcional)")
     emoji = models.CharField(max_length=10, default='🐕', help_text="Emoji representativo do pet")
     
     class Meta:

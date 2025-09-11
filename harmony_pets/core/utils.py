@@ -1,3 +1,19 @@
+# Utilitário para calcular distância entre dois pontos (Haversine)
+from math import radians, sin, cos, sqrt, atan2
+
+def calcular_distancia_km(lat1, lon1, lat2, lon2):
+    """
+    Calcula a distância em km entre dois pontos geográficos usando a fórmula de Haversine.
+    """
+    R = 6371.0  # Raio da Terra em km
+    lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    distancia = R * c
+    return round(distancia, 2)
 import math
 from typing import Tuple, Optional
 

@@ -1,4 +1,6 @@
+
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Configurar Autenticação de Dois Fatores{% endblock %}
 
@@ -80,10 +82,7 @@
     </div>
 </div>
 
-<style>
-.backup-codes code {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-}
-</style>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/setup_2fa.css' %}">
+{% endblock %}
 {% endblock %}

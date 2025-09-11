@@ -1,3 +1,7 @@
+
+
+# Permite ativar/desativar a população automática de imagens reais nos pets
+POPULATE_PETS_WITH_IMAGES = True
 """
 Django settings for harmony_pets project.
 
@@ -10,20 +14,40 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+
+
+# Configurações de e-mail para redefinição de senha (usando variáveis de ambiente)
+import os
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4_k#b82vkh5mgejbm#+wj6^7)ar2jhs#^oq1xx_=+^w$kbps9@'
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4_k#b82vkh5mgejbm#+wj6^7)ar2jhs#^oq1xx_=+^w$kbps9@')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = []
 
@@ -78,11 +102,15 @@ WSGI_APPLICATION = 'harmony_pets.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'harmony_pets_db',  # Nome do seu banco de dados
-        'USER': 'postgres',      # Seu usuário do PostgreSQL
-        'PASSWORD': 'Lv_180556!',    # Sua senha
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME', 'postgres'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'OPTIONS': {
+            'sslmode': 'require',  # Obrigatório para Supabase
+        },
+        'CONN_MAX_AGE': 600,  # Mantém conexão por 10 minutos
     }
 }
 
@@ -118,13 +146,17 @@ USE_I18N = True
 USE_TZ = True
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "core" / "static",
 ]
+
+# Media files (uploads de imagens de pets)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

@@ -1,0 +1,101 @@
+/* Estilos da página de perfil */
+.profile-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 0;
+}
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 40px;
+    margin: 20px 0;
+}
+.profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f8f9fa;
+}
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2.5rem;
+    color: white;
+}
+.info-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.info-section h4 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+.info-item:last-child {
+    border-bottom: none;
+}
+.info-label {
+    font-weight: 600;
+    color: #495057;
+}
+.info-value {
+    color: #6c757d;
+}
+.btn-custom {
+    padding: 12px 30px;
+    margin: 10px;
+    border-radius: 25px;
+    font-weight: bold;
+    text-decoration: none;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+.btn-custom:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+.btn-primary-custom {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+}
+.btn-outline-custom {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+.btn-outline-custom:hover {
+    background: #667eea;
+    color: white;
+}
+.user-type-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 10px;
+}
+.badge-interessado {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+.badge-local {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}

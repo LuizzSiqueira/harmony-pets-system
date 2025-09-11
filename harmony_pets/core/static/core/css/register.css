@@ -1,0 +1,78 @@
+/* Estilo para tela de escolha de cadastro (register.html) */
+.register-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.register-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 40px 32px;
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.register-title {
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+.register-option {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 30px 20px;
+    margin: 15px 0;
+    text-decoration: none;
+    color: #333;
+    display: block;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.05);
+}
+.register-option:hover {
+    border-color: #667eea;
+    background-color: #e6e9fa;
+    color: #667eea;
+    text-decoration: none;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.15);
+}
+.option-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    display: block;
+    text-align: center;
+}
+.option-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.option-description {
+    font-size: 0.95rem;
+    color: #6c757d;
+    text-align: center;
+    line-height: 1.4;
+}
+.back-link {
+    text-align: center;
+    margin-top: 30px;
+}
+.back-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+.back-link a:hover {
+    text-decoration: underline;
+}

@@ -1,47 +1,10 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Pets Próximos - Harmony Pets{% endblock %}
 
 {% block extra_css %}
-<style>
-    .map-container {
-        height: 400px;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
-    }
-    
-    .pet-distance-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-    }
-    
-    .pet-distance-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .distance-badge {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border-radius: 20px;
-        padding: 5px 15px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    
-    .location-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'core/css/pets_proximos.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -78,11 +41,11 @@
                 <div class="card pet-distance-card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div style="font-size: 2.5rem;">{{ item.pet.emoji }}</div>
+                            <div class="pet-emoji">{{ item.pet.emoji }}</div>
                             <span class="distance-badge">{{ item.distancia }} km</span>
                         </div>
                         
-                        <h5 class="card-title" style="color: #667eea;">{{ item.pet.nome }}</h5>
+                        <h5 class="card-title pet-title">{{ item.pet.nome }}</h5>
                         <p class="card-text">
                             <small class="text-muted">
                                 {{ item.pet.get_especie_display }} • {{ item.pet.get_idade_display }}
@@ -117,12 +80,28 @@
 
 <!-- *** RASCUNHO DO JAVASCRIPT PARA GOOGLE MAPS *** -->
 <script>
-// *** SUBSTITUA "SUA_CHAVE_API_GOOGLE_MAPS" PELA SUA CHAVE REAL ***
+// Solicita a localização do usuário e inicializa o mapa com pets próximos
 function initMap() {
-    // Localização do usuário
-    const userLocation = { lat: {{ user_lat|default:"-23.55052" }}, lng: {{ user_lng|default:"-46.633308" }} };
-    
-    // Criar o mapa
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            carregarMapa(userLocation);
+        }, function(error) {
+            // Se o usuário negar ou der erro, usa o centro padrão (São Paulo)
+            const userLocation = { lat: -23.55052, lng: -46.633308 };
+            carregarMapa(userLocation);
+        });
+    } else {
+        // Geolocalização não suportada
+        const userLocation = { lat: -23.55052, lng: -46.633308 };
+        carregarMapa(userLocation);
+    }
+}
+
+function carregarMapa(userLocation) {
     const map = new google.maps.Map(document.getElementById("map"), {
         zoom: 12,
         center: userLocation,
@@ -134,7 +113,7 @@ function initMap() {
             }
         ]
     });
-    
+
     // Marcador do usuário
     new google.maps.Marker({
         position: userLocation,
@@ -144,9 +123,9 @@ function initMap() {
             url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
         }
     });
-    
-    // Buscar dados dos pets via API
-    fetch('/api/pets/mapa/')
+
+    // Buscar pets próximos da localização do usuário
+    fetch(`/api/pets/mapa/?lat=${userLocation.lat}&lng=${userLocation.lng}`)
         .then(response => response.json())
         .then(data => {
             data.pets.forEach(pet => {
@@ -158,7 +137,7 @@ function initMap() {
                         url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
                     }
                 });
-                
+
                 const infoWindow = new google.maps.InfoWindow({
                     content: `
                         <div style="padding: 10px;">
@@ -170,7 +149,7 @@ function initMap() {
                         </div>
                     `
                 });
-                
+
                 marker.addListener("click", () => {
                     infoWindow.open(map, marker);
                 });
@@ -182,8 +161,7 @@ function initMap() {
 }
 
 // *** ERRO PROPOSITAL PARA MOSTRAR QUE PRECISA DA CHAVE ***
-// Descomente a linha abaixo quando tiver a chave da API:
-// <script async defer src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_API_GOOGLE_MAPS&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDMhh2EWwza-y5EaFkCijLe5Vlr1l_0Hto&callback=initMap"></script>
 </script>
 
 <div class="alert alert-warning mt-3">

@@ -1,0 +1,64 @@
+/* Estilos para tela de configuração de 2FA */
+
+.card {
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.10);
+    border: none;
+}
+.card-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 1.2rem 1.5rem;
+    border-bottom: none;
+}
+.card-header h4 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+.card-body {
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+}
+.alert-info {
+    background: #e6e9fa;
+    color: #4a4a6a;
+    border: none;
+}
+.alert-warning {
+    background: #fffbe6;
+    color: #856404;
+    border: none;
+}
+.backup-codes code {
+    font-family: 'Fira Mono', 'Courier New', monospace;
+    font-size: 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: block;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+}
+.btn-secondary {
+    background: #e9ecef;
+    color: #333;
+    border: none;
+    font-weight: 500;
+}
+.mt-4 {
+    margin-top: 2rem !important;
+}
