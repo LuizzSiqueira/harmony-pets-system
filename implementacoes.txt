@@ -1,0 +1,68 @@
+
+
+
+==============================
+Regras de Negócio Implementadas
+==============================
+
+1. Cadastro e associação de pets a locais de adoção com latitude/longitude (individual ou herdada do local)
+   - Local: harmony_pets/core/models.py (model Pet e LocalAdocao)
+
+2. Filtros por status do pet (apenas pets disponíveis)
+   - Local: harmony_pets/core/views.py (QuerySet: Pet.objects.filter(status='disponivel'))
+
+3. Validação automática e flexível de localização no cadastro de pets
+   - Local: harmony_pets/core/forms.py (classe PetForm)
+   - Permite latitude/longitude individual ou uso do local de adoção
+
+4. Emoji automático e condizente com a espécie do pet
+   - Local: harmony_pets/core/forms.py, harmony_pets/populate_pets.py
+
+5. Navegação adaptada ao tipo de usuário (interessado ou local)
+   - Templates: harmony_pets/core/templates/core/pets_proximos.html, base.html
+
+6. Remoção de pets e reset de autenticação 2FA
+   - Scripts e views: harmony_pets/core/views.py
+
+7. Ativação de Row Level Security (RLS) no banco Supabase
+   - Script SQL fornecido na documentação do projeto
+
+==============================
+Funcionalidades Implementadas
+==============================
+
+1. Cálculo de distância entre pontos geográficos (Haversine)
+   - Local: harmony_pets/core/utils.py (função calcular_distancia_km)
+   - Utilizado nas views de pets próximos e API JSON
+
+2. API JSON para pets disponíveis no mapa
+   - Local: harmony_pets/core/views.py (função pets_mapa_api)
+   - URL configurada em harmony_pets/core/urls.py
+
+3. Interface responsiva com Bootstrap
+   - Templates: harmony_pets/core/templates/core/pets_proximos.html, base.html
+   - CSS: harmony_pets/core/static/core/css/pets_proximos.css
+
+4. Filtros inteligentes por localização e atualização automática da localização do usuário
+   - Local: harmony_pets/core/views.py (views pets_proximos, pets_mapa_api)
+   - Botão para capturar localização via navegador
+
+5. Visualização detalhada dos pets próximos
+   - Exibe foto, emoji, nome, espécie, raça, porte, cor, sexo, idade, peso e distância
+   - Template: harmony_pets/core/templates/core/pets_proximos.html
+
+6. Variáveis de ambiente centralizadas
+   - Arquivo: harmony_pets/.env
+   - Protegido por .gitignore
+
+7. População de pets de teste com localização realista e emoji por espécie
+   - Script: harmony_pets/populate_pets.py
+   - Gera pets com nomes, raças, espécies e emojis condizentes
+
+8. Preview de emoji no cadastro de pets
+   - Template: harmony_pets/core/templates/core/pet_form.html
+   - Emoji exibido em tempo real conforme preenchimento
+
+9. Cadastro de pets com localização automática (botão "Usar minha localização")
+   - Template: harmony_pets/core/templates/core/pet_form.html
+   - Preenche latitude/longitude via navegador
