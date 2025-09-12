@@ -1,4 +1,7 @@
 
+import os
+# Chave da API do Google Maps
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
 # Permite ativar/desativar a população automática de imagens reais nos pets
 POPULATE_PETS_WITH_IMAGES = True
@@ -44,7 +47,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4_k#b82vkh5mgejbm#+wj6^7)ar2jhs#^oq1xx_=+^w$kbps9@')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'

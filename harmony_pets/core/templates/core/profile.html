@@ -119,8 +119,39 @@
                         <a href="{% url 'change_password' %}" class="btn btn-custom btn-outline-custom">
                             <i class="fas fa-key"></i> Alterar Senha
                         </a>
+                        <a href="{% url 'minhas_solicitacoes_adocao' %}" class="btn btn-custom btn-info">
+                            <i class="fas fa-list"></i> Minhas Solicitações de Adoção
+                        </a>
+                        <a href="{% url 'meus_pets_adotados' %}" class="btn btn-custom btn-success">
+                            <i class="fas fa-paw"></i> Meus Pets Adotados
+                        </a>
                         <a href="{% url 'home' %}" class="btn btn-custom btn-outline-custom">Voltar ao Início</a>
                     </div>
+                    <div class="text-center mt-4">
+                        <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
+                            <i class="fas fa-map-marker-alt"></i> Usar minha localização para ver pets próximos
+                        </button>
+                        <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="latitude" id="latitude">
+                            <input type="hidden" name="longitude" id="longitude">
+                        </form>
+                    </div>
+                    <script>
+                    function capturarLocalizacao() {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                                document.getElementById('latitude').value = position.coords.latitude;
+                                document.getElementById('longitude').value = position.coords.longitude;
+                                document.getElementById('form-localizacao').submit();
+                            }, function(error) {
+                                alert('Não foi possível obter sua localização. Permita o acesso à localização no navegador.');
+                            });
+                        } else {
+                            alert('Geolocalização não suportada pelo seu navegador.');
+                        }
+                    }
+                    </script>
                     <div class="text-center mt-4">
                         <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível. A exclusão definitiva ocorrerá em até 3 dias.')">
                             {% csrf_token %}

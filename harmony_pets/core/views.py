@@ -27,6 +27,56 @@ from .utils import calcular_distancia
 import io
 import base64
 
+# View para o interessado ver suas solicitações de adoção
+@login_required
+def minhas_solicitacoes_adocao(request):
+    try:
+        interessado = request.user.interessadoadocao
+        solicitacoes = interessado.solicitacoes.select_related('pet').order_by('-data_solicitacao')
+        return render(request, 'core/minhas_solicitacoes_adocao.html', {'solicitacoes': solicitacoes})
+    except Exception:
+        messages.error(request, 'Não foi possível recuperar suas solicitações de adoção.')
+        return redirect('profile')
+
+# View para listar pets adotados pelo usuário interessado
+@login_required
+def meus_pets_adotados(request):
+    try:
+        interessado = request.user.interessadoadocao
+        pets_adotados = interessado.pets_adotados.all().order_by('-data_adocao')
+        return render(request, 'core/pets_adotados.html', {'pets_adotados': pets_adotados})
+    except Exception:
+        messages.error(request, 'Não foi possível recuperar seus pets adotados.')
+        return redirect('profile')
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.http import JsonResponse
+from django.utils import timezone
+from django.urls import reverse
+from datetime import timedelta
+from .forms import (
+    InteressadoAdocaoForm, 
+    LocalAdocaoForm, 
+    PetForm,
+    TwoFactorSetupForm,
+    TwoFactorLoginForm,
+    DisableTwoFactorForm,
+    EditUserForm,
+    EditInteressadoForm,
+    EditLocalForm,
+    ChangePasswordForm
+)
+from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
+from .utils import calcular_distancia
+import io
+import base64
+
 
 @login_required
 def delete_account_view(request):
@@ -393,47 +443,50 @@ def register_local_view(request):
 def pets_proximos(request):
     """View para mostrar pets próximos ao usuário"""
     try:
-        # Verificar se o usuário é um interessado
         interessado = request.user.interessadoadocao
-        
+        # Se receber latitude/longitude via POST, salvar no perfil
+        if request.method == 'POST' and 'latitude' in request.POST and 'longitude' in request.POST:
+            try:
+                interessado.latitude = float(request.POST['latitude'])
+                interessado.longitude = float(request.POST['longitude'])
+                interessado.save()
+            except Exception:
+                messages.error(request, 'Não foi possível salvar sua localização. Tente novamente.')
+                return redirect('profile')
+
         # Verificar se o interessado tem localização
         if not interessado.latitude or not interessado.longitude:
             messages.warning(request, 'Para encontrar pets próximos, você precisa definir sua localização no perfil.')
             return redirect('profile')
-        
-        # Buscar todos os pets disponíveis
+
         pets_disponiveis = Pet.objects.filter(status='disponivel')
-        
-        # Calcular distâncias e ordenar
         pets_com_distancia = []
         for pet in pets_disponiveis:
+            # Prioriza localização individual do pet
+            lat = pet.latitude if pet.latitude is not None else (pet.local_adocao.latitude if pet.local_adocao else None)
+            lng = pet.longitude if pet.longitude is not None else (pet.local_adocao.longitude if pet.local_adocao else None)
             local = pet.local_adocao
-            if local.latitude and local.longitude:
+            if lat is not None and lng is not None:
                 distancia = calcular_distancia(
                     interessado.latitude, interessado.longitude,
-                    local.latitude, local.longitude
+                    lat, lng
                 )
                 pets_com_distancia.append({
                     'pet': pet,
                     'local': local,
                     'distancia': round(distancia, 2)
                 })
-        
-        # Ordenar por distância
         pets_com_distancia.sort(key=lambda x: x['distancia'])
-        
-        # Limitar a 20 pets mais próximos
         pets_proximos = pets_com_distancia[:20]
-        
+        from django.conf import settings
         context = {
             'pets_proximos': pets_proximos,
             'user_lat': interessado.latitude,
             'user_lng': interessado.longitude,
-            'total_encontrados': len(pets_proximos)
+            'total_encontrados': len(pets_proximos),
+            'GOOGLE_MAPS_API_KEY': settings.GOOGLE_MAPS_API_KEY
         }
-        
         return render(request, 'core/pets_proximos.html', context)
-        
     except InteressadoAdocao.DoesNotExist:
         messages.error(request, 'Apenas interessados em adoção podem usar esta funcionalidade.')
         return redirect('home')
@@ -612,9 +665,15 @@ def alterar_status_pet(request, pet_id):
             if novo_status == 'adotado':
                 from django.utils import timezone
                 pet.data_adocao = timezone.now()
+                # Se o pet está reservado, manter o adotado_por
+                # Se não, tentar associar ao interessado da solicitação aprovada mais recente
+                if not pet.adotado_por:
+                    solicitacao_aprovada = pet.solicitacoes.filter(status='aprovada').order_by('-data_resposta').first()
+                    if solicitacao_aprovada:
+                        pet.adotado_por = solicitacao_aprovada.interessado
             else:
                 pet.data_adocao = None
-                
+                pet.adotado_por = None
             pet.save()
             
             messages.success(request, f'Status do pet {pet.nome} alterado de "{status_anterior}" para "{pet.get_status_display()}".')
@@ -692,6 +751,7 @@ def responder_solicitacao(request, solicitacao_id):
             # Se aprovada, marcar pet como reservado
             if acao == 'aprovar':
                 solicitacao.pet.status = 'reservado'
+                solicitacao.pet.adotado_por = solicitacao.interessado
                 solicitacao.pet.save()
                 
                 # Rejeitar outras solicitações para o mesmo pet

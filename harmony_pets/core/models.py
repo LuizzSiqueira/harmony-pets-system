@@ -43,6 +43,9 @@ class LocalAdocao(models.Model):
         verbose_name_plural = "Locais de Adoção"
 
 class Pet(models.Model):
+    # Localização individual do pet (opcional)
+    latitude = models.FloatField(null=True, blank=True, help_text="Latitude do pet (opcional)")
+    longitude = models.FloatField(null=True, blank=True, help_text="Longitude do pet (opcional)")
     ESPECIES_CHOICES = [
         ('cao', 'Cão'),
         ('gato', 'Gato'),

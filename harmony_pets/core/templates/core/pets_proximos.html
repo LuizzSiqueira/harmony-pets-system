@@ -10,60 +10,78 @@
 {% block content %}
 <div class="content-container">
     <div class="location-info text-center">
-        <h2>🗺️ Pets Próximos de Você</h2>
+        <h2>Comparativo de Distância dos Pets Próximos</h2>
         <p class="mb-0">Encontramos {{ total_encontrados }} pets disponíveis na sua região</p>
-    </div>
-
-    <!-- *** RASCUNHO DO MAPA *** -->
-    <div class="alert alert-info">
-        <h5>🗺️ Mapa Interativo (RASCUNHO)</h5>
-        <p><strong>Instruções para implementar:</strong></p>
-        <ol>
-            <li>Obtenha uma chave da API do Google Maps em: <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
-            <li>Substitua "SUA_CHAVE_API_GOOGLE_MAPS" no código JavaScript abaixo</li>
-            <li>Ative as APIs: Maps JavaScript API e Geocoding API</li>
-        </ol>
-    </div>
-    
-    <div id="map" class="map-container">
-        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-            <div class="text-center">
-                <h5>🗺️ Mapa do Google</h5>
-                <p class="text-muted">Configure sua chave da API do Google Maps para visualizar o mapa</p>
-            </div>
+        <div class="mt-3">
+            <button id="btn-localizacao" class="btn btn-info" type="button">
+                <i class="fas fa-map-marker-alt"></i> Atualizar minha localização
+            </button>
+            <span id="status-localizacao" class="ms-2 text-muted"></span>
+            <form id="form-localizacao" method="post" action="" style="display:none;">
+                {% csrf_token %}
+                <input type="hidden" name="latitude" id="latitude">
+                <input type="hidden" name="longitude" id="longitude">
+            </form>
         </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('btn-localizacao');
+            const status = document.getElementById('status-localizacao');
+            btn.addEventListener('click', function() {
+                status.textContent = 'Obtendo localização...';
+                status.className = 'ms-2 text-info';
+                btn.disabled = true;
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        document.getElementById('latitude').value = position.coords.latitude;
+                        document.getElementById('longitude').value = position.coords.longitude;
+                        status.textContent = 'Localização atualizada!';
+                        status.className = 'ms-2 text-success';
+                        setTimeout(() => { status.textContent = ''; }, 2000);
+                        document.getElementById('form-localizacao').submit();
+                    }, function(error) {
+                        status.textContent = 'Não foi possível obter sua localização.';
+                        status.className = 'ms-2 text-danger';
+                        btn.disabled = false;
+                    });
+                } else {
+                    status.textContent = 'Seu navegador não suporta geolocalização.';
+                    status.className = 'ms-2 text-danger';
+                    btn.disabled = false;
+                }
+            });
+        });
+        </script>
     </div>
-
     {% if pets_proximos %}
         <div class="row">
             {% for item in pets_proximos %}
             <div class="col-md-6 col-lg-4">
-                <div class="card pet-distance-card">
+                <div class="card pet-distance-card mb-3">
+                    {% if item.pet.foto and item.pet.foto.name %}
+                        <img src="{{ item.pet.foto.url }}" class="card-img-top" alt="Foto de {{ item.pet.nome }}" style="max-height:180px; object-fit:cover;">
+                    {% elif item.pet.foto_url %}
+                        <img src="{{ item.pet.foto_url }}" class="card-img-top" alt="Foto de {{ item.pet.nome }}" style="max-height:180px; object-fit:cover;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light" style="height:180px; font-size:4rem;">
+                            {{ item.pet.emoji|default:'🐾' }}
+                        </div>
+                    {% endif %}
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="pet-emoji">{{ item.pet.emoji }}</div>
-                            <span class="distance-badge">{{ item.distancia }} km</span>
-                        </div>
-                        
-                        <h5 class="card-title pet-title">{{ item.pet.nome }}</h5>
-                        <p class="card-text">
-                            <small class="text-muted">
-                                {{ item.pet.get_especie_display }} • {{ item.pet.get_idade_display }}
-                            </small>
+                        <h5 class="card-title mb-1">{{ item.pet.nome }} <span style="font-size:1.5rem;">{{ item.pet.emoji|default:'🐾' }}</span></h5>
+                        <p class="mb-1"><span class="badge bg-secondary">{{ item.pet.get_especie_display }}</span> {% if item.pet.raca %}<span class="badge bg-info text-dark">{{ item.pet.raca }}</span>{% endif %}</p>
+                        <p class="mb-1">
+                            <strong>Porte:</strong> {{ item.pet.get_porte_display }}<br>
+                            <strong>Cor:</strong> {{ item.pet.cor }}<br>
+                            <strong>Sexo:</strong> {{ item.pet.get_sexo_display }}<br>
+                            <strong>Idade:</strong> {{ item.pet.idade }} meses<br>
+                            <strong>Peso:</strong> {{ item.pet.peso }} kg
                         </p>
-                        
-                        <div class="mb-2">
-                            <small class="text-muted">
-                                <i class="fas fa-map-marker-alt"></i> 
-                                {{ item.local.nome_fantasia|default:item.local.usuario.username }}
-                            </small>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'pet_detail' item.pet.id %}" class="btn btn-primary">
-                                Ver Detalhes
-                            </a>
-                        </div>
+                        <p class="card-text">
+                            <strong>Distância:</strong> {{ item.distancia }} km<br>
+                            <strong>Local:</strong> {{ item.local.nome_fantasia|default:item.local.usuario.username }}
+                        </p>
+                        <a href="{% url 'pet_detail' item.pet.id %}" class="btn btn-primary btn-sm">Ver Detalhes</a>
                     </div>
                 </div>
             </div>
@@ -78,96 +96,7 @@
     {% endif %}
 </div>
 
-<!-- *** RASCUNHO DO JAVASCRIPT PARA GOOGLE MAPS *** -->
-<script>
-// Solicita a localização do usuário e inicializa o mapa com pets próximos
-function initMap() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const userLocation = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-            carregarMapa(userLocation);
-        }, function(error) {
-            // Se o usuário negar ou der erro, usa o centro padrão (São Paulo)
-            const userLocation = { lat: -23.55052, lng: -46.633308 };
-            carregarMapa(userLocation);
-        });
-    } else {
-        // Geolocalização não suportada
-        const userLocation = { lat: -23.55052, lng: -46.633308 };
-        carregarMapa(userLocation);
-    }
-}
-
-function carregarMapa(userLocation) {
-    const map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: userLocation,
-        styles: [
-            {
-                featureType: "poi",
-                elementType: "labels",
-                stylers: [{ visibility: "off" }]
-            }
-        ]
-    });
-
-    // Marcador do usuário
-    new google.maps.Marker({
-        position: userLocation,
-        map: map,
-        title: "Você está aqui",
-        icon: {
-            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-        }
-    });
-
-    // Buscar pets próximos da localização do usuário
-    fetch(`/api/pets/mapa/?lat=${userLocation.lat}&lng=${userLocation.lng}`)
-        .then(response => response.json())
-        .then(data => {
-            data.pets.forEach(pet => {
-                const marker = new google.maps.Marker({
-                    position: { lat: pet.lat, lng: pet.lng },
-                    map: map,
-                    title: `${pet.nome} - ${pet.distancia}km`,
-                    icon: {
-                        url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-                    }
-                });
-
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div style="padding: 10px;">
-                            <h6>${pet.emoji} ${pet.nome}</h6>
-                            <p class="mb-1">${pet.especie}</p>
-                            <p class="mb-1"><small>📍 ${pet.local_nome}</small></p>
-                            <p class="mb-2"><small>📏 ${pet.distancia} km de distância</small></p>
-                            <a href="${pet.url_detalhes}" class="btn btn-sm btn-primary">Ver Detalhes</a>
-                        </div>
-                    `
-                });
-
-                marker.addListener("click", () => {
-                    infoWindow.open(map, marker);
-                });
-            });
-        })
-        .catch(error => {
-            console.error('Erro ao carregar dados dos pets:', error);
-        });
-}
-
-// *** ERRO PROPOSITAL PARA MOSTRAR QUE PRECISA DA CHAVE ***
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDMhh2EWwza-y5EaFkCijLe5Vlr1l_0Hto&callback=initMap"></script>
-</script>
-
-<div class="alert alert-warning mt-3">
-    <h6>⚠️ Configuração Necessária</h6>
-    <p class="mb-0">
-        <strong>Para ativar o mapa:</strong> Descomente a linha do script no final do arquivo e substitua "SUA_CHAVE_API_GOOGLE_MAPS" pela sua chave real.
-    </p>
 </div>
+
+
 {% endblock %}

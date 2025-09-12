@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/pets_list.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Minhas Solicitações de Adoção</h2>
+    {% if solicitacoes %}
+        <div class="row">
+            {% for solicitacao in solicitacoes %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ solicitacao.pet.nome }} {{ solicitacao.pet.emoji }}</h5>
+                        <p class="card-text">{{ solicitacao.pet.get_especie_display }} - {{ solicitacao.pet.raca }}</p>
+                        <p class="card-text"><strong>Status:</strong> <span class="badge status-{{ solicitacao.status }}">{{ solicitacao.get_status_display }}</span></p>
+                        <p class="card-text"><strong>Solicitado em:</strong> {{ solicitacao.data_solicitacao|date:"d/m/Y H:i" }}</p>
+                        {% if solicitacao.data_resposta %}
+                            <p class="card-text"><strong>Respondido em:</strong> {{ solicitacao.data_resposta|date:"d/m/Y H:i" }}</p>
+                        {% endif %}
+                        {% if solicitacao.resposta_local %}
+                            <p class="card-text"><strong>Resposta do local:</strong> {{ solicitacao.resposta_local }}</p>
+                        {% endif %}
+                        <a href="/pets/{{ solicitacao.pet.id }}/" class="btn btn-primary btn-sm">Ver detalhes do pet</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">Você ainda não fez nenhuma solicitação de adoção.</div>
+    {% endif %}
+    <a href="{% url 'profile' %}" class="btn btn-outline-secondary mt-3">Voltar ao perfil</a>
+</div>
+{% endblock %}

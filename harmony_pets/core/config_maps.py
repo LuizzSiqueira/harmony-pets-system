@@ -12,7 +12,8 @@
 # 6. Configure restrições de segurança (domínios permitidos)
 
 # *** SUBSTITUA ESTA CHAVE PELA SUA CHAVE REAL ***
-GOOGLE_MAPS_API_KEY = "SUA_CHAVE_API_AQUI"
+import os
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
 
 # Configurações do mapa
 GOOGLE_MAPS_CONFIG = {

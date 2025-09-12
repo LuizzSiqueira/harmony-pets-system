@@ -226,24 +226,40 @@ class LocalAdocaoForm(UserCreationForm):
 class PetForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
+        latitude = cleaned_data.get('latitude')
+        longitude = cleaned_data.get('longitude')
         local_adocao = getattr(self.instance, 'local_adocao', None)
-        # Se o local_adocao for passado no form, use ele
-        if not local_adocao:
-            local_adocao = self.initial.get('local_adocao') or self.data.get('local_adocao')
-            if hasattr(local_adocao, 'latitude') and hasattr(local_adocao, 'longitude'):
-                pass
+        # Permite: ou localização individual do pet, ou local de adoção válido
+        if not (latitude and longitude):
+            # Se não informou localização do pet, exige local_adocao válido
+            if not local_adocao:
+                local_adocao = self.initial.get('local_adocao') or self.data.get('local_adocao')
+                if hasattr(local_adocao, 'latitude') and hasattr(local_adocao, 'longitude'):
+                    pass
+                else:
+                    from .models import LocalAdocao
+                    try:
+                        local_adocao = LocalAdocao.objects.get(pk=local_adocao)
+                    except Exception:
+                        local_adocao = None
+            if local_adocao:
+                if not (local_adocao.latitude and local_adocao.longitude):
+                    raise forms.ValidationError('O local de adoção selecionado precisa ter latitude e longitude cadastradas.')
             else:
-                # Tenta buscar pelo id
-                from .models import LocalAdocao
-                try:
-                    local_adocao = LocalAdocao.objects.get(pk=local_adocao)
-                except Exception:
-                    local_adocao = None
-        if local_adocao:
-            if not (local_adocao.latitude and local_adocao.longitude):
-                raise forms.ValidationError('O local de adoção selecionado precisa ter latitude e longitude cadastradas.')
-        else:
-            raise forms.ValidationError('Selecione um local de adoção válido.')
+                raise forms.ValidationError('Informe a localização do pet ou selecione um local de adoção válido.')
+        # Emoji automático se não informado
+        especie = cleaned_data.get('especie')
+        emoji = cleaned_data.get('emoji')
+        especie_emoji = {
+            'cao': '🐕',
+            'gato': '🐱',
+            'coelho': '🐰',
+            'passaro': '🐦',
+            'hamster': '🐹',
+            'outro': '🐾',
+        }
+        if not emoji:
+            cleaned_data['emoji'] = especie_emoji.get(especie, '🐾')
         return cleaned_data
     """Formulário para cadastro e edição de pets"""
     
@@ -252,12 +268,15 @@ class PetForm(forms.ModelForm):
         fields = [
             'nome', 'especie', 'raca', 'idade', 'sexo', 'porte', 'cor', 'peso',
             'castrado', 'vacinado', 'vermifugado', 'docil', 'brincalhao', 'calmo',
-            'descricao', 'cuidados_especiais', 'foto', 'foto_url', 'emoji'
+            'descricao', 'cuidados_especiais', 'foto', 'foto_url', 'emoji',
+            'latitude', 'longitude'
         ]
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do pet'}),
             'especie': forms.Select(attrs={'class': 'form-select'}),
             'raca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Raça (opcional)'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any', 'placeholder': 'Latitude (opcional)'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any', 'placeholder': 'Longitude (opcional)'}),
             'idade': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '240', 'placeholder': 'Idade em meses'}),
             'sexo': forms.Select(attrs={'class': 'form-select'}),
             'porte': forms.Select(attrs={'class': 'form-select'}),
@@ -267,7 +286,7 @@ class PetForm(forms.ModelForm):
             'cuidados_especiais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Medicamentos, dieta especial, limitações... (opcional)'}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'foto_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL da foto (opcional)'}),
-            'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '🐕', 'maxlength': '10'}),
+            'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '�', 'maxlength': '10'}),
         }
         labels = {
             'nome': 'Nome do Pet',

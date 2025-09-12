@@ -1,8 +1,11 @@
+    # Pets adotados pelo usuário
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
+    path('minhas-solicitacoes-adocao/', views.minhas_solicitacoes_adocao, name='minhas_solicitacoes_adocao'),
+    path('meus-pets-adotados/', views.meus_pets_adotados, name='meus_pets_adotados'),
     path('', views.home, name='home'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),

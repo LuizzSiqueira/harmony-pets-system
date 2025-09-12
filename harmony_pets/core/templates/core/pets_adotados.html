@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/pets_list.css' %}">
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Meus Pets Adotados</h2>
+    {% if pets_adotados %}
+        <div class="row">
+            {% for pet in pets_adotados %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if pet.foto %}
+                        <img src="{{ pet.foto.url }}" class="card-img-top" alt="Foto do pet">
+                    {% elif pet.foto_url %}
+                        <img src="{{ pet.foto_url }}" class="card-img-top" alt="Foto do pet">
+                    {% else %}
+                        <div class="card-img-top text-center" style="font-size: 3rem; padding: 2rem;">{{ pet.emoji }}</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ pet.nome }}</h5>
+                        <p class="card-text">{{ pet.get_especie_display }} - {{ pet.raca }}</p>
+                        <p class="card-text"><strong>Adotado em:</strong> {{ pet.data_adocao|date:"d/m/Y H:i" }}</p>
+                        <a href="/pets/{{ pet.id }}/" class="btn btn-primary btn-sm">Ver detalhes</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">Você ainda não adotou nenhum pet.</div>
+    {% endif %}
+    <a href="{% url 'profile' %}" class="btn btn-outline-secondary mt-3">Voltar ao perfil</a>
+</div>
+{% endblock %}

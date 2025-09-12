@@ -42,36 +42,29 @@ def calcular_distancia(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     
     return c * r
 
+import os
+import requests
+
 def geocodificar_endereco(endereco: str) -> Optional[Tuple[float, float]]:
     """
-    *** RASCUNHO ***
     Função para geocodificar um endereço usando a API do Google Maps.
-    
-    Args:
-        endereco: Endereço em formato string
-    
-    Returns:
-        Tupla (latitude, longitude) ou None se não encontrar
+    Retorna uma tupla (lat, lng) ou None se não encontrar.
     """
-    import requests
-    
-    # SUBSTITUA SUA_CHAVE_API pela sua chave real do Google Maps
-    API_KEY = "SUA_CHAVE_API_GOOGLE_MAPS"  # *** RASCUNHO - INSIRA SUA CHAVE ***
-    
-    url = f"https://maps.googleapis.com/maps/api/geocode/json"
+    API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
+    url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {
         'address': endereco,
         'key': API_KEY
     }
-    
     try:
         response = requests.get(url, params=params)
         data = response.json()
-        
         if data['status'] == 'OK' and data['results']:
-            location = data['results'][0]['geometry']['location']
-            return (location['lat'], location['lng'])
+            lat = data['results'][0]['geometry']['location']['lat']
+            lng = data['results'][0]['geometry']['location']['lng']
+            return (lat, lng)
+        else:
+            return None
     except Exception as e:
         print(f"Erro ao geocodificar endereço: {e}")
-    
-    return None
+        return None
