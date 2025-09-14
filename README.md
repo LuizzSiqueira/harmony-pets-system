@@ -25,7 +25,7 @@ Sistema completo de adoção de pets desenvolvido com Django, incluindo autentic
 ### 🐕 Gestão de Pets
 - **CRUD completo** para pets disponíveis para adoção
 - **Filtros avançados** por espécie, porte, sexo e localização
-- **Upload de fotos** e descrições detalhadas
+- **Descrições detalhadas**
 - **Status de adoção** (disponível, em processo, adotado)
 
 ### 📍 Localização e Mapa
