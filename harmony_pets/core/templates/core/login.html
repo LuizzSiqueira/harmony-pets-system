@@ -8,6 +8,11 @@
     <div class="login-card">
         <div class="pet-icon">🐾</div>
         <h2 class="login-title">Entrar no Harmony Pets</h2>
+        {% if blocked_message %}
+            <div class="alert alert-danger text-center mb-3">
+                <strong>{{ blocked_message }}</strong>
+            </div>
+        {% endif %}
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="form-group">
@@ -37,12 +42,12 @@
                     <div class="text-danger mt-1">{{ form.password.errors }}</div>
                 {% endif %}
             </div>
-            {% if form.non_field_errors %}
+            {% if error_message %}
                 <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
+                    Usuário ou senha inválidos.
                 </div>
             {% endif %}
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" {% if blocked_message %}disabled{% endif %}>
                 Entrar
             </button>
             <div class="text-center mt-3">

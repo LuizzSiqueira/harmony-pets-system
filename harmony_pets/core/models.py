@@ -4,8 +4,30 @@ import pyotp
 import qrcode
 from io import BytesIO
 import base64
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your models here.
+
+# Controle de tentativas de login e bloqueio
+class UserLoginAttempt(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='login_attempt')
+    failed_attempts = models.PositiveIntegerField(default=0)
+    blocked_until = models.DateTimeField(null=True, blank=True)
+
+    def is_blocked(self):
+        if self.blocked_until and timezone.now() < self.blocked_until:
+            return True
+        return False
+
+    def block(self, minutes=15):
+        self.blocked_until = timezone.now() + timedelta(minutes=minutes)
+        self.save()
+
+    def reset_attempts(self):
+        self.failed_attempts = 0
+        self.blocked_until = None
+        self.save()
 
 class InteressadoAdocao(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)

@@ -1,5 +1,25 @@
 from django.contrib import admin
-from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
+from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos, UserLoginAttempt
+# Admin para tentativas de login
+@admin.register(UserLoginAttempt)
+class UserLoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'failed_attempts', 'blocked_until', 'is_blocked_now']
+    search_fields = ['user__username', 'user__email']
+    list_filter = ['blocked_until', 'failed_attempts']
+    readonly_fields = ['user']
+
+    actions = ['reset_attempts']
+
+    def is_blocked_now(self, obj):
+        return obj.is_blocked()
+    is_blocked_now.short_description = 'Bloqueado?' 
+    is_blocked_now.boolean = True
+
+    def reset_attempts(self, request, queryset):
+        for attempt in queryset:
+            attempt.reset_attempts()
+        self.message_user(request, "Tentativas e bloqueio resetados com sucesso.")
+    reset_attempts.short_description = "Resetar tentativas/bloqueio selecionados"
 
 # Register your models here.
 

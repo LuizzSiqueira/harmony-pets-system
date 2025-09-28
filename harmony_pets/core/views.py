@@ -23,6 +23,7 @@ from .forms import (
     ChangePasswordForm
 )
 from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
+from django.contrib.auth.models import User
 from .utils import calcular_distancia
 import io
 import base64
@@ -92,30 +93,60 @@ def delete_account_view(request):
     return redirect('profile')
 
 def login_view(request):
+    error_message = None
+    blocked_message = None
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
+        username = request.POST.get('username')
+        user_obj = None
+        if username:
+            try:
+                user_obj = User.objects.get(username=username)
+            except User.DoesNotExist:
+                user_obj = None
+        login_attempt = None
+        if user_obj:
+            from .models import UserLoginAttempt
+            login_attempt, _ = UserLoginAttempt.objects.get_or_create(user=user_obj)
+            if login_attempt.is_blocked():
+                blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+        if login_attempt and login_attempt.is_blocked():
+            blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+        elif form.is_valid() and user_obj:
             password = form.cleaned_data.get('password')
             user = authenticate(username=username, password=password)
             if user is not None:
+                # Resetar tentativas ao logar
+                if login_attempt:
+                    login_attempt.reset_attempts()
                 login(request, user)
-                
-                # Verificar se o usuário tem 2FA ativo
                 try:
                     two_factor = user.two_factor_auth
                     if two_factor.is_enabled:
-                        # Redirecionar para verificação 2FA
                         next_url = request.GET.get('next', 'home')
                         return redirect(f"{reverse('verify_2fa')}?next={next_url}")
-                except TwoFactorAuth.DoesNotExist:
+                except Exception:
                     pass
-                
-                # Se não tem 2FA ou não está ativo, redirecionar normalmente
                 return redirect(request.GET.get('next', 'home'))
+            else:
+                if login_attempt:
+                    login_attempt.failed_attempts += 1
+                    if login_attempt.failed_attempts >= 5:
+                        login_attempt.block()
+                        blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+                    login_attempt.save()
+                error_message = "Usuário ou senha inválidos."
+        elif not form.is_valid() and user_obj and login_attempt:
+            # Se o usuário existe, mas o formulário não é válido, conta tentativa
+            login_attempt.failed_attempts += 1
+            if login_attempt.failed_attempts >= 5:
+                login_attempt.block()
+                blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+            login_attempt.save()
+            error_message = "Usuário ou senha inválidos."
     else:
         form = AuthenticationForm()
-    return render(request, 'core/login.html', {'form': form})
+    return render(request, 'core/login.html', {'form': form, 'error_message': error_message, 'blocked_message': blocked_message})
 
 def logout_view(request):
     """View para fazer logout do usuário"""
