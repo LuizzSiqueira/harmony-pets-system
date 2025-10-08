@@ -878,21 +878,19 @@ def disable_2fa(request):
         return redirect('profile')
     
     if request.method == 'POST':
-        form = DisableTwoFactorForm(request.POST, instance=two_factor, user=request.user)
+        form = DisableTwoFactorForm(request.POST, user=request.user)
         if form.is_valid():
             two_factor.is_enabled = False
             two_factor.save()
-            
             # Limpar verificação da sessão
             if '2fa_verified' in request.session:
                 del request.session['2fa_verified']
             if '2fa_verified_at' in request.session:
                 del request.session['2fa_verified_at']
-            
             messages.success(request, 'Autenticação de dois fatores desativada com sucesso!')
             return redirect('profile')
     else:
-        form = DisableTwoFactorForm(instance=two_factor, user=request.user)
+        form = DisableTwoFactorForm(user=request.user)
     
     return render(request, 'core/disable_2fa.html', {'form': form})
 

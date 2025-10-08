@@ -97,35 +97,37 @@
                                             {% endif %}
                                         </p>
                                     </div>
-                                    <div class="col-md-4 text-end">
-                                        {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
-                                            <a href="{% url 'disable_2fa' %}" class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-times"></i> Desativar
-                                            </a>
-                                        {% else %}
-                                            <a href="{% url 'setup_2fa' %}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-plus"></i> Configurar
-                                            </a>
-                                        {% endif %}
+                                    <div class="col-md-4">
+                                        <div class="btn-group d-flex justify-content-center gap-2" role="group">
+                                            {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
+                                                <a href="{% url 'disable_2fa' %}" class="btn btn-danger btn-sm rounded-pill px-4">
+                                                    <span class="d-inline-block w-100 text-center"><i class="fas fa-times"></i> Desativar 2FA</span>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'setup_2fa' %}" class="btn btn-primary btn-sm rounded-pill px-4">
+                                                    <span class="d-inline-block w-100 text-center"><i class="fas fa-plus"></i> Ativar 2FA</span>
+                                                </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center mt-4">
-                        <a href="{% url 'edit_profile' %}" class="btn btn-custom btn-primary-custom">
-                            <i class="fas fa-edit"></i> Editar Perfil
+                    <div class="d-flex justify-content-center flex-wrap gap-2 mt-4">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-primary rounded-pill px-4">
+                            <span class="d-inline-block w-100 text-center"><i class="fas fa-edit"></i> Editar Perfil</span>
                         </a>
-                        <a href="{% url 'change_password' %}" class="btn btn-custom btn-outline-custom">
-                            <i class="fas fa-key"></i> Alterar Senha
+                        <a href="{% url 'change_password' %}" class="btn btn-secondary rounded-pill px-4">
+                            <span class="d-inline-block w-100 text-center"><i class="fas fa-key"></i> Alterar Senha</span>
                         </a>
-                        <a href="{% url 'minhas_solicitacoes_adocao' %}" class="btn btn-custom btn-info">
-                            <i class="fas fa-list"></i> Minhas Solicitações de Adoção
+                        <a href="{% url 'minhas_solicitacoes_adocao' %}" class="btn btn-info rounded-pill px-4">
+                            <span class="d-inline-block w-100 text-center"><i class="fas fa-list"></i> Minhas Solicitações</span>
                         </a>
-                        <a href="{% url 'meus_pets_adotados' %}" class="btn btn-custom btn-success">
-                            <i class="fas fa-paw"></i> Meus Pets Adotados
+                        <a href="{% url 'meus_pets_adotados' %}" class="btn btn-success rounded-pill px-4">
+                            <span class="d-inline-block w-100 text-center"><i class="fas fa-paw"></i> Meus Pets Adotados</span>
                         </a>
-                        <a href="{% url 'home' %}" class="btn btn-custom btn-outline-custom">Voltar ao Início</a>
+                        <a href="{% url 'home' %}" class="btn btn-dark rounded-pill px-4"><span class="d-inline-block w-100 text-center">Voltar ao Início</span></a>
                     </div>
                     <div class="text-center mt-4">
                         <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">

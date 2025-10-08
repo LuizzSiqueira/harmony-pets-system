@@ -107,10 +107,18 @@
                                 </a>
                             </li>
                         {% endif %}
-                        <li class="nav-item">
+                        <li class="nav-item d-flex align-items-center">
                             <a class="nav-link" href="{% url 'profile' %}">
                                 <i class="fas fa-user"></i> Meu Perfil
                             </a>
+                            <span class="ms-2 fw-bold text-primary" style="font-size: 1rem;">
+                                {{ user.first_name|default:user.username }}
+                            </span>
+                            {% if user.localadocao %}
+                                <span class="ms-1 badge bg-info text-dark">Local de Adoção</span>
+                            {% elif user.interessadoadocao %}
+                                <span class="ms-1 badge bg-success">Interessado</span>
+                            {% endif %}
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'logout' %}">
