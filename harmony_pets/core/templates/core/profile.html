@@ -7,74 +7,145 @@
 <div class="profile-container">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-12 col-lg-10">
                 <div class="profile-card">
-                    <div class="profile-header">
-                        <div class="profile-avatar">
+                    <div class="profile-header d-flex align-items-center gap-3">
+                        <div class="profile-avatar me-3">
                             {% if interessado %}👨‍👩‍👧‍👦{% elif local %}🏢{% else %}👤{% endif %}
                         </div>
-                        <h2>{{ user.get_full_name|default:user.username }}</h2>
-                        <p class="text-muted">@{{ user.username }}</p>
-                        {% if interessado %}
-                            <span class="user-type-badge badge-interessado">Interessado em Adoção</span>
-                        {% elif local %}
-                            <span class="user-type-badge badge-local">Local de Adoção</span>
-                        {% else %}
-                            <span class="user-type-badge badge-interessado">Usuário do Sistema</span>
-                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h2 class="mb-0">{{ user.get_full_name|default:user.username }}</h2>
+                            <p class="text-muted mb-1">@{{ user.username }}</p>
+                            {% if interessado %}
+                                <span class="user-type-badge badge-interessado">Interessado em Adoção</span>
+                            {% elif local %}
+                                <span class="user-type-badge badge-local">Local de Adoção</span>
+                            {% else %}
+                                <span class="user-type-badge badge-interessado">Usuário do Sistema</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-end header-actions">
+                            <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-custom btn-primary-custom me-2"><i class="fas fa-edit"></i> Editar</a>
+                            <a href="{% url 'change_password' %}" class="btn btn-outline-custom btn-custom me-2"><i class="fas fa-key"></i></a>
+                            <!-- Ações compactas no header -->
+                            <details class="actions-menu">
+                                <summary class="btn btn-primary rounded-pill px-3 actions-summary">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </summary>
+                                <div class="actions-list">
+                                    <a href="{% url 'edit_profile' %}" class="action-item"><i class="fas fa-edit"></i> Editar Perfil</a>
+                                    <a href="{% url 'change_password' %}" class="action-item"><i class="fas fa-key"></i> Alterar Senha</a>
+                                    <a href="{% url 'minhas_solicitacoes_adocao' %}" class="action-item"><i class="fas fa-list"></i> Minhas Solicitações</a>
+                                    <a href="{% url 'meus_pets_adotados' %}" class="action-item"><i class="fas fa-paw"></i> Meus Pets Adotados</a>
+                                    <a href="{% url 'home' %}" class="action-item"><i class="fas fa-home"></i> Voltar ao Início</a>
+                                </div>
+                            </details>
+                        </div>
                     </div>
-                    <div class="info-section">
-                        <h4>Informações Básicas</h4>
-                        <div class="info-item">
-                            <span class="info-label">Nome Completo:</span>
-                            <span class="info-value">{{ user.get_full_name|default:"Não informado" }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">E-mail:</span>
-                            <span class="info-value">{{ user.email|default:"Não informado" }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Data de Cadastro:</span>
-                            <span class="info-value">{{ user.date_joined|date:"d/m/Y às H:i" }}</span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <h4>Informações Básicas</h4>
+                                <div class="info-item">
+                                    <span class="info-label">Nome Completo:</span>
+                                    <span class="info-value">
+                                        <span id="nome_anon">{{ user.get_full_name|default:"Não informado" }}</span>
+                                        <span id="nome_real" style="display:none;">{{ user_real.get_full_name|default:"Não informado" }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('nome')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">E-mail:</span>
+                                    <span class="info-value">
+                                        <span id="email_anon">{{ user.email|default:"Não informado" }}</span>
+                                        <span id="email_real" style="display:none;">{{ user_real.email|default:"Não informado" }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('email')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Data de Cadastro:</span>
+                                    <span class="info-value">
+                                        {% if user.date_joined %}
+                                            {{ user.date_joined|date:'d/m/Y' }} às {{ user.date_joined|date:'H:i' }}
+                                        {% else %}
+                                            Não informado
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div> <!-- .info-section (left) -->
+                        </div> <!-- .col-md-6 (left) -->
+
+                        <!-- Right column: Interessado / Local e Dados Técnicos -->
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <h4>Interessado / Local</h4>
+                                {% if interessado %}
+                                    <div class="info-item">
+                                        <span class="info-label">CPF/CNPJ:</span>
+                                        <span class="info-value">
+                                            <span id="cpf_anon">{{ interessado.cpf_cnpj|default:"Não informado" }}</span>
+                                            <span id="cpf_real" style="display:none;">{{ interessado_real.cpf_cnpj|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('cpf')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Telefone:</span>
+                                        <span class="info-value">
+                                            <span id="telefone_anon">{{ interessado.telefone|default:"Não informado" }}</span>
+                                            <span id="telefone_real" style="display:none;">{{ interessado_real.telefone|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('telefone')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Endereço:</span>
+                                        <span class="info-value">
+                                            <span id="endereco_anon">{{ interessado.endereco|default:"Não informado" }}</span>
+                                            <span id="endereco_real" style="display:none;">{{ interessado_real.endereco|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('endereco')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                {% elif local %}
+                                    <div class="info-item">
+                                        <span class="info-label">Telefone:</span>
+                                        <span class="info-value">
+                                            <span id="telefone_anon">{{ local.telefone|default:"Não informado" }}</span>
+                                            <span id="telefone_real" style="display:none;">{{ local_real.telefone|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('telefone')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Endereço:</span>
+                                        <span class="info-value">
+                                            <span id="endereco_anon">{{ local.endereco|default:"Não informado" }}</span>
+                                            <span id="endereco_real" style="display:none;">{{ local_real.endereco|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('endereco')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">Nenhuma informação adicional.</p>
+                                {% endif %}
+                            </div>
+                            <div class="info-section mt-3">
+                                <h4>Dados Técnicos</h4>
+                                <div class="info-item">
+                                    <span class="info-label">Último Login:</span>
+                                    <span class="info-value">{{ user.last_login|default:"Nunca" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">IP:</span>
+                                    <span class="info-value">{{ request.META.HTTP_X_FORWARDED_FOR|default:request.META.REMOTE_ADDR|default:"Não disponível" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Logs de segurança:</span>
+                                    <span class="info-value">
+                                        <span id="logs_anon">{{ logs_anon }}</span>
+                                        <span id="logs_real" style="display:none;">{{ logs_real }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('logs')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    {% if interessado %}
-                        <div class="info-section">
-                            <h4>Informações do Interessado</h4>
-                            <div class="info-item">
-                                <span class="info-label">CPF:</span>
-                                <span class="info-value">{{ interessado.cpf|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Telefone:</span>
-                                <span class="info-value">{{ interessado.telefone|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Endereço:</span>
-                                <span class="info-value">{{ interessado.endereco|default:"Não informado" }}</span>
-                            </div>
-                        </div>
-                    {% elif local %}
-                        <div class="info-section">
-                            <h4>Informações do Local de Adoção</h4>
-                            <div class="info-item">
-                                <span class="info-label">CNPJ:</span>
-                                <span class="info-value">{{ local.cnpj|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Nome Fantasia:</span>
-                                <span class="info-value">{{ local.nome_fantasia|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Telefone:</span>
-                                <span class="info-value">{{ local.telefone|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Endereço:</span>
-                                <span class="info-value">{{ local.endereco|default:"Não informado" }}</span>
-                            </div>
-                        </div>
-                    {% endif %}
                     <!-- Seção de Segurança -->
                     <div class="security-section mt-4">
                         <h4 class="section-title mb-3">
@@ -114,60 +185,61 @@
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-center flex-wrap gap-2 mt-4">
-                        <a href="{% url 'edit_profile' %}" class="btn btn-primary rounded-pill px-4">
-                            <span class="d-inline-block w-100 text-center"><i class="fas fa-edit"></i> Editar Perfil</span>
-                        </a>
-                        <a href="{% url 'change_password' %}" class="btn btn-secondary rounded-pill px-4">
-                            <span class="d-inline-block w-100 text-center"><i class="fas fa-key"></i> Alterar Senha</span>
-                        </a>
-                        <a href="{% url 'minhas_solicitacoes_adocao' %}" class="btn btn-info rounded-pill px-4">
-                            <span class="d-inline-block w-100 text-center"><i class="fas fa-list"></i> Minhas Solicitações</span>
-                        </a>
-                        <a href="{% url 'meus_pets_adotados' %}" class="btn btn-success rounded-pill px-4">
-                            <span class="d-inline-block w-100 text-center"><i class="fas fa-paw"></i> Meus Pets Adotados</span>
-                        </a>
-                        <a href="{% url 'home' %}" class="btn btn-dark rounded-pill px-4"><span class="d-inline-block w-100 text-center">Voltar ao Início</span></a>
+                    <div class="d-flex justify-content-center mt-4">
+                        <details class="actions-menu">
+                            <summary class="btn btn-primary rounded-pill px-4 actions-summary">
+                                <i class="fas fa-ellipsis-h"></i> Ações
+                            </summary>
+                            <div class="actions-list">
+                                <a href="{% url 'edit_profile' %}" class="action-item"><i class="fas fa-edit"></i> Editar Perfil</a>
+                                <a href="{% url 'change_password' %}" class="action-item"><i class="fas fa-key"></i> Alterar Senha</a>
+                                <a href="{% url 'minhas_solicitacoes_adocao' %}" class="action-item"><i class="fas fa-list"></i> Minhas Solicitações</a>
+                                <a href="{% url 'meus_pets_adotados' %}" class="action-item"><i class="fas fa-paw"></i> Meus Pets Adotados</a>
+                                <a href="{% url 'home' %}" class="action-item"><i class="fas fa-home"></i> Voltar ao Início</a>
+                            </div>
+                        </details>
                     </div>
-                    <div class="text-center mt-4">
-                        <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
-                            <i class="fas fa-map-marker-alt"></i> Usar minha localização para ver pets próximos
-                        </button>
-                        <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
-                            {% csrf_token %}
-                            <input type="hidden" name="latitude" id="latitude">
-                            <input type="hidden" name="longitude" id="longitude">
-                        </form>
-                    </div>
-                    <script>
-                    function capturarLocalizacao() {
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(function(position) {
-                                document.getElementById('latitude').value = position.coords.latitude;
-                                document.getElementById('longitude').value = position.coords.longitude;
-                                document.getElementById('form-localizacao').submit();
-                            }, function(error) {
-                                alert('Não foi possível obter sua localização. Permita o acesso à localização no navegador.');
-                            });
-                        } else {
-                            alert('Geolocalização não suportada pelo seu navegador.');
-                        }
-                    }
-                    </script>
-                    <div class="text-center mt-4">
-                        <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível. A exclusão definitiva ocorrerá em até 3 dias.')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-user-times"></i> Excluir minha conta
+                    <div class="bottom-actions">
+                        <div>
+                            <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
+                                <i class="fas fa-map-marker-alt"></i> Usar minha localização
                             </button>
-                        </form>
-                        <p class="text-danger mt-2" style="font-size: 0.95rem;">
-                            Sua conta será marcada para exclusão e removida definitivamente em até 3 dias.
-                        </p>
+                            <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
+                                {% csrf_token %}
+                                <input type="hidden" name="latitude" id="latitude">
+                                <input type="hidden" name="longitude" id="longitude">
+                            </form>
+                        </div>
+                        <div>
+                            <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível. A exclusão definitiva ocorrerá em até 3 dias.')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-user-times"></i> Excluir minha conta
+                                </button>
+                            </form>
+                            <p class="text-danger mt-2" style="font-size: 0.95rem; text-align:center;">
+                                Sua conta será marcada para exclusão e removida definitivamente em até 3 dias.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+function toggleSensitive(field) {
+    const anon = document.getElementById(field + '_anon');
+    const real = document.getElementById(field + '_real');
+    if (anon && real) {
+        if (anon.style.display === 'none') {
+            anon.style.display = 'inline';
+            real.style.display = 'none';
+        } else {
+            anon.style.display = 'none';
+            real.style.display = 'inline';
+        }
+    }
+}
+</script>
 {% endblock %}

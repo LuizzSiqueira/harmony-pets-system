@@ -1,0 +1,16 @@
+[run]
+branch = True
+source =
+    harmony_pets
+    core
+
+[report]
+omit =
+    */migrations/*
+    */tests/*
+    */manage.py
+    */wsgi.py
+    */asgi.py
+    */settings.py
+    */venv/*
+    */__init__.py

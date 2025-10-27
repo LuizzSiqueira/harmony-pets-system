@@ -31,9 +31,9 @@
 }
 .info-section {
     background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    padding: 24px 22px;
+    border-radius: 12px;
+    margin-bottom: 26px;
 }
 .info-section h4 {
     color: #667eea;
@@ -43,19 +43,68 @@
 .info-item {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 12px 0;
     border-bottom: 1px solid #e9ecef;
+    line-height: 1.4;
 }
 .info-item:last-child {
     border-bottom: none;
 }
 .info-label {
-    font-weight: 600;
-    color: #495057;
+    font-weight: 700;
+    color: #343a40;
+    padding-right: 12px;
 }
 .info-value {
-    color: #6c757d;
+    color: #495057;
 }
+
+/* Segurança / configurações — espaçamento um pouco maior */
+.security-section {
+    background-color: #fff7ef;
+    border: 1px solid #ffe8cc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 18px;
+}
+
+/* Minimal actions menu */
+.actions-menu { display: inline-block; }
+.actions-menu summary.actions-summary {
+    list-style: none;
+    cursor: pointer;
+    border: none;
+}
+.actions-menu summary::-webkit-details-marker { display: none; }
+.actions-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    margin-top: 10px;
+    padding: 8px 0;
+    min-width: 200px;
+    text-align: left;
+}
+.action-item {
+    display: block;
+    padding: 10px 16px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 600;
+}
+.action-item:hover { background: #f1f3f5; }
+
+/* Header actions positioning */
+.header-actions { display: flex; align-items: center; gap: .5rem; }
+.actions-summary { padding: 8px 10px; }
+@media (max-width: 576px) {
+    .actions-summary { padding: 8px; }
+}
+
+/* Bottom actions container */
+.bottom-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 18px; }
+.bottom-actions .btn { min-width: 220px; }
+
 .btn-custom {
     padding: 12px 30px;
     margin: 10px;
@@ -99,3 +148,40 @@
     background-color: #f3e5f5;
     color: #7b1fa2;
 }
+
+/* Small flex/grid utilities (lightweight substitute if Bootstrap isn't loaded) */
+.d-flex { display: flex !important; }
+.align-items-center { align-items: center !important; }
+.flex-grow-1 { flex: 1 1 auto !important; }
+.gap-3 { gap: 1rem !important; }
+.me-3 { margin-right: 1rem !important; }
+.me-2 { margin-right: .5rem !important; }
+.ms-2 { margin-left: .5rem !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mt-3 { margin-top: 1rem !important; }
+.text-end { text-align: right !important; }
+.text-muted { color: #6c757d !important; }
+
+/* Responsive grid for profile columns */
+.row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+.col-md-6 { padding: 0 10px; width: 100%; }
+@media (min-width: 768px) {
+    .col-md-6 { width: 50%; }
+}
+
+/* Header adjustments when using flex layout */
+.profile-header.d-flex { text-align: left; padding-bottom: 0; border-bottom: none; }
+.profile-header.d-flex .profile-avatar { margin: 0; margin-right: 16px; }
+.profile-avatar { width: 80px; height: 80px; font-size: 2rem; }
+
+/* Smaller card padding on small screens */
+@media (max-width: 576px) {
+    .profile-card { padding: 20px; }
+    .btn-custom { padding: 10px 18px; }
+}
+
+/* Slight refinement of info items */
+.info-item { align-items: center; }
+.info-label { width: 40%; }
+.info-value { width: 60%; text-align: right; }
+

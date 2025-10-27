@@ -68,3 +68,43 @@ def geocodificar_endereco(endereco: str) -> Optional[Tuple[float, float]]:
     except Exception as e:
         print(f"Erro ao geocodificar endereço: {e}")
         return None
+
+# Função para anonimizar dados sensíveis de InteressadoAdocao e User
+def anonimizar_dados_interessado(interessado):
+    """
+    Anonimiza os dados sensíveis de uma instância de InteressadoAdocao e do usuário relacionado.
+    """
+    # Anonimizar dados do usuário
+    user = interessado.usuario
+    user.first_name = "Anonimo"
+    user.last_name = "Anonimo"
+    user.email = f"anonimo_{user.id}@exemplo.com"
+    user.username = f"anonimo_{user.id}"
+    user.save()
+
+    # Anonimizar dados do interessado
+    interessado.cpf = "***"
+    interessado.telefone = "***"
+    interessado.endereco = "***"
+    interessado.save()
+
+
+def mask_sensitive(value, preserve_chars='@.-_ '):
+    """Retorna uma versão mascarada de `value` substituindo caracteres por '*' preservando alguns separadores.
+
+    Exemplos:
+        'joao.silva@example.com' -> '****.*****@*******.***'
+        '123.456.789-00' -> '***.***.***-**'
+    """
+    if value is None:
+        return value
+    s = str(value)
+    masked = []
+    for ch in s:
+        if ch in preserve_chars:
+            masked.append(ch)
+        elif ch.isspace():
+            masked.append(ch)
+        else:
+            masked.append('*')
+    return ''.join(masked)

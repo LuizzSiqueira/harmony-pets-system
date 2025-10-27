@@ -137,6 +137,20 @@ class InteressadoAdocaoForm(UserCreationForm):
             
         return cpf_numeros
 
+    def clean_telefone(self):
+        telefone = self.cleaned_data.get('telefone')
+        if telefone:
+            # Verificar formato do telefone
+            if not re.match(r'^\(\d{2}\) \d{4,5}-\d{4}$', telefone):
+                raise forms.ValidationError('Telefone inválido. Use o formato (11) 99999-9999.')
+        return telefone
+
+    def clean_endereco(self):
+        endereco = self.cleaned_data.get('endereco')
+        if endereco and len(endereco) < 10:
+            raise forms.ValidationError('Endereço muito curto. Forneça mais detalhes.')
+        return endereco
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
@@ -216,6 +230,20 @@ class LocalAdocaoForm(UserCreationForm):
             raise forms.ValidationError('Já existe um usuário cadastrado com este CNPJ.')
             
         return cnpj_numeros
+
+    def clean_telefone(self):
+        telefone = self.cleaned_data.get('telefone')
+        if telefone:
+            # Verificar formato do telefone
+            if not re.match(r'^\(\d{2}\) \d{4,5}-\d{4}$', telefone):
+                raise forms.ValidationError('Telefone inválido. Use o formato (11) 99999-9999.')
+        return telefone
+
+    def clean_endereco(self):
+        endereco = self.cleaned_data.get('endereco')
+        if endereco and len(endereco) < 10:
+            raise forms.ValidationError('Endereço muito curto. Forneça mais detalhes.')
+        return endereco
 
     def clean_email(self):
         email = self.cleaned_data.get('email')

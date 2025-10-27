@@ -156,3 +156,6 @@ dmypy.json
 
 # Redis
 dump.rdb
+
+# Adicionado para evitar subir o arquivo de guia ao repositório
+COMO_RODAR.md

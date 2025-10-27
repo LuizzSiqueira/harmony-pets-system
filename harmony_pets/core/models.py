@@ -6,6 +6,7 @@ from io import BytesIO
 import base64
 from django.utils import timezone
 from datetime import timedelta
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -46,6 +47,18 @@ class InteressadoAdocao(models.Model):
         verbose_name = "Interessado em Adoção"
         verbose_name_plural = "Interessados em Adoção"
 
+    def clean_latitude(self):
+        latitude = self.cleaned_data.get('latitude')
+        if latitude is not None and (latitude < -90 or latitude > 90):
+            raise ValidationError('A latitude deve estar entre -90 e 90 graus.')
+        return latitude
+
+    def clean_longitude(self):
+        longitude = self.cleaned_data.get('longitude')
+        if longitude is not None and (longitude < -180 or longitude > 180):
+            raise ValidationError('A longitude deve estar entre -180 e 180 graus.')
+        return longitude
+
 class LocalAdocao(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
     cnpj = models.CharField(max_length=18, unique=True)
@@ -63,6 +76,18 @@ class LocalAdocao(models.Model):
     class Meta:
         verbose_name = "Local de Adoção"
         verbose_name_plural = "Locais de Adoção"
+
+    def clean_latitude(self):
+        latitude = self.cleaned_data.get('latitude')
+        if latitude is not None and (latitude < -90 or latitude > 90):
+            raise ValidationError('A latitude deve estar entre -90 e 90 graus.')
+        return latitude
+
+    def clean_longitude(self):
+        longitude = self.cleaned_data.get('longitude')
+        if longitude is not None and (longitude < -180 or longitude > 180):
+            raise ValidationError('A longitude deve estar entre -180 e 180 graus.')
+        return longitude
 
 class Pet(models.Model):
     # Localização individual do pet (opcional)

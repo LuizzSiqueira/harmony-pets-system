@@ -1,4 +1,3 @@
-
 import os
 # Chave da API do Google Maps
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
@@ -21,6 +20,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
@@ -116,6 +116,15 @@ DATABASES = {
         'CONN_MAX_AGE': 600,  # Mantém conexão por 10 minutos
     }
 }
+
+# Configuração para usar SQLite durante testes
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db_test.sqlite3'),
+        }
+    }
 
 
 # Password validation

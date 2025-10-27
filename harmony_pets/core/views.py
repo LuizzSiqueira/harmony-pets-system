@@ -29,6 +29,21 @@ import io
 import base64
 
 # View para o interessado ver suas solicitações de adoção
+
+# View administrativa para anonimizar todos os dados sensíveis dos interessados
+from django.contrib.admin.views.decorators import staff_member_required
+from .utils import anonimizar_dados_interessado
+
+@staff_member_required
+def anonimizar_interessados(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'Acesso negado.')
+        return redirect('profile')
+    interessados = InteressadoAdocao.objects.all()
+    for interessado in interessados:
+        anonimizar_dados_interessado(interessado)
+    messages.success(request, 'Dados sensíveis anonimizados com sucesso!')
+    return redirect('admin:index')
 @login_required
 def minhas_solicitacoes_adocao(request):
     try:
@@ -174,12 +189,52 @@ def profile_view(request):
         except LocalAdocao.DoesNotExist:
             pass
     
+    # Anonimizar dados sensíveis para exibição
+    import copy
+    user_anon = copy.copy(user)
+    interessado_anon = copy.copy(interessado) if interessado else None
+    local_anon = copy.copy(local) if local else None
+
+    # Dados sensíveis anonimizados usando máscara
+    from .utils import mask_sensitive
+    # manter primeiro nome e username reais para identificação visual, anonimizar sobrenome e email parcialmente
+    user_anon.last_name = mask_sensitive(user.last_name)
+    user_anon.email = mask_sensitive(user.email)
+    if interessado_anon:
+        interessado_anon.cpf = mask_sensitive(interessado.cpf, preserve_chars='.-')
+        interessado_anon.telefone = mask_sensitive(interessado.telefone, preserve_chars='()- +')
+        interessado_anon.endereco = mask_sensitive(interessado.endereco, preserve_chars=',. -/')
+        interessado_anon.latitude = mask_sensitive(interessado.latitude)
+        interessado_anon.longitude = mask_sensitive(interessado.longitude)
+    if local_anon:
+        local_anon.cnpj = mask_sensitive(local.cnpj, preserve_chars='.-/')
+        local_anon.telefone = mask_sensitive(local.telefone, preserve_chars='()- +')
+        local_anon.endereco = mask_sensitive(local.endereco, preserve_chars=',. -/')
+        local_anon.latitude = mask_sensitive(local.latitude)
+        local_anon.longitude = mask_sensitive(local.longitude)
+
+    # Mock para IP, localização e logs
+    ip_real = request.META.get('REMOTE_ADDR', '127.0.0.1')
+    ip_anon = "***.***.***.***"
+    geo_real = f"{interessado.latitude}, {interessado.longitude}" if interessado else "-"
+    geo_anon = "***"
+    logs_real = "Acesso em 08/10/2025, alteração de senha, login realizado"
+    logs_anon = "***"
+
     context = {
-        'user': user,
-        'interessado': interessado,
-        'local': local,
+        'user': user_anon,
+        'user_real': user,
+        'interessado': interessado_anon,
+        'interessado_real': interessado,
+        'local': local_anon,
+        'local_real': local,
+        'ip_real': ip_real,
+        'ip_anon': ip_anon,
+        'geo_real': geo_real,
+        'geo_anon': geo_anon,
+        'logs_real': logs_real,
+        'logs_anon': logs_anon,
     }
-    
     return render(request, 'core/profile.html', context)
 
 
