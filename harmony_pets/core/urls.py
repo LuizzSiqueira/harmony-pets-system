@@ -1,6 +1,8 @@
     # Pets adotados pelo usuário
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.utils import timezone
+from .views import AppPasswordResetView
 from . import views
 
 urlpatterns = [
@@ -38,6 +40,7 @@ urlpatterns = [
     path('2fa/setup/', views.setup_2fa, name='setup_2fa'),
     path('2fa/verify/', views.verify_2fa, name='verify_2fa'),
     path('2fa/disable/', views.disable_2fa, name='disable_2fa'),
+    path('2fa/preference/', views.set_2fa_preference, name='set_2fa_preference'),
     
     # URLs para edição de perfil
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
@@ -48,8 +51,10 @@ urlpatterns = [
     path('termos-de-uso/', views.termos_uso, name='termos_uso'),
     path('aceitar-termos/', views.aceitar_termos, name='aceitar_termos'),
     # URLs de redefinição de senha por e-mail (Django auth)
-    path('password_reset/', auth_views.PasswordResetView.as_view(template_name='core/password_reset_form.html'), name='password_reset'),
+    path('password_reset/', AppPasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='core/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='core/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/password_reset_complete.html'), name='password_reset_complete'),
+    # Logs da aplicação (somente staff)
+    path('admin-logs/', views.admin_logs, name='admin_logs'),
 ]

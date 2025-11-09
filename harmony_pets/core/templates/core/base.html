@@ -92,6 +92,13 @@
                         </a>
                     </li>
                     {% endif %}
+                    {% if user.is_authenticated and user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_logs' %}">
+                            <i class="fas fa-file-alt"></i> Logs
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
@@ -187,6 +194,51 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Mensagens de validação em PT-BR para campos obrigatórios e formatos -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = {
+                required: 'Este campo é obrigatório.',
+                select: 'Selecione uma opção.',
+                email: 'Informe um e-mail válido.',
+                url: 'Informe uma URL válida.',
+                number: 'Informe um número válido.',
+                pattern: 'Formato inválido.',
+                minlength: (el) => `Use ao menos ${el.getAttribute('minlength')} caracteres.`,
+                maxlength: (el) => `Use no máximo ${el.getAttribute('maxlength')} caracteres.`
+            };
+
+            function setPtBrValidityMessage(el) {
+                el.setCustomValidity('');
+                const v = el.validity;
+                if (!v) return;
+                if (v.valid) return;
+
+                if (v.valueMissing) {
+                    el.setCustomValidity(el.tagName === 'SELECT' ? messages.select : messages.required);
+                } else if (v.typeMismatch) {
+                    if (el.type === 'email') el.setCustomValidity(messages.email);
+                    else if (el.type === 'url') el.setCustomValidity(messages.url);
+                    else if (el.type === 'number') el.setCustomValidity(messages.number);
+                } else if (v.patternMismatch) {
+                    el.setCustomValidity(messages.pattern);
+                } else if (v.tooShort && el.getAttribute('minlength')) {
+                    el.setCustomValidity(messages.minlength(el));
+                } else if (v.tooLong && el.getAttribute('maxlength')) {
+                    el.setCustomValidity(messages.maxlength(el));
+                }
+            }
+
+            function wire(el) {
+                el.addEventListener('invalid', function () { setPtBrValidityMessage(el); });
+                el.addEventListener('blur', function () { setPtBrValidityMessage(el); });
+                el.addEventListener('input', function () { el.setCustomValidity(''); });
+            }
+
+            document.querySelectorAll('input, textarea, select').forEach(wire);
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

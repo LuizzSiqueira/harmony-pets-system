@@ -222,7 +222,7 @@
                         {% if user.aceitacao_termos.termos_completos_aceitos %}
                         <div class="alert alert-success text-center">
                             <i class="fas fa-check-circle me-2"></i>
-                            <strong>Você já aceitou nossos termos em {{ user.aceitacao_termos.data_aceitacao|date:"d/m/Y às H:i" }}</strong>
+                            <strong>Você já aceitou nossos termos em {{ user.aceitacao_termos.data_aceitacao|date:"d/m/Y H:i" }}</strong>
                         </div>
                         {% else %}
                         <div class="text-center mt-4">

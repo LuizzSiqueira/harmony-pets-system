@@ -108,3 +108,29 @@ def mask_sensitive(value, preserve_chars='@.-_ '):
         else:
             masked.append('*')
     return ''.join(masked)
+
+
+def sanitize_payload(data: dict) -> dict:
+    """Masca campos sensíveis em dicionários de payload (POST/PUT/PATCH).
+
+    - Remove chaves notoriamente inúteis como csrfmiddlewaretoken
+    - Mascara valores de chaves com nomes sensíveis (password, senha, token, secret, key, code)
+    """
+    if not isinstance(data, dict):
+        return {}
+
+    SENSITIVE_KEYS = {'password', 'senha', 'token', 'secret', 'key', 'api_key', 'access_token', 'refresh_token', 'code'}
+    cleaned = {}
+    for k, v in data.items():
+        k_lower = str(k).lower()
+        if k_lower in {'csrfmiddlewaretoken'}:
+            continue
+        if any(s in k_lower for s in SENSITIVE_KEYS):
+            cleaned[k] = mask_sensitive(v)
+        else:
+            # Converte objetos não-serializáveis em string de forma segura
+            try:
+                cleaned[k] = v if isinstance(v, (int, float, bool)) else str(v)[:2000]
+            except Exception:
+                cleaned[k] = '<unserializable>'
+    return cleaned

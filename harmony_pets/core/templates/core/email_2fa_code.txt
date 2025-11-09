@@ -1,0 +1,11 @@
+Seu código de verificação (2FA)
+
+Olá {{ user.first_name|default:user.username }},
+
+Use o código abaixo para concluir seu login com verificação em duas etapas:
+
+{{ code }}
+
+Este código expira em 10 minutos. Se você não solicitou este código, pode ignorar este e-mail.
+
+Harmony Pets

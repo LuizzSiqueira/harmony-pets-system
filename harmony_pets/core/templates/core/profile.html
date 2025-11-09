@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load formatters %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/profile.css' %}">
 {% endblock %}
@@ -66,7 +67,7 @@
                                     <span class="info-label">Data de Cadastro:</span>
                                     <span class="info-value">
                                         {% if user.date_joined %}
-                                            {{ user.date_joined|date:'d/m/Y' }} às {{ user.date_joined|date:'H:i' }}
+                                            {{ user.date_joined|date:"d/m/Y H:i" }}
                                         {% else %}
                                             Não informado
                                         {% endif %}
@@ -81,10 +82,10 @@
                                 <h4>Interessado / Local</h4>
                                 {% if interessado %}
                                     <div class="info-item">
-                                        <span class="info-label">CPF/CNPJ:</span>
+                                        <span class="info-label">CPF:</span>
                                         <span class="info-value">
-                                            <span id="cpf_anon">{{ interessado.cpf_cnpj|default:"Não informado" }}</span>
-                                            <span id="cpf_real" style="display:none;">{{ interessado_real.cpf_cnpj|default:"Não informado" }}</span>
+                                            <span id="cpf_anon">{{ interessado_real.cpf|cpf_mask|default:"Não informado" }}</span>
+                                            <span id="cpf_real" style="display:none;">{{ interessado_real.cpf|cpf_format|default:"Não informado" }}</span>
                                             <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('cpf')" title="Mostrar/ocultar"></i>
                                         </span>
                                     </div>
@@ -105,6 +106,14 @@
                                         </span>
                                     </div>
                                 {% elif local %}
+                                    <div class="info-item">
+                                        <span class="info-label">CNPJ:</span>
+                                        <span class="info-value">
+                                            <span id="cnpj_anon">{{ local_real.cnpj|cnpj_mask|default:"Não informado" }}</span>
+                                            <span id="cnpj_real" style="display:none;">{{ local_real.cnpj|cnpj_format|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('cnpj')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
                                     <div class="info-item">
                                         <span class="info-label">Telefone:</span>
                                         <span class="info-value">
@@ -158,7 +167,7 @@
                                         <h5 class="mb-2">
                                             <i class="fas fa-mobile-alt"></i> Autenticação de Dois Fatores
                                         </h5>
-                                        <p class="text-muted mb-0">
+                                        <p class="text-muted mb-1">
                                             {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
                                                 <span class="badge bg-success">Ativo</span>
                                                 Sua conta está protegida com autenticação de dois fatores.
@@ -167,6 +176,31 @@
                                                 Adicione uma camada extra de segurança à sua conta.
                                             {% endif %}
                                         </p>
+                                        <form method="post" action="{% url 'set_2fa_preference' %}" class="mt-3">
+                                            {% csrf_token %}
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-md-8">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="method" id="pref_totp" value="totp" {% if two_factor_preference != 'email' %}checked{% endif %}>
+                                                        <label class="form-check-label" for="pref_totp">
+                                                            Usar autenticador (aplicativo)
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="method" id="pref_email" value="email" {% if two_factor_preference == 'email' %}checked{% endif %}>
+                                                        <label class="form-check-label" for="pref_email">
+                                                            Usar código por e-mail
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 text-md-end">
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                                        Salvar preferência
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted d-block mt-2">Sua preferência será aplicada na tela de verificação 2FA.</small>
+                                        </form>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="btn-group d-flex justify-content-center gap-2" role="group">
@@ -199,34 +233,66 @@
                             </div>
                         </details>
                     </div>
-                    <div class="bottom-actions">
-                        <div>
-                            <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
-                                <i class="fas fa-map-marker-alt"></i> Usar minha localização
-                            </button>
-                            <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
-                                {% csrf_token %}
-                                <input type="hidden" name="latitude" id="latitude">
-                                <input type="hidden" name="longitude" id="longitude">
-                            </form>
-                        </div>
-                        <div>
-                            <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível. A exclusão definitiva ocorrerá em até 3 dias.')">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger">
-                                    <i class="fas fa-user-times"></i> Excluir minha conta
-                                </button>
-                            </form>
-                            <p class="text-danger mt-2" style="font-size: 0.95rem; text-align:center;">
-                                Sua conta será marcada para exclusão e removida definitivamente em até 3 dias.
-                            </p>
+                    <div class="info-section mt-4">
+                        <h4 class="mb-3"><i class="fas fa-cogs"></i> Ações da Conta</h4>
+                        <div class="row">
+                            {% if interessado_real %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div class="mb-3">
+                                            <h5 class="card-title mb-1"><i class="fas fa-map-marker-alt text-primary"></i> Atualizar minha localização</h5>
+                                            <p class="card-text text-muted mb-2">Use a localização atual para encontrar pets próximos a você.</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
+                                                <i class="fas fa-location-arrow"></i> Usar minha localização
+                                            </button>
+                                            <div id="status-localizacao" class="visually-hidden" aria-live="polite"></div>
+                                        </div>
+                                        <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="latitude" id="latitude">
+                                            <input type="hidden" name="longitude" id="longitude">
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-danger">
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div class="mb-3">
+                                            <h5 class="card-title mb-1 text-danger"><i class="fas fa-user-times"></i> Excluir minha conta</h5>
+                                            <p class="card-text text-muted mb-2">A exclusão é imediata e permanente. Esta ação não pode ser desfeita.</p>
+                                            <div class="alert alert-danger small" role="alert">
+                                                Ao excluir sua conta:
+                                                <ul class="mb-0">
+                                                    <li>Seu perfil e dados pessoais serão removidos.</li>
+                                                    <li>Suas solicitações de adoção vinculadas serão apagadas.</li>
+                                                    <li>Se for um <strong>Local de Adoção</strong>, os <strong>pets cadastrados</strong> por este perfil e respectivas solicitações também serão removidos.</li>
+                                                    <li>Registros de auditoria (histórico técnico) permanecem para segurança, <em>sem seus dados pessoais</em>.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta AGORA? Esta ação é irreversível e removerá seus dados imediatamente.')">
+                                            {% csrf_token %}
+                                            <div class="text-center">
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash-alt"></i> Confirmar exclusão
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+    </div>
 <script>
 function toggleSensitive(field) {
     const anon = document.getElementById(field + '_anon');
@@ -240,6 +306,43 @@ function toggleSensitive(field) {
             real.style.display = 'inline';
         }
     }
+}
+
+// Geolocalização no perfil (sem mensagens visíveis)
+function capturarLocalizacao() {
+    const btn = document.getElementById('btn-localizacao');
+    const form = document.getElementById('form-localizacao');
+    const latEl = document.getElementById('latitude');
+    const lngEl = document.getElementById('longitude');
+    if (!btn || !form || !latEl || !lngEl) return;
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obtendo localização...';
+
+    if (!('geolocation' in navigator)) {
+        // Somente feedback visual no botão
+        btn.classList.add('btn-warning');
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function (pos) {
+            latEl.value = pos.coords.latitude;
+            lngEl.value = pos.coords.longitude;
+            form.submit();
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        },
+        function () {
+            // Apenas restaura o botão; sem alertas
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
 }
 </script>
 {% endblock %}

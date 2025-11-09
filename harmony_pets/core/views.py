@@ -20,13 +20,44 @@ from .forms import (
     EditUserForm,
     EditInteressadoForm,
     EditLocalForm,
-    ChangePasswordForm
+    ChangePasswordForm,
+    AppPasswordResetForm,
 )
 from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
 from django.contrib.auth.models import User
 from .utils import calcular_distancia
 import io
 import base64
+import os
+import logging
+logger = logging.getLogger('core')
+
+from django.contrib.auth.views import PasswordResetView
+
+class AppPasswordResetView(PasswordResetView):
+    template_name = 'core/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.txt'
+    html_email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    form_class = AppPasswordResetForm
+    extra_email_context = {
+        'site_name': 'Harmony Pets',
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.utils import timezone
+        context['year'] = timezone.now().year
+        context.setdefault('site_name', 'Harmony Pets')
+        return context
+
+    def form_valid(self, form):
+        logger.info(
+            "Password reset: enviando e-mail com templates (txt=%s, html=%s)",
+            self.email_template_name,
+            self.html_email_template_name,
+        )
+        return super().form_valid(form)
 
 # View para o interessado ver suas solicitações de adoção
 
@@ -99,11 +130,22 @@ def delete_account_view(request):
     """View para solicitar exclusão da conta do usuário"""
     user = request.user
     if request.method == 'POST':
-        # Marcar usuário como inativo (soft delete)
-        user.is_active = False
-        user.save()
+        # Exclusão imediata e permanente
+        username = user.username
+        # Log do evento antes da remoção do usuário
+        logger.warning(f"Exclusão de conta imediata solicitada por '{username}' (id={user.id})")
+        # Efetua logout para limpar sessão e, em seguida, remove o usuário
         logout(request)
-        messages.success(request, 'Sua conta foi marcada para exclusão e será removida definitivamente em até 3 dias.')
+        try:
+            user.delete()
+        except Exception:
+            # Em caso de falha inesperada, garante que o usuário ao menos fique inativo
+            try:
+                user.is_active = False
+                user.save()
+            except Exception:
+                pass
+        messages.success(request, f'Sua conta "{username}" foi excluída permanentemente.')
         return redirect('home')
     return redirect('profile')
 
@@ -135,13 +177,24 @@ def login_view(request):
                 if login_attempt:
                     login_attempt.reset_attempts()
                 login(request, user)
+                logger.info(f"Login bem-sucedido para usuário '{username}' do IP {get_client_ip(request)}")
+                # Limpa flags de 2FA desta sessão, sempre que logar novamente
+                request.session.pop('2fa_verified', None)
+                request.session.pop('2fa_verified_at', None)
+                # Força verificação 2FA se TOTP estiver ativo ou preferência por e-mail estiver configurada
                 try:
                     two_factor = user.two_factor_auth
-                    if two_factor.is_enabled:
-                        next_url = request.GET.get('next', 'home')
-                        return redirect(f"{reverse('verify_2fa')}?next={next_url}")
+                    totp_enabled = bool(two_factor.is_enabled)
+                    pref_email = (two_factor.preferred_method == 'email')
+                    require_every_login = bool(two_factor.require_every_login)
                 except Exception:
-                    pass
+                    totp_enabled = False
+                    pref_email = False
+                    require_every_login = False
+                if totp_enabled or pref_email:
+                    # Se política exigir a cada login, já redireciona imediatamente
+                    next_url = request.GET.get('next', 'home')
+                    return redirect(f"{reverse('verify_2fa')}?next={next_url}")
                 return redirect(request.GET.get('next', 'home'))
             else:
                 if login_attempt:
@@ -151,6 +204,7 @@ def login_view(request):
                         blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
                     login_attempt.save()
                 error_message = "Usuário ou senha inválidos."
+                logger.warning(f"Falha de login para usuário '{username}' do IP {get_client_ip(request)}")
         elif not form.is_valid() and user_obj and login_attempt:
             # Se o usuário existe, mas o formulário não é válido, conta tentativa
             login_attempt.failed_attempts += 1
@@ -167,6 +221,7 @@ def logout_view(request):
     """View para fazer logout do usuário"""
     logout(request)
     messages.success(request, 'Você saiu da sua conta com sucesso!')
+    logger.info(f"Logout realizado para usuário '{request.user.username if request.user.is_authenticated else 'desconhecido'}'")
     return redirect('home')
 
 def home(request):
@@ -221,6 +276,18 @@ def profile_view(request):
     logs_real = "Acesso em 08/10/2025, alteração de senha, login realizado"
     logs_anon = "***"
 
+    # Preferências de 2FA persistidas
+    two_factor_pref = 'totp'
+    two_factor_require_every_login = True
+    two_factor_enabled = False
+    try:
+        tf = request.user.two_factor_auth
+        two_factor_pref = tf.preferred_method
+        two_factor_require_every_login = tf.require_every_login
+        two_factor_enabled = tf.is_enabled
+    except Exception:
+        pass
+
     context = {
         'user': user_anon,
         'user_real': user,
@@ -234,6 +301,9 @@ def profile_view(request):
         'geo_anon': geo_anon,
         'logs_real': logs_real,
         'logs_anon': logs_anon,
+        'two_factor_preference': two_factor_pref,
+        'two_factor_require_every_login': two_factor_require_every_login,
+        'two_factor_enabled': two_factor_enabled,
     }
     return render(request, 'core/profile.html', context)
 
@@ -673,6 +743,7 @@ def adicionar_pet(request):
             pet.local_adocao = local
             pet.save()
             messages.success(request, f'Pet {pet.nome} cadastrado com sucesso!')
+            logger.info(f"Pet criado: id={pet.id} nome='{pet.nome}' por '{request.user.username}'")
             return redirect('gerenciar_pets')
         else:
             messages.error(request, 'Por favor, corrija os erros abaixo.')
@@ -700,6 +771,7 @@ def editar_pet(request, pet_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'Pet {pet.nome} atualizado com sucesso!')
+            logger.info(f"Pet atualizado: id={pet.id} nome='{pet.nome}' por '{request.user.username}'")
             return redirect('gerenciar_pets')
         else:
             messages.error(request, 'Por favor, corrija os erros abaixo.')
@@ -727,6 +799,7 @@ def excluir_pet(request, pet_id):
         nome_pet = pet.nome
         pet.delete()
         messages.success(request, f'Pet {nome_pet} removido com sucesso.')
+        logger.warning(f"Pet excluído: id={pet_id} nome='{nome_pet}' por '{request.user.username}'")
         return redirect('gerenciar_pets')
     
     return render(request, 'core/confirmar_exclusao_pet.html', {'pet': pet})
@@ -763,6 +836,7 @@ def alterar_status_pet(request, pet_id):
             pet.save()
             
             messages.success(request, f'Status do pet {pet.nome} alterado de "{status_anterior}" para "{pet.get_status_display()}".')
+            logger.info(f"Status do pet alterado: id={pet.id} de '{status_anterior}' para '{pet.get_status_display()}' por '{request.user.username}'")
         else:
             messages.error(request, 'Status inválido.')
     
@@ -904,19 +978,105 @@ def setup_2fa(request):
 def verify_2fa(request):
     """Verificar código 2FA durante login"""
     if request.method == 'POST':
-        form = TwoFactorLoginForm(request.POST, user=request.user)
-        if form.is_valid():
-            # Marcar como verificado na sessão
-            request.session['2fa_verified'] = True
-            request.session['2fa_verified_at'] = str(timezone.now())
-            
-            messages.success(request, 'Código verificado com sucesso!')
-            next_url = request.GET.get('next', 'home')
-            return redirect(next_url)
+        # Se a ação for enviar código por e-mail, gerar e enviar, sem validar o formulário de token
+        if request.POST.get('action') == 'send_email_code':
+            # Garante existir um registro de TwoFactorAuth para armazenar preferência/cfg
+            two_factor, _ = TwoFactorAuth.objects.get_or_create(usuario=request.user)
+
+            # Gerar código de 6 dígitos e armazenar no cache por 10 minutos
+            import secrets
+            code = f"{secrets.randbelow(1000000):06d}"
+            from django.core.cache import cache
+            cache_key = f"email_2fa_code_{request.user.id}"
+            cache.set(cache_key, code, timeout=600)  # 10 minutos
+
+            # Enviar e-mail com o código
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
+            subject = 'Seu código de verificação (2FA) - Harmony Pets'
+            context = {
+                'user': request.user,
+                'code': code,
+            }
+            text_body = render_to_string('core/email_2fa_code.txt', context)
+            html_body = render_to_string('core/email_2fa_code.html', context)
+            message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
+            message.attach_alternative(html_body, 'text/html')
+            try:
+                message.send()
+                messages.info(request, 'Código enviado por e-mail. Verifique sua caixa de entrada (e também o spam).')
+            except Exception:
+                messages.error(request, 'Não foi possível enviar o e-mail com o código. Tente novamente mais tarde.')
+
+            form = TwoFactorLoginForm(user=request.user)
+        else:
+            form = TwoFactorLoginForm(request.POST, user=request.user)
+            if form.is_valid():
+                # Marcar como verificado na sessão
+                request.session['2fa_verified'] = True
+                request.session['2fa_verified_at'] = str(timezone.now())
+                
+                messages.success(request, 'Código verificado com sucesso!')
+                next_url = request.GET.get('next', 'home')
+                return redirect(next_url)
     else:
-        form = TwoFactorLoginForm(user=request.user)
+        initial = {}
+        # Usa preferência persistida para acionar auto-envio
+        try:
+            tf = request.user.two_factor_auth
+            pref = tf.preferred_method
+        except Exception:
+            pref = None
+        if pref == 'email':
+            initial['use_email_code'] = True
+            # Auto-envio do código por e-mail se ainda não existir no cache
+            from django.core.cache import cache
+            cache_key = f"email_2fa_code_{request.user.id}"
+            if cache.get(cache_key) is None:
+                try:
+                    # Gera e envia
+                    import secrets
+                    code = f"{secrets.randbelow(1000000):06d}"
+                    cache.set(cache_key, code, timeout=600)
+                    from django.core.mail import EmailMultiAlternatives
+                    from django.template.loader import render_to_string
+                    subject = 'Seu código de verificação (2FA) - Harmony Pets'
+                    context = {'user': request.user, 'code': code}
+                    text_body = render_to_string('core/email_2fa_code.txt', context)
+                    html_body = render_to_string('core/email_2fa_code.html', context)
+                    message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
+                    message.attach_alternative(html_body, 'text/html')
+                    message.send()
+                    messages.info(request, 'Enviamos um código de verificação para o seu e-mail.')
+                except Exception:
+                    messages.error(request, 'Não foi possível enviar o código por e-mail. Tente novamente.')
+        form = TwoFactorLoginForm(user=request.user, initial=initial)
     
     return render(request, 'core/verify_2fa.html', {'form': form})
+
+
+@login_required
+def set_2fa_preference(request):
+    """Define preferência do método de 2FA (autenticador ou e-mail) e persiste no modelo do usuário."""
+    if request.method != 'POST':
+        return redirect('profile')
+    method = request.POST.get('method')
+    if method not in ('totp', 'email'):
+        messages.error(request, 'Método inválido.')
+        return redirect('profile')
+    if method == 'email' and not (request.user.email and '@' in request.user.email):
+        messages.error(request, 'Defina um e-mail válido no seu perfil para usar código por e-mail.')
+        return redirect('profile')
+    # Atualiza/Cria registro de TwoFactorAuth
+    tf, _ = TwoFactorAuth.objects.get_or_create(usuario=request.user)
+    tf.preferred_method = method
+    # Se veio no POST, também atualiza a política de exigir a cada login
+    require_every_login = request.POST.get('require_every_login')
+    if require_every_login is not None:
+        tf.require_every_login = True if str(require_every_login).lower() in ('1', 'true', 'on') else False
+    tf.save()
+    messages.success(request, 'Preferência de verificação em duas etapas atualizada.')
+    return redirect('profile')
 
 
 @login_required
@@ -1012,3 +1172,49 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+# ==================== LOGS PARA ADMINISTRADORES ==================== #
+@staff_member_required
+def admin_logs(request):
+    """Exibe últimas linhas do arquivo de logs para administradores/staff"""
+    from django.conf import settings
+    log_path = os.path.join(settings.LOG_DIR, 'app.log') if hasattr(settings, 'LOG_DIR') else ''
+
+    # Parâmetros de filtro
+    q = request.GET.get('q', '').strip()
+    level = request.GET.get('level', '')
+    try:
+        n = int(request.GET.get('n', '500'))
+    except ValueError:
+        n = 500
+    n = max(50, min(n, 5000))
+
+    lines = []
+    error = None
+    if log_path and os.path.exists(log_path):
+        try:
+            # Lê o arquivo e pega as últimas N linhas
+            with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                all_lines = f.readlines()
+            lines = all_lines[-n:]
+            # Aplica filtros simples
+            if level:
+                level = level.upper()
+                lines = [ln for ln in lines if f" {level} " in ln]
+            if q:
+                lines = [ln for ln in lines if q.lower() in ln.lower()]
+        except Exception as e:
+            error = f"Não foi possível ler o arquivo de logs: {e}"
+    else:
+        error = 'Arquivo de logs não encontrado. A aplicação gravará logs assim que eventos ocorrerem.'
+
+    context = {
+        'log_path': log_path,
+        'lines': lines,
+        'q': q,
+        'level': level,
+        'n': n,
+        'error': error,
+    }
+    return render(request, 'core/admin_logs.html', context)

@@ -67,3 +67,9 @@ Para testar sem API do Google Maps:
 2. Acesse /pets/proximos/ 
 3. Veja a lista de pets com distâncias calculadas
 4. O mapa mostrará placeholder até configurar a API
+
+## Permissões de geolocalização (importante)
+
+- Navegadores só permitem `navigator.geolocation` em contextos seguros: HTTPS ou `http://localhost`.
+- Em produção, ative HTTPS; em desenvolvimento, use `localhost` (não `127.0.0.1`) para que o prompt de permissão apareça.
+- Não há headers de bloqueio no projeto (Permissions-Policy/Feature-Policy). Se necessário, confira permissões do navegador e limpe permissões negadas anteriormente.
