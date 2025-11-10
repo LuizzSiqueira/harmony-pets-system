@@ -1253,6 +1253,34 @@ def admin_logs(request):
     else:
         error = 'Arquivo de logs não encontrado. A aplicação gravará logs assim que eventos ocorrerem.'
 
+    # ==== AuditLog (banco) com filtro por usuário ====
+    audit_user_param = request.GET.get('usuario') or request.GET.get('user') or ''
+    audit_user_param = audit_user_param.strip()
+    try:
+        audit_limit = int(request.GET.get('audit_n', '200'))
+    except ValueError:
+        audit_limit = 200
+    audit_limit = max(20, min(audit_limit, 1000))
+
+    audit_qs = AuditLog.objects.select_related('usuario').all()
+    # filtro adicional por caminho, se fornecido
+    audit_path_q = (request.GET.get('audit_path') or '').strip()
+    selected_user = None
+    if audit_user_param:
+        # Tenta interpretar como ID numérico primeiro
+        if audit_user_param.isdigit():
+            audit_qs = audit_qs.filter(usuario_id=int(audit_user_param))
+            selected_user = User.objects.filter(id=int(audit_user_param)).first()
+        else:
+            audit_qs = audit_qs.filter(usuario__username__iexact=audit_user_param)
+            selected_user = User.objects.filter(username__iexact=audit_user_param).first()
+
+    if audit_path_q:
+        audit_qs = audit_qs.filter(caminho__icontains=audit_path_q)
+    audit_logs = list(audit_qs.order_by('-criado_em')[:audit_limit])
+    # Lista de usuários distintos presentes em AuditLog (para dropdown)
+    audit_users = User.objects.filter(auditlog__isnull=False).distinct().order_by('username')
+
     context = {
         'log_path': log_path,
         'lines': lines,
@@ -1260,6 +1288,13 @@ def admin_logs(request):
         'level': level,
         'n': n,
         'error': error,
+        # AuditLog extras
+        'audit_logs': audit_logs,
+        'audit_users': audit_users,
+        'audit_user_param': audit_user_param,
+        'selected_audit_user': selected_user,
+        'audit_limit': audit_limit,
+        'audit_path_q': audit_path_q,
     }
     return render(request, 'core/admin_logs.html', context)
 
