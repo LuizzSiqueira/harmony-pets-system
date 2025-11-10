@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
@@ -26,6 +27,7 @@ from .forms import (
 from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
 from django.contrib.auth.models import User
 from .utils import calcular_distancia
+from .utils import obter_emoji_animal, buscar_emoji_animais, EmojiAPIError
 import io
 import base64
 import os
@@ -1218,3 +1220,35 @@ def admin_logs(request):
         'error': error,
     }
     return render(request, 'core/admin_logs.html', context)
+
+# ==================== API: Sugestão de Emoji ==================== #
+
+@require_GET
+def sugerir_emoji(request):
+    """Sugere um emoji usando a API Ninjas com base no termo informado.
+
+    Query params:
+      - termo: string de busca (ex.: 'dog', 'cat', 'panda')
+      - group (opcional): restringe a um grupo (ex.: 'animals_nature')
+
+    Retorna JSON: { ok: bool, emoji: str, error?: str }
+    """
+    termo = (request.GET.get('termo') or '').strip()
+    group = (request.GET.get('group') or '').strip() or None
+    if not termo:
+        return JsonResponse({'ok': False, 'emoji': '', 'error': 'missing-term'}, status=400)
+
+    # Primeira tentativa: se group veio, tenta com group. Depois, sem group.
+    emoji_char = ''
+    try:
+        if group:
+            resultados = buscar_emoji_animais(termo, group=group, limit=1)
+            if resultados:
+                emoji_char = resultados[0].get('character') or ''
+        if not emoji_char:
+            # fallback sem grupo
+            emoji_char = obter_emoji_animal(termo)
+    except EmojiAPIError as e:
+        return JsonResponse({'ok': False, 'emoji': '', 'error': str(e)[:200]}, status=200)
+
+    return JsonResponse({'ok': bool(emoji_char), 'emoji': emoji_char})

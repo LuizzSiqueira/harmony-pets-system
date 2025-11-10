@@ -370,6 +370,11 @@ class PetForm(forms.ModelForm):
         if 'emoji' in self.fields:
             self.fields['emoji'].required = False
 
+        # Padronizar mensagens de obrigatoriedade em PT-BR para todos os campos obrigatórios
+        for field in self.fields.values():
+            if getattr(field, 'required', False):
+                field.error_messages['required'] = 'Este campo é obrigatório.'
+
     def clean_idade(self):
         idade = self.cleaned_data.get('idade')
         if idade is not None and (idade < 0 or idade > 240):

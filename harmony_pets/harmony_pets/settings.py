@@ -113,27 +113,45 @@ WSGI_APPLICATION = 'harmony_pets.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'postgres'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',  # Obrigatório para Supabase
-        },
-        'CONN_MAX_AGE': 600,  # Mantém conexão por 10 minutos
-    }
-}
+# Seleção de banco de dados:
+# - USE_DB=local -> SQLite (útil para apresentação/offline)
+# - USE_DB=web   -> Postgres/Supabase (usa DB_* do ambiente)
+USE_DB = (os.environ.get('USE_DB') or '').lower()
 
-# Configuração para usar SQLite durante testes
 if 'test' in sys.argv:
+    # Durante testes: usar SQLite isolado
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': os.path.join(BASE_DIR, 'db_test.sqlite3'),
+        }
+    }
+elif USE_DB == 'local':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+else:
+    # Padrão (ou USE_DB=web): Postgres/Supabase
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'postgres'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': os.environ.get('DB_SSLMODE', 'require'),  # Supabase requer SSL
+                'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '5')),
+                'keepalives': 1,
+                'keepalives_idle': int(os.environ.get('DB_KEEPALIVES_IDLE', '20')),
+                'keepalives_interval': int(os.environ.get('DB_KEEPALIVES_INTERVAL', '10')),
+                'keepalives_count': int(os.environ.get('DB_KEEPALIVES_COUNT', '3')),
+            },
+            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600')),
         }
     }
 

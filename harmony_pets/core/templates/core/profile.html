@@ -26,18 +26,26 @@
                             {% endif %}
                         </div>
                         <div class="text-end header-actions">
-                            <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-custom btn-primary-custom me-2"><i class="fas fa-edit"></i> Editar</a>
-                            <a href="{% url 'change_password' %}" class="btn btn-outline-custom btn-custom me-2"><i class="fas fa-key"></i></a>
-                            <!-- Ações compactas no header -->
+                            <!-- Único botão de ação (menu) -->
                             <details class="actions-menu">
-                                <summary class="btn btn-primary rounded-pill px-3 actions-summary">
+                                <summary class="btn btn-primary rounded-pill px-3 actions-summary" title="Ações">
                                     <i class="fas fa-ellipsis-h"></i>
                                 </summary>
                                 <div class="actions-list">
+                                    <!-- Comum a todos -->
                                     <a href="{% url 'edit_profile' %}" class="action-item"><i class="fas fa-edit"></i> Editar Perfil</a>
                                     <a href="{% url 'change_password' %}" class="action-item"><i class="fas fa-key"></i> Alterar Senha</a>
-                                    <a href="{% url 'minhas_solicitacoes_adocao' %}" class="action-item"><i class="fas fa-list"></i> Minhas Solicitações</a>
-                                    <a href="{% url 'meus_pets_adotados' %}" class="action-item"><i class="fas fa-paw"></i> Meus Pets Adotados</a>
+
+                                    <!-- Ações específicas por tipo de perfil -->
+                                    {% if interessado %}
+                                        <a href="{% url 'minhas_solicitacoes_adocao' %}" class="action-item"><i class="fas fa-list"></i> Minhas Solicitações</a>
+                                        <a href="{% url 'meus_pets_adotados' %}" class="action-item"><i class="fas fa-paw"></i> Meus Pets Adotados</a>
+                                    {% elif local %}
+                                        <a href="{% url 'gerenciar_pets' %}" class="action-item"><i class="fas fa-dog"></i> Meus Pets</a>
+                                        <a href="{% url 'solicitacoes_adocao' %}" class="action-item"><i class="fas fa-inbox"></i> Solicitações Recebidas</a>
+                                    {% endif %}
+
+                                    <!-- Comum a todos -->
                                     <a href="{% url 'home' %}" class="action-item"><i class="fas fa-home"></i> Voltar ao Início</a>
                                 </div>
                             </details>
@@ -219,20 +227,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-center mt-4">
-                        <details class="actions-menu">
-                            <summary class="btn btn-primary rounded-pill px-4 actions-summary">
-                                <i class="fas fa-ellipsis-h"></i> Ações
-                            </summary>
-                            <div class="actions-list">
-                                <a href="{% url 'edit_profile' %}" class="action-item"><i class="fas fa-edit"></i> Editar Perfil</a>
-                                <a href="{% url 'change_password' %}" class="action-item"><i class="fas fa-key"></i> Alterar Senha</a>
-                                <a href="{% url 'minhas_solicitacoes_adocao' %}" class="action-item"><i class="fas fa-list"></i> Minhas Solicitações</a>
-                                <a href="{% url 'meus_pets_adotados' %}" class="action-item"><i class="fas fa-paw"></i> Meus Pets Adotados</a>
-                                <a href="{% url 'home' %}" class="action-item"><i class="fas fa-home"></i> Voltar ao Início</a>
-                            </div>
-                        </details>
-                    </div>
+                    <!-- Removido menu duplicado de ações para manter apenas um botão de ação no header -->
                     <div class="info-section mt-4">
                         <h4 class="mb-3"><i class="fas fa-cogs"></i> Ações da Conta</h4>
                         <div class="row">

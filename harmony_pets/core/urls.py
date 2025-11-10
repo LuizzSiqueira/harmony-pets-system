@@ -6,6 +6,8 @@ from .views import AppPasswordResetView
 from . import views
 
 urlpatterns = [
+    # API utilitária
+    path('api/emoji/sugerir/', views.sugerir_emoji, name='sugerir_emoji'),
     path('minhas-solicitacoes-adocao/', views.minhas_solicitacoes_adocao, name='minhas_solicitacoes_adocao'),
     path('meus-pets-adotados/', views.meus_pets_adotados, name='meus_pets_adotados'),
     path('', views.home, name='home'),

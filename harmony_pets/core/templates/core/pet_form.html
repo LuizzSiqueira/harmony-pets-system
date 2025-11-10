@@ -39,9 +39,14 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="{{ form.emoji.id_for_label }}" class="form-label">{{ form.emoji.label }} <span class="text-muted small">(opcional)</span></label>
-                        {{ form.emoji }}
+                        <div class="d-flex gap-2 align-items-center">
+                            {{ form.emoji }}
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-sugerir-emoji" title="Sugerir via API">
+                                <i class="fas fa-magic"></i> Sugerir
+                            </button>
+                        </div>
                         <div class="preview-emoji" id="emoji-preview">{{ form.emoji.value|default:"�" }}</div>
-                        <div class="form-text">Se não preencher, um emoji será atribuído automaticamente conforme a espécie.</div>
+                        <div class="form-text">Se não preencher, um emoji será atribuído automaticamente conforme a espécie. Você também pode clicar em "Sugerir" para buscar pela API.</div>
                         {% if form.emoji.errors %}
                             <div class="text-danger mt-1">{{ form.emoji.errors.0 }}</div>
                         {% endif %}
@@ -230,10 +235,92 @@
 document.addEventListener('DOMContentLoaded', function() {
     const emojiInput = document.getElementById('{{ form.emoji.id_for_label }}');
     const emojiPreview = document.getElementById('emoji-preview');
+    const especieSelect = document.getElementById('{{ form.especie.id_for_label }}');
+    const especieToEmoji = {
+        'cao': '🐶',
+        'gato': '🐱',
+        'coelho': '🐰',
+        'hamster': '🐹',
+        'passaro': '🐦',
+        'outro': '🐾'
+    };
+    const especieToQuery = {
+        'cao': 'dog',
+        'gato': 'cat',
+        'coelho': 'rabbit',
+        'hamster': 'hamster',
+        'passaro': 'bird',
+        'outro': 'paw prints'
+    };
     
     if (emojiInput && emojiPreview) {
         emojiInput.addEventListener('input', function() {
             emojiPreview.textContent = this.value || '🐕';
+        });
+    }
+
+    async function sugerirViaAPI(termo, group) {
+        try {
+            const params = new URLSearchParams({ termo });
+            if (group) params.set('group', group);
+            const resp = await fetch(`/api/emoji/sugerir/?${params.toString()}`, { credentials: 'same-origin' });
+            if (!resp.ok) return '';
+            const data = await resp.json();
+            return data && data.ok ? (data.emoji || '') : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Atualiza o emoji automaticamente ao trocar a espécie (consulta API com fallback local)
+    if (especieSelect && emojiInput && emojiPreview) {
+        const atualizarEmojiAuto = async () => {
+            const especie = especieSelect.value;
+            const autoEmoji = especieToEmoji[especie] || '🐾';
+            // Busca sugestão via API primeiro
+            const query = especieToQuery[especie] || 'animal';
+            let sugerido = await sugerirViaAPI(query, 'animals_nature');
+            if (!sugerido) sugerido = await sugerirViaAPI(query);
+
+            const finalEmoji = sugerido || autoEmoji;
+            // Só sobrescreve se campo está vazio ou contém um dos mapeados (evita sobrescrever digitação manual)
+            if (!emojiInput.value || Object.values(especieToEmoji).includes(emojiInput.value)) {
+                emojiInput.value = finalEmoji;
+                emojiPreview.textContent = finalEmoji;
+            }
+        };
+        especieSelect.addEventListener('change', atualizarEmojiAuto);
+        // Chamada inicial para preencher caso esteja em branco
+        atualizarEmojiAuto();
+    }
+    // Botão "Sugerir" ao lado do campo
+    const btnSugerir = document.getElementById('btn-sugerir-emoji');
+    if (btnSugerir && emojiInput && emojiPreview) {
+        btnSugerir.addEventListener('click', async function() {
+            const especie = especieSelect ? especieSelect.value : null;
+            const nome = document.getElementById('{{ form.nome.id_for_label }}')?.value?.trim();
+            const candidatos = [];
+            if (nome) candidatos.push(nome);
+            if (especie) candidatos.push(especieToQuery[especie] || especie);
+            // Tenta nome primeiro, depois espécie. Usa grupo animals_nature inicialmente
+            let resultado = '';
+            for (const termo of candidatos) {
+                resultado = await sugerirViaAPI(termo, 'animals_nature');
+                if (resultado) break;
+            }
+            if (!resultado) {
+                for (const termo of candidatos) {
+                    resultado = await sugerirViaAPI(termo);
+                    if (resultado) break;
+                }
+            }
+            if (!resultado && especie) {
+                resultado = especieToEmoji[especie] || '🐾';
+            }
+            if (resultado) {
+                emojiInput.value = resultado;
+                emojiPreview.textContent = resultado;
+            }
         });
     }
     // Geolocalização

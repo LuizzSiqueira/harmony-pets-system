@@ -134,3 +134,71 @@ def sanitize_payload(data: dict) -> dict:
             except Exception:
                 cleaned[k] = '<unserializable>'
     return cleaned
+
+# ------------------ Emoji API (API Ninjas) ------------------
+from typing import List, Dict
+
+class EmojiAPIError(Exception):
+    """Erro genérico ao consultar a Emoji API (API Ninjas)."""
+    pass
+
+def buscar_emoji_animais(termo: str, group: str | None = None, limit: int = 1) -> List[Dict]:
+    """Consulta a Emoji API (API Ninjas) para buscar emojis (ex.: animais).
+
+    Args:
+        termo: termo de busca (ex: 'dog', 'cat', 'panda', 'slightly smiling face').
+        group: grupo/categoria principal (ex.: 'animals_nature', 'smileys_emotion').
+        limit: máximo de resultados a retornar.
+
+    Returns:
+        Lista de dicionários com campos da API (ex.: character, name, code, image, group, subgroup)
+
+    Necessário definir variável de ambiente API_NINJAS_KEY com a chave.
+    Documentação: https://api.api-ninjas.com/v1/emoji
+    """
+    api_key = os.environ.get('API_NINJAS_KEY')
+    if not api_key:
+        raise EmojiAPIError('Defina a variável de ambiente API_NINJAS_KEY com a chave da API.')
+
+    base_url = 'https://api.api-ninjas.com/v1/emoji'
+    params = {}
+    if termo:
+        params['name'] = termo
+    if group:
+        params['group'] = group
+    if limit:
+        params['limit'] = str(limit)
+
+    try:
+        resp = requests.get(base_url, headers={'X-Api-Key': api_key}, params=params, timeout=5)
+    except requests.RequestException as e:
+        raise EmojiAPIError(f'Erro de conexão com a API: {e}') from e
+
+    if resp.status_code != 200:
+        raise EmojiAPIError(f'Falha na API (status {resp.status_code}): {resp.text[:200]}')
+
+    try:
+        data = resp.json()
+    except ValueError as e:
+        raise EmojiAPIError('Resposta inválida (JSON).') from e
+
+    if not isinstance(data, list):
+        raise EmojiAPIError('Formato inesperado de resposta.')
+
+    return data[:limit]
+
+def obter_emoji_animal(termo: str) -> str:
+    """Retorna apenas o caractere Unicode do primeiro emoji encontrado para o termo.
+
+    Fallback: retorna string vazia se nada encontrado ou em erro (não dispara exceção
+    para uso em fluxos não-críticos do sistema).
+    """
+    try:
+        resultados = buscar_emoji_animais(termo, limit=1)
+        if resultados:
+            # API retorna campo 'character'
+            return resultados[0].get('character') or ''
+        return ''
+    except EmojiAPIError as e:
+        print(f"[WARN] Falha ao buscar emoji para '{termo}': {e}")
+        return ''

@@ -30,6 +30,48 @@ class Command(BaseCommand):
         reset = options.get("reset", False)
         total_pets = int(options.get("pets") or 20)
 
+        # Helper para gerar nomes que sejam nomes próprios (sem adjetivos como "Amigo"/"Fofo"), sem dígitos
+        def gerar_nome_unico(base_nome: str, sexo: str, local: LocalAdocao) -> str:
+            sufixos_m = ["zinho", "inho"]
+            sufixos_f = ["zinha", "inha"]
+            nomes_proprios_extra = [
+                "Luna", "Nina", "Mia", "Lola", "Bella", "Mel", "Kiara", "Maya", "Lia", "Clara", "Sofia",
+                "Theo", "Leo", "Tito", "Nico", "Chico", "Fred", "Bento", "Dudu", "Paco", "Teca", "Tuca"
+            ]
+
+            candidatos = []
+            # 1) Nome base
+            candidatos.append(base_nome)
+            # 2) Diminutivos conforme sexo
+            sufixos = sufixos_f if (sexo or "").lower().startswith("f") else sufixos_m
+            for sfx in sufixos:
+                candidatos.append(f"{base_nome}{sfx}")
+            # 3) Combinações com outro nome próprio (sem repetir o mesmo nome)
+            for outro in nomes_proprios_extra:
+                if outro.lower() != (base_nome or "").lower():
+                    candidatos.append(f"{base_nome} {outro}")
+
+            # Retorna o primeiro candidato que não exista ainda no banco
+            for cand in candidatos:
+                if not Pet.objects.filter(nome=cand).exists():
+                    return cand
+
+            # Fallback: combinações aleatórias de nomes próprios e diminutivos (sem números)
+            tentativas = 0
+            while tentativas < 30:
+                outro = random.choice(nomes_proprios_extra)
+                sfx = random.choice(sufixos)
+                cand = random.choice([
+                    f"{base_nome} {outro}",
+                    f"{base_nome}{sfx}",
+                    f"{outro} {base_nome}",
+                ])
+                if not Pet.objects.filter(nome=cand).exists():
+                    return cand
+                tentativas += 1
+            # Último recurso: devolve o base_nome
+            return base_nome
+
         if reset:
             self.stdout.write(self.style.WARNING("Limpando dados existentes..."))
             with transaction.atomic():
@@ -198,9 +240,13 @@ class Command(BaseCommand):
             lat = (local.latitude or -23.5505) + lat_jitter
             lng = (local.longitude or -46.6333) + lng_jitter
 
-            nome_unico = f"{base['nome']}-{i+1}"
+            # Gerar nome realista e único, sem números
+            nome_unico = gerar_nome_unico(base["nome"], base.get("sexo"), local)
             if Pet.objects.filter(nome=nome_unico).exists():
-                continue
+                # Se por acaso colidir, tenta uma segunda vez com um novo candidato
+                nome_unico = gerar_nome_unico(base["nome"], base.get("sexo"), local)
+                if Pet.objects.filter(nome=nome_unico).exists():
+                    continue
 
             pet_kwargs = dict(
                 nome=nome_unico,

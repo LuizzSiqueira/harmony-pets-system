@@ -1,15 +1,46 @@
-Policy: centralizar variáveis de ambiente
+Política: centralizar variáveis de ambiente
 
-Onde manter o arquivo `.env`:
-- Coloque um único arquivo `.env` na raiz do projeto: `/home/luizsiqueira/Documents/ProjetoFinalDeCurso/Sistema_de_Adocao/.env`.
-- Não mantenha outros arquivos `.env` dentro de `venv/` ou em subpastas — isso evita duplicação/confusão.
+Onde manter o arquivo `.env` (atual):
+- Utilize um único arquivo `.env` em `harmony_pets/.env` (mesmo nível de `manage.py`).
+- Esse caminho é o que o Django carrega via `dotenv` nas settings: `load_dotenv(os.path.join(BASE_DIR, '.env'))`, em que `BASE_DIR` aponta para a pasta `harmony_pets/`.
 
-Como o venv carrega o .env agora:
-- Ao ativar o venv (`source venv/bin/activate`), o script de ativação procura por `../.env` (o `.env` na raiz do projeto) e exporta as variáveis. Se não existir, ele busca `venv/.env`.
+Por que não usar `.env` na raiz do repo?
+- O projeto foi configurado para ler especificamente `harmony_pets/.env`. Manter apenas esse arquivo evita ambiguidade.
+
+Como aplicar as variáveis de ambiente:
+- Ao rodar via `manage.py`, o Django carrega automaticamente `harmony_pets/.env`.
+- Opcionalmente, você pode exportar variáveis no shell antes de rodar comandos (ex.: `USE_DB=local`).
 
 Boas práticas:
-- Adicione as entradas relevantes ao `.gitignore` (já configurado) para garantir que `.env` não seja versionado.
-- Em produção, use um secret manager (Azure Key Vault, AWS Secrets Manager, etc.) em vez do `.env` no filesystem.
+- Garanta que `.env` esteja no `.gitignore` (já configurado) para não versionar segredos.
+- Em produção, prefira um secret manager (Azure Key Vault, AWS Secrets Manager, etc.) ou variáveis de ambiente do host.
 
-Remoção de duplicatas:
-- Se existir `venv/.env`, remova-o para evitar duplicatas. O script de ativação prioriza o `.env` na raiz do projeto.
+Campos úteis no `.env`:
+```
+SECRET_KEY=defina-uma-chave-segura
+DEBUG=True
+
+# E-mail (para reset de senha e 2FA por e-mail)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=
+
+# Google Maps (opcional)
+GOOGLE_MAPS_API_KEY=
+
+# Banco (quando usar Postgres)
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=5432
+
+# Emoji API (API Ninjas)
+API_NINJAS_KEY=
+
+# Seleção de banco ("local" = SQLite, "web" = Postgres)
+USE_DB=local
+```
