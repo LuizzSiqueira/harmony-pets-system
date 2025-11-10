@@ -24,7 +24,7 @@ from .forms import (
     ChangePasswordForm,
     AppPasswordResetForm,
 )
-from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
+from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos, AuditLog
 from django.contrib.auth.models import User
 from .utils import calcular_distancia
 from .utils import obter_emoji_animal, buscar_emoji_animais, EmojiAPIError
@@ -307,6 +307,48 @@ def profile_view(request):
         'two_factor_require_every_login': two_factor_require_every_login,
         'two_factor_enabled': two_factor_enabled,
     }
+
+    # Painel administrativo: KPIs e últimos eventos para staff/superuser
+    if request.user.is_staff:
+        try:
+            users_total = User.objects.count()
+            interessados_total = InteressadoAdocao.objects.count()
+            locais_total = LocalAdocao.objects.count()
+            pets_total = Pet.objects.count()
+            pets_disponiveis = Pet.objects.filter(status='disponivel').count()
+            pets_adotados = Pet.objects.filter(status='adotado').count()
+            pets_reservados = Pet.objects.filter(status='reservado').count()
+            sol_total = SolicitacaoAdocao.objects.count()
+            sol_pendentes = SolicitacaoAdocao.objects.filter(status='pendente').count()
+            sol_aprovadas = SolicitacaoAdocao.objects.filter(status='aprovada').count()
+            sol_rejeitadas = SolicitacaoAdocao.objects.filter(status='rejeitada').count()
+            twofa_total = TwoFactorAuth.objects.count()
+            twofa_ativos = TwoFactorAuth.objects.filter(is_enabled=True).count()
+            twofa_taxa = round((twofa_ativos / twofa_total) * 100, 1) if twofa_total else 0.0
+            audit_recent = list(AuditLog.objects.order_by('-criado_em')[:10])
+            audit_errors_recent = list(AuditLog.objects.filter(status_code__gte=400).order_by('-criado_em')[:10])
+            context.update({
+                'admin_stats': {
+                    'users_total': users_total,
+                    'interessados_total': interessados_total,
+                    'locais_total': locais_total,
+                    'pets_total': pets_total,
+                    'pets_disponiveis': pets_disponiveis,
+                    'pets_adotados': pets_adotados,
+                    'pets_reservados': pets_reservados,
+                    'sol_total': sol_total,
+                    'sol_pendentes': sol_pendentes,
+                    'sol_aprovadas': sol_aprovadas,
+                    'sol_rejeitadas': sol_rejeitadas,
+                    'twofa_total': twofa_total,
+                    'twofa_ativos': twofa_ativos,
+                    'twofa_taxa': twofa_taxa,
+                },
+                'audit_recent': audit_recent,
+                'audit_errors_recent': audit_errors_recent,
+            })
+        except Exception:
+            pass
     return render(request, 'core/profile.html', context)
 
 

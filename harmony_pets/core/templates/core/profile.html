@@ -227,6 +227,129 @@
                             </div>
                         </div>
                     </div>
+                    {% if request.user.is_staff %}
+                    <!-- Painel Administrativo: acompanhamento rápido -->
+                    <div class="admin-dashboard mt-4">
+                        <h4 class="section-title mb-3">
+                            <i class="fas fa-tachometer-alt text-primary"></i> Painel Administrativo
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <div class="text-muted small">Usuários</div>
+                                                <div class="h4 mb-0">{{ admin_stats.users_total|default:0 }}</div>
+                                            </div>
+                                            <i class="fas fa-users text-secondary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Interessados</div>
+                                        <div class="h4 mb-0">{{ admin_stats.interessados_total|default:0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Locais de Adoção</div>
+                                        <div class="h4 mb-0">{{ admin_stats.locais_total|default:0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Pets (disp./adot./res.)</div>
+                                        <div class="h6 mb-0">
+                                            {{ admin_stats.pets_disponiveis|default:0 }} / {{ admin_stats.pets_adotados|default:0 }} / {{ admin_stats.pets_reservados|default:0 }}
+                                        </div>
+                                        <small class="text-muted">Total: {{ admin_stats.pets_total|default:0 }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Solicitações (pend./aprov./rej.)</div>
+                                        <div class="h6 mb-0">
+                                            {{ admin_stats.sol_pendentes|default:0 }} / {{ admin_stats.sol_aprovadas|default:0 }} / {{ admin_stats.sol_rejeitadas|default:0 }}
+                                        </div>
+                                        <small class="text-muted">Total: {{ admin_stats.sol_total|default:0 }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">2FA Ativo</div>
+                                        <div class="h6 mb-0">{{ admin_stats.twofa_ativos|default:0 }} de {{ admin_stats.twofa_total|default:0 }}</div>
+                                        <small class="text-muted">Adoção: {{ admin_stats.twofa_taxa|default:0 }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header py-2">
+                                        <strong><i class="fas fa-stream"></i> Últimas Ações</strong>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush small">
+                                            {% for ev in audit_recent %}
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div class="text-truncate" style="max-width: 75%;">
+                                                        <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span>
+                                                        {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                                                    </div>
+                                                    <span class="badge bg-light text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+                                                </div>
+                                            {% empty %}
+                                                <div class="list-group-item">Sem registros ainda.</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2 text-end">
+                                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_logs' %}"><i class="fas fa-file-alt"></i> Ver logs</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/admin/"><i class="fas fa-tools"></i> Admin</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-header py-2">
+                                        <strong class="text-warning"><i class="fas fa-exclamation-triangle"></i> Erros Recentes (HTTP ≥ 400)</strong>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush small">
+                                            {% for ev in audit_errors_recent %}
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div class="text-truncate" style="max-width: 75%;">
+                                                        <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span>
+                                                        {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                                                    </div>
+                                                    <span class="badge bg-warning text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+                                                </div>
+                                            {% empty %}
+                                                <div class="list-group-item">Sem erros recentes. Ótimo!</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2 text-end">
+                                        <a class="btn btn-sm btn-outline-warning" href="{% url 'admin_logs' %}"><i class="fas fa-eye"></i> Acompanhar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                     <!-- Removido menu duplicado de ações para manter apenas um botão de ação no header -->
                     <div class="info-section mt-4">
                         <h4 class="mb-3"><i class="fas fa-cogs"></i> Ações da Conta</h4>
