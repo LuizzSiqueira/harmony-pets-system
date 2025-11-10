@@ -51,7 +51,9 @@ urlpatterns = [
     
     # URLs para páginas legais
     path('termos-de-uso/', views.termos_uso, name='termos_uso'),
+    path('politica-de-privacidade/', views.politica_privacidade, name='politica_privacidade'),
     path('aceitar-termos/', views.aceitar_termos, name='aceitar_termos'),
+    path('contato/', views.contato, name='contato'),
     # URLs de redefinição de senha por e-mail (Django auth)
     path('password_reset/', AppPasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='core/password_reset_done.html'), name='password_reset_done'),
@@ -59,4 +61,5 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/password_reset_complete.html'), name='password_reset_complete'),
     # Logs da aplicação (somente staff)
     path('admin-logs/', views.admin_logs, name='admin_logs'),
+    path('admin-quality/', views.admin_quality, name='admin_quality'),
 ]

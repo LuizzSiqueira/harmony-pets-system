@@ -8,6 +8,9 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+import xml.etree.ElementTree as ET
+import json
+from datetime import datetime
 from django.utils import timezone
 from django.urls import reverse
 from datetime import timedelta
@@ -1159,6 +1162,29 @@ def termos_uso(request):
     return render(request, 'core/termos_uso.html')
 
 
+def politica_privacidade(request):
+    """Redireciona para a seção de Política de Privacidade dentro de Termos de Uso."""
+    from django.urls import reverse
+    return redirect(f"{reverse('termos_uso')}#politica-privacidade")
+
+
+def contato(request):
+    """Página de contato: apenas informa os meios oficiais de suporte/comunicação.
+
+    Usa variáveis de ambiente se disponíveis para evitar hardcode de dados sensíveis.
+    """
+    meios = {
+        'email': os.environ.get('HARMONY_CONTACT_EMAIL', 'contato@harmonypets.org'),
+        'telefone': os.environ.get('HARMONY_CONTACT_PHONE', '(11) 0000-0000'),
+        'instagram': os.environ.get('HARMONY_CONTACT_INSTAGRAM', '@harmonypets'),
+        'facebook': os.environ.get('HARMONY_CONTACT_FACEBOOK', 'facebook.com/harmonypets'),
+        'horario': 'Seg – Sex, 09h00 – 18h00 (Horário de Brasília)',
+        'suporte': 'Tempo médio de resposta: até 2 dias úteis',
+    }
+    # Nunca expor e-mails pessoais; apenas o institucional genérico.
+    return render(request, 'core/contato.html', {'meios': meios})
+
+
 def aceitar_termos(request):
     """View para aceitar os termos de uso e LGPD"""
     if request.method == 'POST':
@@ -1260,7 +1286,8 @@ def admin_logs(request):
         audit_limit = int(request.GET.get('audit_n', '200'))
     except ValueError:
         audit_limit = 200
-    audit_limit = max(20, min(audit_limit, 1000))
+    # Permite limites pequenos (ex.: 10) para testes e uso prático
+    audit_limit = max(1, min(audit_limit, 1000))
 
     audit_qs = AuditLog.objects.select_related('usuario').all()
     # filtro adicional por caminho, se fornecido
@@ -1297,6 +1324,128 @@ def admin_logs(request):
         'audit_path_q': audit_path_q,
     }
     return render(request, 'core/admin_logs.html', context)
+
+# ==================== PAINEL QUALIDADE (Cobertura de Testes) ==================== #
+@staff_member_required
+def admin_quality(request):
+    """Exibe métricas de qualidade simples (cobertura de testes) lendo coverage.xml.
+
+    Requer que coverage.xml tenha sido gerado previamente (ex.: via script run_tests_coverage.sh).
+    Mostra line-rate global e por pacote 'core'.
+    """
+    from django.conf import settings
+    coverage_path = os.path.join(settings.BASE_DIR, 'harmony_pets', 'coverage.xml')
+    global_rate = None
+    core_rate = None
+    lines_valid = None
+    lines_covered = None
+    timestamp_str = None
+    error = None
+    delta_global = None
+    delta_core = None
+    history = []
+    history_path = os.path.join(settings.BASE_DIR, 'harmony_pets', 'quality_history.json')
+    if os.path.exists(coverage_path):
+        try:
+            tree = ET.parse(coverage_path)
+            root = tree.getroot()
+            # atributos principais
+            global_attr = root.attrib.get('line-rate')
+            lines_valid_attr = root.attrib.get('lines-valid')
+            lines_covered_attr = root.attrib.get('lines-covered')
+            timestamp_attr = root.attrib.get('timestamp')
+            if global_attr:
+                try:
+                    global_rate = round(float(global_attr) * 100, 2)
+                except ValueError:
+                    global_rate = None
+            if lines_valid_attr and lines_covered_attr:
+                try:
+                    lines_valid = int(lines_valid_attr)
+                    lines_covered = int(lines_covered_attr)
+                except ValueError:
+                    lines_valid = lines_covered = None
+            if timestamp_attr and timestamp_attr.isdigit():
+                try:
+                    # coverage.py timestamp é epoch ms
+                    dt = datetime.fromtimestamp(int(timestamp_attr)/1000.0)
+                    timestamp_str = dt.strftime('%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    timestamp_str = None
+            # procura pacote 'core'
+            for pkg in root.findall('.//package'):
+                if pkg.attrib.get('name') == 'core':
+                    core_attr = pkg.attrib.get('line-rate')
+                    if core_attr:
+                        try:
+                            core_rate = round(float(core_attr) * 100, 2)
+                        except ValueError:
+                            core_rate = None
+                    break
+        except Exception as e:
+            error = f'Falha ao ler coverage.xml: {e}'
+    else:
+        error = 'coverage.xml não encontrado. Gere com o script de cobertura.'
+
+    # Formata como string com ponto decimal independente de locale
+    def fmt(rate):
+        if rate is None:
+            return None
+        s = f"{rate:.2f}".rstrip('0').rstrip('.')
+        return s
+    # Carrega histórico existente
+    if os.path.exists(history_path):
+        try:
+            with open(history_path, 'r', encoding='utf-8') as hf:
+                data = json.load(hf)
+                history = data.get('history', []) if isinstance(data, dict) else []
+        except Exception:
+            history = []
+    # Atualiza histórico se timestamp diferente do último
+    if global_rate is not None and timestamp_str:
+        last_ts = history[-1]['timestamp'] if history else None
+        if last_ts != timestamp_str:
+            entry = {
+                'timestamp': timestamp_str,
+                'global_rate': global_rate,
+                'core_rate': core_rate,
+                'lines_valid': lines_valid,
+                'lines_covered': lines_covered,
+            }
+            history.append(entry)
+            # mantém somente últimos 30
+            history = history[-30:]
+            try:
+                with open(history_path, 'w', encoding='utf-8') as hf:
+                    json.dump({'history': history}, hf, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+    # Calcula deltas (comparação com penúltimo)
+    if len(history) >= 2:
+        delta_global = round(history[-1]['global_rate'] - history[-2]['global_rate'], 2)
+        if history[-2].get('core_rate') is not None and history[-1].get('core_rate') is not None:
+            delta_core = round(history[-1]['core_rate'] - history[-2]['core_rate'], 2)
+
+    threshold_ok = global_rate is not None and global_rate >= 50.0
+    missing_lines = None
+    if lines_valid is not None and lines_covered is not None:
+        missing_lines = lines_valid - lines_covered
+
+    context = {
+        'coverage_path': coverage_path,
+        'global_rate': fmt(global_rate),
+        'core_rate': fmt(core_rate),
+        'error': error,
+        'lines_valid': lines_valid,
+        'lines_covered': lines_covered,
+        'missing_lines': missing_lines,
+        'timestamp_str': timestamp_str,
+        'threshold_ok': threshold_ok,
+        'delta_global': delta_global,
+        'delta_core': delta_core,
+        'history': history,
+    }
+    return render(request, 'core/admin_quality.html', context)
 
 # ==================== API: Sugestão de Emoji ==================== #
 

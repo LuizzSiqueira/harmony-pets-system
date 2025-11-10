@@ -1,0 +1,68 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Política de Privacidade • Harmony Pets{% endblock %}
+
+{% block content %}
+<div class="content-container">
+	<h1 class="mb-3">Política de Privacidade</h1>
+	<p class="text-muted mb-4">Última atualização: {% now 'd/m/Y' %}</p>
+
+	<h5>1. Introdução</h5>
+	<p>
+		Na Harmony Pets, levamos sua privacidade a sério. Este documento explica como coletamos,
+		usamos e protegemos seus dados pessoais ao utilizar nossa plataforma de adoção de pets.
+	</p>
+
+	<h5>2. Dados coletados</h5>
+	<ul>
+		<li>Informações de conta: nome, e-mail e senha.</li>
+		<li>Dados de perfil: CPF/CNPJ, telefone, endereço (quando necessário para o processo de adoção).</li>
+		<li>Dados de uso: páginas acessadas, interações e logs de segurança (para auditoria e melhoria do serviço).</li>
+		<li>Localização: latitude/longitude informadas por você para encontrar pets próximos (opcional).</li>
+	</ul>
+
+	<h5>3. Como usamos seus dados</h5>
+	<ul>
+		<li>Viabilizar o cadastro, login e segurança da conta (incluindo 2FA opcional).</li>
+		<li>Intermediar solicitações de adoção e comunicação entre interessados e locais de adoção.</li>
+		<li>Melhorar a experiência de uso e a segurança da plataforma.</li>
+		<li>Cumprir obrigações legais e solicitações de autoridades competentes.</li>
+	</ul>
+
+	<h5>4. Compartilhamento</h5>
+	<p>
+		Compartilhamos dados estritamente necessários com organizações parceiras de adoção envolvidas no seu processo,
+		e com provedores de infraestrutura (ex.: envio de e-mails). Não vendemos seus dados.
+	</p>
+
+	<h5>5. Segurança</h5>
+	<p>
+		Adotamos práticas de segurança como senhas com hash, autenticação em duas etapas e registros de auditoria.
+		Ainda assim, nenhum sistema é 100% seguro; recomendamos boas práticas de segurança por parte dos usuários.
+	</p>
+
+	<h5>6. Seus direitos</h5>
+	<ul>
+		<li>Acessar, corrigir ou excluir seus dados (quando aplicável).</li>
+		<li>Revogar consentimentos e preferências de comunicação.</li>
+		<li>Solicitar informações sobre o tratamento de dados.</li>
+	</ul>
+
+	<h5>7. Retenção e eliminação</h5>
+	<p>
+		Mantemos dados pelo tempo necessário para cumprir finalidades legais e operacionais.
+		Você pode solicitar a exclusão da conta em Perfil &gt; Excluir conta.
+	</p>
+
+	<h5>8. Contato</h5>
+	<p>
+		Em caso de dúvidas sobre esta política ou sobre seus dados pessoais, entre em contato pelos canais disponíveis na plataforma.
+	</p>
+
+	<div class="mt-4">
+		<a href="{% url 'home' %}" class="btn btn-outline-primary">Voltar para Início</a>
+	</div>
+</div>
+{% endblock %}
+
