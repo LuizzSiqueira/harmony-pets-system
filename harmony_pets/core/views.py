@@ -36,6 +36,7 @@ import base64
 import os
 import logging
 logger = logging.getLogger('core')
+from django.conf import settings
 
 from django.contrib.auth.views import PasswordResetView
 
@@ -133,18 +134,25 @@ import base64
 @login_required
 def delete_account_view(request):
     """View para solicitar exclusão da conta do usuário"""
+    from django.conf import settings
+    if not getattr(settings, 'ACCOUNT_DELETION_ENABLED', True):
+        messages.warning(request, 'A exclusão de contas está temporariamente desativada pela política da plataforma.')
+        return redirect('profile')
+
     user = request.user
     if request.method == 'POST':
-        # Exclusão imediata e permanente
+        # Requer confirmação explícita via checkbox para mitigar deleções acidentais
+        confirmed = request.POST.get('confirm_delete') == 'on'
+        if not confirmed:
+            messages.error(request, 'Marque a caixa de confirmação para excluir sua conta de forma permanente.')
+            return redirect('profile')
+
         username = user.username
-        # Log do evento antes da remoção do usuário
         logger.warning(f"Exclusão de conta imediata solicitada por '{username}' (id={user.id})")
-        # Efetua logout para limpar sessão e, em seguida, remove o usuário
         logout(request)
         try:
             user.delete()
         except Exception:
-            # Em caso de falha inesperada, garante que o usuário ao menos fique inativo
             try:
                 user.is_active = False
                 user.save()
@@ -152,6 +160,7 @@ def delete_account_view(request):
                 pass
         messages.success(request, f'Sua conta "{username}" foi excluída permanentemente.')
         return redirect('home')
+    # GET não expõe formulário dedicado (está embutido no perfil)
     return redirect('profile')
 
 def login_view(request):
@@ -223,11 +232,15 @@ def login_view(request):
     return render(request, 'core/login.html', {'form': form, 'error_message': error_message, 'blocked_message': blocked_message})
 
 def logout_view(request):
-    """View para fazer logout do usuário"""
-    logout(request)
-    messages.success(request, 'Você saiu da sua conta com sucesso!')
-    logger.info(f"Logout realizado para usuário '{request.user.username if request.user.is_authenticated else 'desconhecido'}'")
-    return redirect('home')
+    """Tela de logout: confirma em GET e encerra sessão em POST."""
+    if request.method == 'POST':
+        username = request.user.username if request.user.is_authenticated else 'desconhecido'
+        logout(request)
+        messages.success(request, 'Sua sessão foi encerrada com segurança.')
+        logger.info(f"Logout realizado para usuário '{username}'")
+        return render(request, 'core/logout_done.html')
+    # GET: confirmação
+    return render(request, 'core/logout_confirm.html')
 
 def home(request):
     # Mostrar alguns pets em destaque na página inicial
@@ -309,6 +322,7 @@ def profile_view(request):
         'two_factor_preference': two_factor_pref,
         'two_factor_require_every_login': two_factor_require_every_login,
         'two_factor_enabled': two_factor_enabled,
+        'account_deletion_enabled': getattr(settings, 'ACCOUNT_DELETION_ENABLED', True),
     }
 
     # Painel administrativo: KPIs e últimos eventos para staff/superuser
@@ -1234,6 +1248,40 @@ def aceitar_termos(request):
     return render(request, 'core/aceitar_termos.html')
 
 
+def recusar_termos(request):
+    """Tela explícita de recusa dos termos de uso.
+
+    Objetivos:
+    - Informar consequências da recusa.
+    - Permitir ao usuário optar por sair ou voltar para ler novamente.
+    - Não registra aceite; apenas reforça política e mantém bloqueio pelo middleware.
+    """
+    # Mesmo que já tenha aceitado previamente, mantemos esta página acessível
+    # para permitir a revogação explícita do aceite, conforme política solicitada.
+    return render(request, 'core/recusar_termos.html')
+
+
+from django.views.decorators.http import require_POST
+
+@login_required
+@require_POST
+def revogar_termos(request):
+    """Revoga o aceite dos termos de uso e LGPD do usuário autenticado.
+
+    - Marca `termos_aceitos` e `lgpd_aceito` como False no registro de AceitacaoTermos
+    - Redireciona para a tela de aceite de termos, bloqueando o uso até nova aceitação
+    """
+    try:
+        aceitacao = request.user.aceitacao_termos
+        aceitacao.termos_aceitos = False
+        aceitacao.lgpd_aceito = False
+        aceitacao.save()
+        messages.warning(request, 'Você revogou seu aceite. Para continuar, aceite os termos novamente.')
+    except AceitacaoTermos.DoesNotExist:
+        messages.info(request, 'Nenhum aceite prévio encontrado. Você precisa aceitar os termos para usar a plataforma.')
+    return redirect('aceitar_termos')
+
+
 def get_client_ip(request):
     """Função para obter o IP real do cliente"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -1446,6 +1494,86 @@ def admin_quality(request):
         'history': history,
     }
     return render(request, 'core/admin_quality.html', context)
+
+@staff_member_required
+def admin_dashboard(request):
+    """Dashboard administrativo consolidando KPIs, cobertura e auditoria.
+
+    Combina estatísticas principais (usuários, pets, solicitações), métricas de 2FA,
+    resumo de cobertura de testes (global e pacote core) e últimos eventos/a erros.
+    """
+    from django.conf import settings
+    # KPIs essenciais
+    try:
+        users_total = User.objects.count()
+        interessados_total = InteressadoAdocao.objects.count()
+        locais_total = LocalAdocao.objects.count()
+        pets_total = Pet.objects.count()
+        pets_disponiveis = Pet.objects.filter(status='disponivel').count()
+        pets_adotados = Pet.objects.filter(status='adotado').count()
+        pets_reservados = Pet.objects.filter(status='reservado').count()
+        sol_total = SolicitacaoAdocao.objects.count()
+        sol_pendentes = SolicitacaoAdocao.objects.filter(status='pendente').count()
+        sol_aprovadas = SolicitacaoAdocao.objects.filter(status='aprovada').count()
+        sol_rejeitadas = SolicitacaoAdocao.objects.filter(status='rejeitada').count()
+        twofa_total = TwoFactorAuth.objects.count()
+        twofa_ativos = TwoFactorAuth.objects.filter(is_enabled=True).count()
+        twofa_taxa = round((twofa_ativos / twofa_total) * 100, 1) if twofa_total else 0.0
+    except Exception:
+        users_total = interessados_total = locais_total = pets_total = 0
+        pets_disponiveis = pets_adotados = pets_reservados = 0
+        sol_total = sol_pendentes = sol_aprovadas = sol_rejeitadas = 0
+        twofa_total = twofa_ativos = 0
+        twofa_taxa = 0.0
+
+    # Cobertura de testes (reuso da lógica de admin_quality de forma resumida)
+    coverage_path = os.path.join(settings.BASE_DIR, 'harmony_pets', 'coverage.xml')
+    global_rate = None
+    core_rate = None
+    if os.path.exists(coverage_path):
+        try:
+            tree = ET.parse(coverage_path)
+            root = tree.getroot()
+            global_attr = root.attrib.get('line-rate')
+            if global_attr:
+                global_rate = round(float(global_attr) * 100, 2)
+            # pacote core
+            for pkg in root.findall('packages/package'):
+                if pkg.attrib.get('name') == 'core':
+                    pr = pkg.attrib.get('line-rate')
+                    if pr:
+                        core_rate = round(float(pr) * 100, 2)
+                    break
+        except Exception:
+            pass
+
+    # Auditoria
+    audit_recent = list(AuditLog.objects.order_by('-criado_em')[:10])
+    audit_errors_recent = list(AuditLog.objects.filter(status_code__gte=400).order_by('-criado_em')[:10])
+
+    context = {
+        'kpis': {
+            'users_total': users_total,
+            'interessados_total': interessados_total,
+            'locais_total': locais_total,
+            'pets_total': pets_total,
+            'pets_disponiveis': pets_disponiveis,
+            'pets_adotados': pets_adotados,
+            'pets_reservados': pets_reservados,
+            'sol_total': sol_total,
+            'sol_pendentes': sol_pendentes,
+            'sol_aprovadas': sol_aprovadas,
+            'sol_rejeitadas': sol_rejeitadas,
+            'twofa_total': twofa_total,
+            'twofa_ativos': twofa_ativos,
+            'twofa_taxa': twofa_taxa,
+        },
+        'coverage_global': global_rate,
+        'coverage_core': core_rate,
+        'audit_recent': audit_recent,
+        'audit_errors_recent': audit_errors_recent,
+    }
+    return render(request, 'core/admin_dashboard.html', context)
 
 # ==================== API: Sugestão de Emoji ==================== #
 

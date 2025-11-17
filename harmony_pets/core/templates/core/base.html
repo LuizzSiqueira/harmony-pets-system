@@ -98,6 +98,11 @@
                             <i class="fas fa-file-alt"></i> Logs
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                            <i class="fas fa-chart-line"></i> Dashboard
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
@@ -151,14 +156,28 @@
 
     <!-- Main Content -->
     <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                {% if messages %}
+                <div aria-live="polite" aria-atomic="true" class="position-relative">
+                    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                        {% for message in messages %}
+                            <div class="toast" role="alert" data-bs-delay="6000" data-bs-autohide="true">
+                                <div class="toast-header">
+                                    {% if 'success' in message.tags %}<span class="me-2 text-success"><i class="fas fa-check-circle"></i></span>{% endif %}
+                                    {% if 'error' in message.tags or 'danger' in message.tags %}<span class="me-2 text-danger"><i class="fas fa-exclamation-circle"></i></span>{% endif %}
+                                    {% if 'warning' in message.tags %}<span class="me-2 text-warning"><i class="fas fa-exclamation-triangle"></i></span>{% endif %}
+                                    {% if 'info' in message.tags %}<span class="me-2 text-info"><i class="fas fa-info-circle"></i></span>{% endif %}
+                                    <strong class="me-auto">Harmony Pets</strong>
+                                    <small class="text-muted">Agora</small>
+                                    <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Fechar"></button>
+                                </div>
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
+                {% endif %}
 
         {% block content %}
         {% endblock %}
@@ -198,6 +217,13 @@
     <!-- Mensagens de validação em PT-BR para campos obrigatórios e formatos -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Inicializa toasts para mensagens Django
+            document.querySelectorAll('.toast').forEach(function(toastEl){
+                try {
+                    var t = new bootstrap.Toast(toastEl);
+                    t.show();
+                } catch(e) {}
+            });
             const messages = {
                 required: 'Este campo é obrigatório.',
                 select: 'Selecione uma opção.',

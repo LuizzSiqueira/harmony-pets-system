@@ -53,6 +53,8 @@ urlpatterns = [
     path('termos-de-uso/', views.termos_uso, name='termos_uso'),
     path('politica-de-privacidade/', views.politica_privacidade, name='politica_privacidade'),
     path('aceitar-termos/', views.aceitar_termos, name='aceitar_termos'),
+    path('recusar-termos/', views.recusar_termos, name='recusar_termos'),
+    path('revogar-termos/', views.revogar_termos, name='revogar_termos'),
     path('contato/', views.contato, name='contato'),
     # URLs de redefinição de senha por e-mail (Django auth)
     path('password_reset/', AppPasswordResetView.as_view(), name='password_reset'),
@@ -62,4 +64,5 @@ urlpatterns = [
     # Logs da aplicação (somente staff)
     path('admin-logs/', views.admin_logs, name='admin_logs'),
     path('admin-quality/', views.admin_quality, name='admin_quality'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]

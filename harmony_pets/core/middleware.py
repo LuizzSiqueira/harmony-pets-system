@@ -24,6 +24,8 @@ class TermsAcceptanceMiddleware:
             reverse('logout'),
             reverse('termos_uso'),
             reverse('aceitar_termos'),
+            reverse('recusar_termos'),
+            reverse('revogar_termos'),
             reverse('register'),
             reverse('register_interessado'),
             reverse('register_local'),
@@ -120,9 +122,9 @@ class AuditLogMiddleware(MiddlewareMixin):
         return None
 
     def process_response(self, request: HttpRequest, response):
+        """Registra logs de escrita após a resposta."""
         try:
             if request.method in self.WRITE_METHODS:
-                # Ignora endpoints estáticos
                 path = request.path or ''
                 if path.startswith('/static/'):
                     return response
@@ -139,7 +141,6 @@ class AuditLogMiddleware(MiddlewareMixin):
                 user_agent = (request.META.get('HTTP_USER_AGENT') or '')[:500]
                 params = dict(request.GET) if request.GET else {}
                 try:
-                    # request.POST pode ser QueryDict; converte para dict simples
                     body = sanitize_payload({k: request.POST.getlist(k)[0] if len(request.POST.getlist(k)) == 1 else request.POST.getlist(k) for k in request.POST.keys()})
                 except Exception:
                     body = {}
@@ -166,6 +167,47 @@ class AuditLogMiddleware(MiddlewareMixin):
                     duracao_ms=duracao_ms,
                 )
         except Exception:
-            # Evita quebrar a requisição se algo falhar na auditoria
             pass
         return response
+
+
+class AdminAccessRedirectMiddleware:
+    """Redireciona usuários não autenticados ou sem permissão de staff que tentam acessar /admin.
+
+    Mantém comportamento padrão para usuários staff/superuser. Simples e cedo na cadeia.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path
+        if path.startswith('/admin'):
+            if not request.user.is_authenticated or not request.user.is_staff:
+                from django.shortcuts import redirect
+                from django.urls import reverse
+                from django.contrib import messages
+                # Evita loop caso já esteja na página de login principal.
+                login_url = reverse('login')
+                if path != login_url:
+                    # Mensagem de aviso
+                    messages.warning(request, 'Acesso restrito: necessário usuário administrador.')
+                    # AuditLog rápido (sem corpo) para tentativa de acesso administrador
+                    try:
+                        AuditLog.objects.create(
+                            usuario=request.user if request.user.is_authenticated else None,
+                            metodo=request.method,
+                            caminho=path[:512],
+                            view_name='admin:index',
+                            status_code=302,
+                            ip=request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR'),
+                            user_agent=(request.META.get('HTTP_USER_AGENT') or '')[:500],
+                            params={},
+                            body={},
+                            mensagem='Tentativa bloqueada de acesso ao /admin',
+                            duracao_ms=0,
+                        )
+                    except Exception:
+                        pass
+                    return redirect(f"{login_url}?next={path}")
+        return self.get_response(request)

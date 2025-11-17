@@ -1,0 +1,10 @@
+{% extends 'core/base.html' %}
+{% block title %}Sessão Encerrada{% endblock %}
+{% block content %}
+<div class="content-container text-center">
+  <h2 class="mb-3"><i class="fas fa-check-circle text-success"></i> Logout realizado</h2>
+  <p>Você saiu da sua conta com sucesso. Volte sempre!<br>
+     Para acessar novamente, clique em <a href="{% url 'login' %}">Entrar</a>.</p>
+  <a class="btn btn-primary mt-3" href="{% url 'home' %}"><i class="fas fa-home"></i> Ir para início</a>
+</div>
+{% endblock %}

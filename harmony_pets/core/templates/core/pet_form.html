@@ -45,8 +45,8 @@
                                 <i class="fas fa-magic"></i> Sugerir
                             </button>
                         </div>
-                        <div class="preview-emoji" id="emoji-preview">{{ form.emoji.value|default:"🐾" }}</div>
-                        <div class="form-text">Se não preencher, um emoji será atribuído automaticamente conforme a espécie. Você também pode clicar em "Sugerir" para buscar via API.</div>
+                        <div class="preview-emoji" id="emoji-preview">{{ form.emoji.value|default:"�" }}</div>
+                        <div class="form-text">Se não preencher, um emoji será atribuído automaticamente conforme a espécie. Você também pode clicar em "Sugerir" para buscar pela API.</div>
                         {% if form.emoji.errors %}
                             <div class="text-danger mt-1">{{ form.emoji.errors.0 }}</div>
                         {% endif %}

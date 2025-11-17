@@ -354,29 +354,29 @@
                     <div class="info-section mt-4">
                         <h4 class="mb-3"><i class="fas fa-cogs"></i> Ações da Conta</h4>
                         <div class="row">
-                            {% if interessado_real %}
                             <div class="col-md-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card h-100 border-secondary">
                                     <div class="card-body d-flex flex-column justify-content-between">
                                         <div class="mb-3">
-                                            <h5 class="card-title mb-1"><i class="fas fa-map-marker-alt text-primary"></i> Atualizar minha localização</h5>
-                                            <p class="card-text text-muted mb-2">Use a localização atual para encontrar pets próximos a você.</p>
+                                            <h5 class="card-title mb-1 text-secondary"><i class="fas fa-user-shield"></i> Remoção de Conta conforme Termos</h5>
+                                            <p class="card-text text-muted mb-2">A remoção segue as diretrizes dos <a href="{% url 'termos_uso' %}" target="_blank">Termos de Uso</a> e Política de Privacidade (LGPD). Revise antes de prosseguir.</p>
+                                            <div class="alert alert-secondary small" role="alert">
+                                                <ul class="mb-0">
+                                                    <li>Requer aceitação prévia dos termos.</li>
+                                                    <li>Não remove registros técnicos (auditoria de segurança).</li>
+                                                    <li>Irreversível após confirmação.</li>
+                                                    <li>Alternativa: mantenha a conta inativa sem exclusão.</li>
+                                                </ul>
+                                            </div>
                                         </div>
-                                        <div class="text-center">
-                                            <button id="btn-localizacao" class="btn btn-info" type="button" onclick="capturarLocalizacao()">
-                                                <i class="fas fa-location-arrow"></i> Usar minha localização
-                                            </button>
-                                            <div id="status-localizacao" class="visually-hidden" aria-live="polite"></div>
+                                        <div class="text-center d-flex flex-column gap-2">
+                                            <a href="{% url 'aceitar_termos' %}" class="btn btn-outline-success btn-sm"><i class="fas fa-file-signature"></i> Aceitar Termos</a>
+                                            <a href="{% url 'recusar_termos' %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-times-circle"></i> Recusar Termos</a>
+                                            <a href="{% url 'contato' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle"></i> Suporte</a>
                                         </div>
-                                        <form id="form-localizacao" method="post" action="{% url 'pets_proximos' %}" style="display:none;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="latitude" id="latitude">
-                                            <input type="hidden" name="longitude" id="longitude">
-                                        </form>
                                     </div>
                                 </div>
                             </div>
-                            {% endif %}
                             <div class="col-md-6 mb-3">
                                 <div class="card h-100 border-danger">
                                     <div class="card-body d-flex flex-column justify-content-between">
@@ -393,14 +393,26 @@
                                                 </ul>
                                             </div>
                                         </div>
+                                        {% if account_deletion_enabled %}
                                         <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta AGORA? Esta ação é irreversível e removerá seus dados imediatamente.')">
                                             {% csrf_token %}
+                                            <div class="form-check text-start mb-3">
+                                                <input class="form-check-input" type="checkbox" name="confirm_delete" id="confirm_delete">
+                                                <label for="confirm_delete" class="form-check-label small">
+                                                    Confirmo que li e compreendi as consequências e desejo prosseguir com a exclusão permanente.
+                                                </label>
+                                            </div>
                                             <div class="text-center">
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="fas fa-trash-alt"></i> Confirmar exclusão
+                                                <button type="submit" class="btn btn-danger" aria-disabled="false">
+                                                    <i class="fas fa-trash-alt"></i> Excluir definitivamente
                                                 </button>
                                             </div>
                                         </form>
+                                        {% else %}
+                                            <div class="alert alert-warning small" role="alert">
+                                                A exclusão de contas está desativada pela política atual da plataforma. Entre em contato com o suporte caso necessário.
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -426,41 +438,5 @@ function toggleSensitive(field) {
     }
 }
 
-// Geolocalização no perfil (sem mensagens visíveis)
-function capturarLocalizacao() {
-    const btn = document.getElementById('btn-localizacao');
-    const form = document.getElementById('form-localizacao');
-    const latEl = document.getElementById('latitude');
-    const lngEl = document.getElementById('longitude');
-    if (!btn || !form || !latEl || !lngEl) return;
-
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obtendo localização...';
-
-    if (!('geolocation' in navigator)) {
-        // Somente feedback visual no botão
-        btn.classList.add('btn-warning');
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        function (pos) {
-            latEl.value = pos.coords.latitude;
-            lngEl.value = pos.coords.longitude;
-            form.submit();
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        },
-        function () {
-            // Apenas restaura o botão; sem alertas
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-}
 </script>
 {% endblock %}

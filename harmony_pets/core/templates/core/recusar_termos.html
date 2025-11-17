@@ -1,0 +1,78 @@
+{% extends "core/base.html" %}
+
+{% block title %}Não Aceitar Termos - Harmony Pets{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h1 class="h4 mb-0"><i class="fas fa-times-circle me-2"></i> Você optou por não aceitar os termos</h1>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Ao recusar os Termos de Uso e a Política de Privacidade (LGPD), o uso da plataforma fica restrito.
+          </div>
+
+          <p class="mb-3">
+            Sem o aceite, não podemos oferecer recursos que exigem tratamento de dados pessoais, como:
+          </p>
+          <ul>
+            <li>Cadastro e autenticação de usuários</li>
+            <li>Localização de pets próximos</li>
+            <li>Solicitação e acompanhamento de adoções</li>
+            <li>Comunicação entre interessados e organizações</li>
+          </ul>
+
+          <p class="mt-3">
+            Você pode:
+          </p>
+          <ul>
+            <li>Revisar os <a href="{% url 'termos_uso' %}" target="_blank">Termos de Uso e a Política de Privacidade</a> novamente</li>
+            <li>Voltar e <a href="{% url 'aceitar_termos' %}">aceitar os termos</a> para continuar</li>
+            {% if user.is_authenticated %}
+            <li>Encerrar sua sessão com segurança</li>
+            {% endif %}
+            <li>Falar com o <a href="{% url 'contato' %}">atendimento</a> em caso de dúvidas</li>
+          </ul>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+            <a href="{% url 'termos_uso' %}" class="btn btn-outline-primary">
+              <i class="fas fa-book me-2"></i>
+              Ler Termos novamente
+            </a>
+            <a href="{% url 'aceitar_termos' %}" class="btn btn-success">
+              <i class="fas fa-check me-2"></i>
+              Aceitar e continuar
+            </a>
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'revogar_termos' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja revogar seu aceite? Você ficará impedido de usar a plataforma até aceitar novamente.');">
+                <i class="fas fa-user-slash me-2"></i>
+                Revogar meu aceite
+              </button>
+            </form>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-secondary">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                Sair da minha conta
+              </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'home' %}" class="btn btn-outline-dark">
+              <i class="fas fa-home me-2"></i>
+              Ir para a página inicial
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

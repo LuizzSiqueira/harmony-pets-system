@@ -66,6 +66,12 @@ def criar_locais():
             username=d["username"],
             defaults={"email": d["email"], "first_name": d["nome"].split()[0], "last_name": d["nome"].split()[-1]},
         )
+        # Define senha padrão para ambientes de desenvolvimento
+        try:
+            user.set_password('123')
+            user.save()
+        except Exception:
+            pass
         local, _ = LocalAdocao.objects.get_or_create(
             usuario=user,
             defaults={

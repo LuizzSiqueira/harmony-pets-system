@@ -48,7 +48,8 @@
         </div>
         <div class="col-md-2">
           <label class="form-label">Qtd AuditLog</label>
-          <input type="number" name="audit_n" value="{{ audit_limit }}" min="20" max="1000" class="form-control">
+          <!-- min ajustado para 1 para alinhar com lógica backend -->
+          <input type="number" name="audit_n" value="{{ audit_limit }}" min="1" max="1000" class="form-control">
         </div>
         <div class="col-md-3">
           <label class="form-label">Buscar Caminho (AuditLog)</label>

@@ -7,6 +7,12 @@ user_sp, _ = User.objects.get_or_create(
         'last_name': 'SP',
     }
 )
+# Define senha padrão
+try:
+    user_sp.set_password('123')
+    user_sp.save()
+except Exception:
+    pass
 local_sp, _ = LocalAdocao.objects.get_or_create(
     usuario=user_sp,
     defaults={
@@ -30,6 +36,11 @@ try:
             'last_name': 'Mogi',
         }
     )
+    try:
+        user_mogi.set_password('123')
+        user_mogi.save()
+    except Exception:
+        pass
     endereco_mogi = 'Av. Voluntário Fernando Pinheiro Franco, 350 - Centro, Mogi das Cruzes, SP'
     from core.utils import geocodificar_endereco
     latlng_mogi = geocodificar_endereco(endereco_mogi)
@@ -127,6 +138,11 @@ try:
             first_name='ONG',
             last_name='Exemplo'
         )
+        try:
+            user_local.set_password('123')
+            user_local.save()
+        except Exception:
+            pass
         endereco = 'Rua das Flores, 123 - São Paulo, SP'
         latlng = geocodificar_endereco(endereco)
         local = LocalAdocao.objects.create(
@@ -344,6 +360,11 @@ with transaction.atomic():
                 'last_name': local_data['nome_fantasia'].split()[-1],
             }
         )
+        try:
+            user.set_password('123')
+            user.save()
+        except Exception:
+            pass
         endereco = local_data['endereco']
         latlng = geocodificar_endereco(endereco)
         local, _ = LocalAdocao.objects.get_or_create(

@@ -80,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.AdminAccessRedirectMiddleware',
     'core.middleware.TermsAcceptanceMiddleware',
     'core.middleware.TwoFactorMiddleware',
     'core.middleware.AuditLogMiddleware',
@@ -248,3 +249,7 @@ LOGGING = {
         },
     },
 }
+
+# Política de exclusão de conta (tornar opcional via ambiente)
+# Quando False, a exclusão de conta é desativada para os usuários finais.
+ACCOUNT_DELETION_ENABLED = os.environ.get('ACCOUNT_DELETION_ENABLED', 'True') == 'True'
