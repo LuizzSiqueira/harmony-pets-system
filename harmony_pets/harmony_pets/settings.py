@@ -65,6 +65,9 @@ if DEBUG:
 # Application definition
 
 INSTALLED_APPS = [
+    # IMPORTANTE: Apps customizados devem vir ANTES dos apps do Django
+    # Isso garante que templates personalizados (ex: registration/*) tenham prioridade
+    # sobre templates padrão do django.contrib.admin e django.contrib.auth
     'core',
     'django.contrib.admin',
     'django.contrib.auth',

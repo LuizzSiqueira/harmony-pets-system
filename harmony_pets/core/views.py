@@ -38,23 +38,22 @@ import logging
 logger = logging.getLogger('core')
 from django.conf import settings
 
-from django.contrib.auth.views import PasswordResetView
+from django.views.generic import FormView
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
 
-class AppPasswordResetView(PasswordResetView):
+class AppPasswordResetView(FormView):
+    """
+    View manual para redefinição de senha usando EmailMultiAlternatives.
+    Implementação idêntica ao envio de 2FA para consistência.
+    """
     template_name = 'core/password_reset_form.html'
-    email_template_name = 'registration/password_reset_email.txt'
-    # Usa template exclusivo para evitar conflito com template admin.
-    html_email_template_name = 'registration/core_password_reset_email.html'
-    subject_template_name = 'registration/core_password_reset_subject.txt'
     form_class = AppPasswordResetForm
-    extra_email_context = {
-        'site_name': 'Harmony Pets',
-    }
-
-    def form_valid(self, form):
-        # Garante que o form não sobrescreva com template legacy vindo de parâmetros externos
-        form.extra_email_context = getattr(self, 'extra_email_context', {'site_name': 'Harmony Pets'})
-        return super().form_valid(form)
+    success_url = '/password_reset/done/'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -64,21 +63,70 @@ class AppPasswordResetView(PasswordResetView):
         return context
 
     def form_valid(self, form):
-        logger.info(
-            "Password reset: enviando e-mail com templates (txt=%s, html=%s)",
-            self.email_template_name,
-            self.html_email_template_name,
+        """
+        Implementação manual de envio de e-mail de redefinição de senha.
+        Estrutura idêntica ao 2FA: gera token, renderiza templates e envia via EmailMultiAlternatives.
+        """
+        email = form.cleaned_data['email']
+        
+        # Buscar usuários ativos com este e-mail
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+        active_users = UserModel.objects.filter(
+            email__iexact=email,
+            is_active=True
         )
-        return super().form_valid(form)
-
-class AppPasswordResetStyledView(AppPasswordResetView):
-    """View alternativa para redefinição que força corpo HTML e registra diagnóstico claro.
-
-    Útil quando o provedor está entregando somente texto da versão anterior.
-    """
-    def form_valid(self, form):
-        logger.info("Password reset (styled view): iniciando envio customizado (template=%s)", self.html_email_template_name)
-        form.extra_email_context = getattr(self, 'extra_email_context', {'site_name': 'Harmony Pets'})
+        
+        for user in active_users:
+            # Gerar token e uid (equivalente ao código do 2FA)
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Obter domínio e protocolo
+            current_site = get_current_site(self.request)
+            domain = current_site.domain
+            protocol = 'https' if self.request.is_secure() else 'http'
+            
+            # Contexto para os templates (mesmo padrão do 2FA)
+            context = {
+                'user': user,
+                'uid': uid,
+                'token': token,
+                'uidb64': uid,
+                'domain': domain,
+                'protocol': protocol,
+                'site_name': 'Harmony Pets',
+            }
+            
+            # Renderizar templates TXT e HTML (EXATAMENTE como 2FA)
+            subject = render_to_string('registration/password_reset_subject.txt', context).strip()
+            text_body = render_to_string('registration/password_reset_email.txt', context)
+            html_body = render_to_string('registration/password_reset_email.html', context)
+            
+            # Criar e enviar e-mail usando EmailMultiAlternatives (IDÊNTICO ao 2FA)
+            message = EmailMultiAlternatives(
+                subject=subject,
+                body=text_body,
+                to=[user.email]
+            )
+            message.attach_alternative(html_body, 'text/html')
+            
+            try:
+                message.send()
+                logger.info(
+                    "Password reset: e-mail enviado manualmente via EmailMultiAlternatives para %s (uid=%s)",
+                    user.email,
+                    uid
+                )
+            except Exception as e:
+                logger.error(
+                    "Password reset: erro ao enviar e-mail para %s: %s",
+                    user.email,
+                    str(e)
+                )
+        
+        # Sempre redirecionar para success_url (mesmo que nenhum usuário seja encontrado)
+        # para não revelar se o e-mail existe no sistema (segurança)
         return super().form_valid(form)
 
 # View para o interessado ver suas solicitações de adoção

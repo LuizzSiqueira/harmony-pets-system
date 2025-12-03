@@ -2,7 +2,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.utils import timezone
-from .views import AppPasswordResetView, AppPasswordResetStyledView
+from .views import AppPasswordResetView
 from . import views
 
 urlpatterns = [
