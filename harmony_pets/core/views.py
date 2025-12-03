@@ -733,12 +733,15 @@ def pets_proximos(request):
                 interessado.save()
             except Exception:
                 messages.error(request, 'Não foi possível salvar sua localização. Tente novamente.')
-                return redirect('profile')
 
-        # Verificar se o interessado tem localização
+        # Se não tiver localização, mostrar página com botão para solicitar
         if not interessado.latitude or not interessado.longitude:
-            messages.warning(request, 'Para encontrar pets próximos, você precisa definir sua localização no perfil.')
-            return redirect('profile')
+            # Ainda permite acesso à página, mas sem pets listados
+            context = {
+                'pets_proximos': [],
+                'sem_localizacao': True
+            }
+            return render(request, 'core/pets_proximos.html', context)
 
         pets_disponiveis = Pet.objects.filter(status='disponivel')
         pets_com_distancia = []
@@ -1177,7 +1180,18 @@ def verify_2fa(request):
                     messages.error(request, 'Não foi possível enviar o código por e-mail. Tente novamente.')
         form = TwoFactorLoginForm(user=request.user, initial=initial)
     
-    return render(request, 'core/verify_2fa.html', {'form': form})
+    # Determinar preferência para o template
+    preferred_method = 'totp'  # padrão
+    try:
+        tf = request.user.two_factor_auth
+        preferred_method = tf.preferred_method
+    except Exception:
+        pass
+    
+    return render(request, 'core/verify_2fa.html', {
+        'form': form,
+        'preferred_method': preferred_method
+    })
 
 
 @login_required

@@ -69,7 +69,10 @@
 }
 
 /* Minimal actions menu */
-.actions-menu { display: inline-block; }
+.actions-menu { 
+    display: inline-block; 
+    position: relative;
+}
 .actions-menu summary.actions-summary {
     list-style: none;
     cursor: pointer;
@@ -77,12 +80,16 @@
 }
 .actions-menu summary::-webkit-details-marker { display: none; }
 .actions-list {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 1000;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     margin-top: 10px;
     padding: 8px 0;
-    min-width: 200px;
+    min-width: 220px;
     text-align: left;
 }
 .action-item {

@@ -28,8 +28,8 @@
                         <div class="text-end header-actions">
                             <!-- Único botão de ação (menu) -->
                             <details class="actions-menu">
-                                <summary class="btn btn-primary rounded-pill px-3 actions-summary" title="Ações">
-                                    <i class="fas fa-ellipsis-h"></i>
+                                <summary class="btn rounded-pill px-4 py-2 actions-summary" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);" title="Ações">
+                                    <i class="fas fa-cog me-2"></i>Ações
                                 </summary>
                                 <div class="actions-list">
                                     <!-- Comum a todos -->
@@ -170,57 +170,34 @@
                         </h4>
                         <div class="card">
                             <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <h5 class="mb-2">
-                                            <i class="fas fa-mobile-alt"></i> Autenticação de Dois Fatores
-                                        </h5>
-                                        <p class="text-muted mb-1">
-                                            {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
-                                                <span class="badge bg-success">Ativo</span>
-                                                Sua conta está protegida com autenticação de dois fatores.
-                                            {% else %}
-                                                <span class="badge bg-warning">Inativo</span>
-                                                Adicione uma camada extra de segurança à sua conta.
-                                            {% endif %}
-                                        </p>
-                                        <form method="post" action="{% url 'set_2fa_preference' %}" class="mt-3">
-                                            {% csrf_token %}
-                                            <div class="row g-2 align-items-center">
-                                                <div class="col-md-8">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="method" id="pref_totp" value="totp" {% if two_factor_preference != 'email' %}checked{% endif %}>
-                                                        <label class="form-check-label" for="pref_totp">
-                                                            Usar autenticador (aplicativo)
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="method" id="pref_email" value="email" {% if two_factor_preference == 'email' %}checked{% endif %}>
-                                                        <label class="form-check-label" for="pref_email">
-                                                            Usar código por e-mail
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4 text-md-end">
-                                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                                        Salvar preferência
-                                                    </button>
-                                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h5 class="mb-2">
+                                                    <i class="fas fa-mobile-alt"></i> Autenticação de Dois Fatores
+                                                </h5>
+                                                <p class="text-muted mb-0">
+                                                    {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
+                                                        <span class="badge bg-success">Ativo</span>
+                                                        Sua conta está protegida com autenticação de dois fatores.
+                                                    {% else %}
+                                                        <span class="badge bg-warning text-dark">Inativo</span>
+                                                        Adicione uma camada extra de segurança à sua conta.
+                                                    {% endif %}
+                                                </p>
                                             </div>
-                                            <small class="text-muted d-block mt-2">Sua preferência será aplicada na tela de verificação 2FA.</small>
-                                        </form>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="btn-group d-flex justify-content-center gap-2" role="group">
-                                            {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
-                                                <a href="{% url 'disable_2fa' %}" class="btn btn-danger btn-sm rounded-pill px-4">
-                                                    <span class="d-inline-block w-100 text-center"><i class="fas fa-times"></i> Desativar 2FA</span>
-                                                </a>
-                                            {% else %}
-                                                <a href="{% url 'setup_2fa' %}" class="btn btn-primary btn-sm rounded-pill px-4">
-                                                    <span class="d-inline-block w-100 text-center"><i class="fas fa-plus"></i> Ativar 2FA</span>
-                                                </a>
-                                            {% endif %}
+                                            <div>
+                                                {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
+                                                    <a href="{% url 'disable_2fa' %}" class="btn btn-danger rounded-pill px-4">
+                                                        <i class="fas fa-times"></i> Desativar 2FA
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{% url 'setup_2fa' %}" class="btn rounded-pill px-4" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; font-weight: 600;">
+                                                        <i class="fas fa-shield-alt"></i> Ativar 2FA
+                                                    </a>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -370,8 +347,8 @@
                                             </div>
                                         </div>
                                         <div class="text-center d-flex flex-column gap-2">
-                                            <a href="{% url 'aceitar_termos' %}" class="btn btn-outline-success btn-sm"><i class="fas fa-file-signature"></i> Aceitar Termos</a>
-                                            <a href="{% url 'recusar_termos' %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-times-circle"></i> Recusar Termos</a>
+                                            <a href="{% url 'termos_uso' %}" target="_blank" class="btn btn-outline-info btn-sm"><i class="fas fa-file-alt"></i> Revisar Termos de Uso</a>
+                                            <a href="{% url 'termos_uso' %}#politica-privacidade" target="_blank" class="btn btn-outline-info btn-sm"><i class="fas fa-shield-alt"></i> Revisar Política de Privacidade</a>
                                             <a href="{% url 'contato' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-question-circle"></i> Suporte</a>
                                         </div>
                                     </div>

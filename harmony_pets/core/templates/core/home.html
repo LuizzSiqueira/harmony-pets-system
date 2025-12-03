@@ -33,7 +33,7 @@
                             <a href="{% url 'adicionar_pet' %}" class="btn btn-outline-primary rounded-pill px-4">➕ Adicionar Pet</a>
                         {% elif user.interessadoadocao %}
                             <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4">Ver Pets para Adoção</a>
-                            <a href="{% url 'pets_proximos' %}" class="btn btn-outline-info rounded-pill px-4">🗺️ Pets Próximos</a>
+                            <a href="{% url 'pets_proximos' %}" class="btn rounded-pill px-4" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white; border: none; font-weight: 600;">🗺️ Pets Próximos</a>
                             <a href="{% url 'profile' %}" class="btn btn-outline-dark rounded-pill px-4">Meu Perfil</a>
                         {% else %}
                             <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4">Ver Pets para Adoção</a>
