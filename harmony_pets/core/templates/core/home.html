@@ -8,12 +8,23 @@
 {% endblock %}
 
 {% block content %}
-    <div class="hero-section py-5" style="background: linear-gradient(120deg, #f8fafc 60%, #e9d8fd 100%);">
-        <div class="container">
+    <!-- Hero Section com Vídeo de Fundo -->
+    <div class="hero-section position-relative overflow-hidden" style="min-height: 70vh; display: flex; align-items: center; background-color: white;">
+        <!-- Vídeo de fundo -->
+        <video autoplay muted loop playsinline class="position-absolute w-100 h-100 hero-video" style="background-color: white;">
+            <source src="{% static 'core/videos/hero-animation.mp4' %}" type="video/mp4">
+            Seu navegador não suporta vídeo HTML5.
+        </video>
+        
+        <!-- Overlay gradiente -->
+        <div class="position-absolute w-100 h-100 hero-overlay"></div>
+        
+        <!-- Conteúdo -->
+        <div class="container position-relative" style="z-index: 2;">
             <div class="hero-content text-center">
-                <div class="pet-icon mb-3" style="font-size: 5rem; animation: bounce 1.2s infinite alternate;">🐾</div>
-                <h1 class="hero-title fw-bold mb-2" style="font-size: 2.8rem; color: #5a67d8; text-shadow: 0 2px 8px #e9d8fd; letter-spacing: 2px;">Bem-vindo ao Harmony Pets!</h1>
-                <p class="hero-subtitle mb-4" style="font-size: 1.3rem; color: #6b7280;">Onde a felicidade de um pet encontra a alegria de uma família.</p>
+                <div class="pet-icon mb-3" style="font-size: 5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));">🐾</div>
+                <h1 class="hero-title fw-bold mb-2" style="font-size: 2.8rem; color: #5a67d8; text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.9), 0 0 20px rgba(233, 216, 253, 0.8); letter-spacing: 2px;">Bem-vindo ao Harmony Pets!</h1>
+                <p class="hero-subtitle mb-4" style="font-size: 1.3rem; color: #374151; font-weight: 600; text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.9);">Onde a felicidade de um pet encontra a alegria de uma família.</p>
                 <div class="d-flex justify-content-center flex-wrap gap-3 mb-3">
                     {% if user.is_authenticated %}
                         {% if user.localadocao %}
@@ -42,22 +53,78 @@
                 {% endif %}
             </div>
         </div>
+            </div>
+        </div>
+        
         <style>
+            /* Animação do vídeo - aparece, fica visível e depois desaparece */
+            .hero-video {
+                object-fit: cover;
+                z-index: 0;
+                opacity: 0;
+                animation: showAndHideVideo 5s ease-in-out forwards;
+            }
+            
+            @keyframes showAndHideVideo {
+                0% {
+                    opacity: 0;
+                }
+                20% {
+                    opacity: 0.7;
+                }
+                80% {
+                    opacity: 0.7;
+                }
+                100% {
+                    opacity: 0;
+                }
+            }
+            
+            /* Animação do overlay - aparece gradualmente */
+            .hero-overlay {
+                background: linear-gradient(120deg, rgba(248, 250, 252, 0.4) 60%, rgba(233, 216, 253, 0.5) 100%);
+                z-index: 1;
+                opacity: 0;
+                animation: fadeInOverlay 1s ease-in 4.5s forwards;
+            }
+            
+            @keyframes fadeInOverlay {
+                to {
+                    opacity: 1;
+                }
+            }
+            
+            /* Animação do conteúdo - aparece após o vídeo desaparecer */
+            .hero-content {
+                opacity: 0;
+                transform: translateY(20px);
+                animation: fadeInContent 1s ease-out 5s forwards;
+            }
+            
+            @keyframes fadeInContent {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Animação do emoji - começa a pular após aparecer */
+            .pet-icon {
+                animation: fadeInIcon 0.8s ease-out 5s forwards, bounce 1.2s infinite alternate 6s;
+                opacity: 0;
+            }
+            
+            @keyframes fadeInIcon {
+                to {
+                    opacity: 1;
+                }
+            }
+            
             @keyframes bounce {
                 0% { transform: translateY(0); }
                 100% { transform: translateY(-18px); }
             }
         </style>
-                
-                {% if user.is_authenticated %}
-                    <div class="mt-4">
-                        <a href="{% url 'logout' %}" class="text-white" style="text-decoration: none; opacity: 0.8;">
-                            Sair da conta
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
     </div>
     
     <!-- Seção de pets em destaque -->
@@ -90,7 +157,4 @@
         </div>
     </div>
     {% endif %}
-    
-    </div> <!-- Fechando div container -->
-</div> <!-- Fechando div hero-section -->
 {% endblock %}
