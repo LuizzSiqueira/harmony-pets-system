@@ -1,23 +1,77 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" style="margin:0;padding:0;">
 <head>
   <meta charset="UTF-8" />
-  <title>Seu código de verificação</title>
+  <title>🔐 Código de verificação - Harmony Pets</title>
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;color:transparent;">
+    Seu código 2FA expira em 10 minutos. Use já para acessar com segurança.
+  </div>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; color:#111; }
-    .card { border:1px solid #e5e7eb; border-radius:10px; padding:24px; max-width:560px; margin:0 auto; }
-    .code { font-size:28px; font-weight:700; letter-spacing:6px; text-align:center; padding:12px 0; }
-    .muted { color:#6b7280; font-size:14px; }
+    @media (prefers-color-scheme: dark) {
+      body { background:#0f172a !important; }
+      .wrap { background:#0f172a !important; }
+      .surface { background:#1e293b !important; border-color:#334155 !important; }
+      .header { background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#4f46e5) !important; }
+      .text { color:#f1f5f9 !important; }
+      .muted { color:#cbd5e1 !important; }
+      .code-box { background:#1e293b !important; border-color:#334155 !important; color:#f1f5f9 !important; }
+      a { color:#60a5fa !important; }
+    }
   </style>
 </head>
-<body>
-  <div class="card">
-    <h2>Seu código de verificação (2FA)</h2>
-    <p>Olá {{ user.first_name|default:user.username }},</p>
-    <p>Use o código abaixo para concluir seu login com verificação em duas etapas:</p>
-    <div class="code">{{ code }}</div>
-    <p class="muted">Este código expira em 10 minutos. Se você não solicitou este código, pode ignorar este e-mail.</p>
-    <p class="muted">Harmony Pets</p>
-  </div>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="wrap" style="background:#f0f4f8;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellpadding="0" cellspacing="0" class="surface" style="max-width:620px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(17,24,39,0.08);">
+          <tr>
+            <td class="header" style="background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#4f46e5);padding:28px 24px 22px;text-align:center;">
+              <h1 style="margin:0;font-size:24px;line-height:1.25;font-weight:700;color:#ffffff;font-family:Arial,Helvetica,sans-serif;">🔐 Verificação em duas etapas</h1>
+              <p style="margin:10px 0 0;font-size:13px;color:#e0e7ff;">Proteção adicional para sua conta.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 40px 4px;font-size:15px;line-height:1.55;color:#1f2937;" class="text">
+              <p style="margin:0 0 14px;">Olá <strong style="color:#111827;">{{ user.first_name|default:user.username }}</strong>,</p>
+              <p style="margin:0 0 18px;">Use o código abaixo para concluir seu login seguro no <strong>Harmony Pets</strong>. Se você não iniciou este processo, ignore este e-mail.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:6px 40px 30px;">
+              <div class="code-box" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:22px 30px;font-size:34px;font-weight:800;letter-spacing:10px;font-family:Courier,monospace;color:#111827;">
+                {{ code }}
+              </div>
+              <p style="margin:16px 0 0;font-size:12px;color:#64748b;">Expira em <strong>10 minutos</strong>. Não compartilhe este código.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 4px;font-size:13px;color:#374151;line-height:1.4;" class="text">
+              <p style="margin:0 0 8px;font-weight:600;color:#111827;">Dicas de segurança:</p>
+              <ul style="margin:4px 0 12px;padding:0 0 0 20px;font-size:12px;line-height:1.35;color:#4b5563;">
+                <li>Verifique o domínio do site antes de inserir o código.</li>
+                <li>Nunca encaminhe este e-mail para terceiros.</li>
+                <li>Altere sua senha periodicamente para maior proteção.</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 40px 26px;font-size:11px;text-align:center;color:#94a3b8;border-top:1px solid #e5e7eb;" class="muted">
+              <p style="margin:0 0 6px;">Harmony Pets &middot; © {% now "Y" %}</p>
+              <p style="margin:0;font-size:10px;color:#9ca3af;">E-mail automático – não responda.</p>
+            </td>
+          </tr>
+        </table>
+        <table role="presentation" width="620" cellpadding="0" cellspacing="0" style="max-width:620px;width:100%;margin-top:12px;">
+          <tr>
+            <td style="font-size:11px;color:#94a3b8;text-align:center;font-family:Arial,Helvetica,sans-serif;line-height:1.4;">
+              Caso seu cliente não suporte HTML, uma versão texto simples foi enviada junto.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

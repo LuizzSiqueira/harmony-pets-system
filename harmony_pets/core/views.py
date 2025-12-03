@@ -43,12 +43,18 @@ from django.contrib.auth.views import PasswordResetView
 class AppPasswordResetView(PasswordResetView):
     template_name = 'core/password_reset_form.html'
     email_template_name = 'registration/password_reset_email.txt'
-    html_email_template_name = 'registration/password_reset_email.html'
-    subject_template_name = 'registration/password_reset_subject.txt'
+    # Usa template exclusivo para evitar conflito com template admin.
+    html_email_template_name = 'registration/core_password_reset_email.html'
+    subject_template_name = 'registration/core_password_reset_subject.txt'
     form_class = AppPasswordResetForm
     extra_email_context = {
         'site_name': 'Harmony Pets',
     }
+
+    def form_valid(self, form):
+        # Garante que o form não sobrescreva com template legacy vindo de parâmetros externos
+        form.extra_email_context = getattr(self, 'extra_email_context', {'site_name': 'Harmony Pets'})
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -63,6 +69,16 @@ class AppPasswordResetView(PasswordResetView):
             self.email_template_name,
             self.html_email_template_name,
         )
+        return super().form_valid(form)
+
+class AppPasswordResetStyledView(AppPasswordResetView):
+    """View alternativa para redefinição que força corpo HTML e registra diagnóstico claro.
+
+    Útil quando o provedor está entregando somente texto da versão anterior.
+    """
+    def form_valid(self, form):
+        logger.info("Password reset (styled view): iniciando envio customizado (template=%s)", self.html_email_template_name)
+        form.extra_email_context = getattr(self, 'extra_email_context', {'site_name': 'Harmony Pets'})
         return super().form_valid(form)
 
 # View para o interessado ver suas solicitações de adoção

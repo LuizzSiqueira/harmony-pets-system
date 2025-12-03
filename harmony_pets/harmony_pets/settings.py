@@ -34,7 +34,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 # Configurações de e-mail para redefinição de senha (usando variáveis de ambiente)
 import os
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
@@ -57,18 +57,21 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = []
+if DEBUG:
+    # Permitir hosts comuns em desenvolvimento e testes internos
+    ALLOWED_HOSTS.extend(['127.0.0.1','localhost','testserver'])
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'core',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
     ]
 
 MIDDLEWARE = [

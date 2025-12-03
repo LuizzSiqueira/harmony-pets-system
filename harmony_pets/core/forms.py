@@ -7,6 +7,8 @@ from .models import InteressadoAdocao, LocalAdocao, Pet, TwoFactorAuth
 import re
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+import logging
+logger = logging.getLogger('core')
 
 def validar_cpf(cpf):
     """Valida CPF"""
@@ -479,7 +481,22 @@ class TwoFactorLoginForm(forms.Form):
         auth_token = cleaned.get('authenticator_token')
         email_token = cleaned.get('email_token')
 
+        # Bloqueio por tentativas falhas de 2FA
+        from .models import UserLoginAttempt
+        attempt = None
+        if self.user:
+            attempt, _ = UserLoginAttempt.objects.get_or_create(user=self.user)
+            if attempt.is_blocked():
+                raise forms.ValidationError('Tentativas excessivas. Tente novamente mais tarde.')
+
         if not auth_token and not email_token:
+            # conta tentativa
+            if attempt:
+                attempt.failed_attempts += 1
+                if attempt.failed_attempts >= 5:
+                    attempt.block(minutes=15)
+                else:
+                    attempt.save()
             raise forms.ValidationError('Informe o código do autenticador ou o código recebido por e-mail.')
 
         # Prioriza validação por e-mail se fornecida
@@ -497,6 +514,8 @@ class TwoFactorLoginForm(forms.Form):
                 else:
                     # Consome o código e retorna sucesso geral
                     cache.delete(cache_key)
+                    if attempt:
+                        attempt.reset_attempts()
                     return cleaned
 
         # Se chegou aqui, valida token do autenticador (TOTP/backup)
@@ -517,6 +536,19 @@ class TwoFactorLoginForm(forms.Form):
                     self.add_error('authenticator_token', 'O código do autenticador deve ter 6 dígitos.')
                 elif not two_factor.verify_token(auth_token):
                     self.add_error('authenticator_token', 'Código do autenticador inválido ou expirado.')
+
+        # Se houver erros nos campos, incrementar tentativas
+        if any(self.errors.get(f) for f in ['email_token','authenticator_token']):
+            if attempt:
+                attempt.failed_attempts += 1
+                if attempt.failed_attempts >= 5:
+                    attempt.block(minutes=15)
+                else:
+                    attempt.save()
+        else:
+            # Sucesso geral: resetar tentativas
+            if attempt:
+                attempt.reset_attempts()
 
         return cleaned
 
@@ -761,13 +793,16 @@ class AppPasswordResetForm(PasswordResetForm):
         )
 
         if html_body:
-            # Enviar HTML como corpo principal
+            logger.info("PasswordResetForm: enviando multipart (html principal + texto alternativo) para %s", to_email)
             message = EmailMultiAlternatives(subject, html_body, from_email, [to_email])
             message.content_subtype = "html"
-            # Anexar alternativa texto puro
             message.attach_alternative(body_text, "text/plain")
         else:
-            # Fallback apenas texto
+            logger.warning("PasswordResetForm: html_email_template_name ausente, enviando apenas texto para %s", to_email)
             message = EmailMultiAlternatives(subject, body_text, from_email, [to_email])
 
-        message.send()
+        try:
+            message.send()
+            logger.info("PasswordResetForm: e-mail de redefinição enviado com sucesso para %s", to_email)
+        except Exception as e:
+            logger.error("PasswordResetForm: falha ao enviar e-mail para %s - %s", to_email, e)
