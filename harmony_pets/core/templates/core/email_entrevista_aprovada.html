@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br" style="margin:0;padding:0;">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎉 Entrevista Aprovada - Harmony Pets</title>
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background:#0f172a !important; }
+      .wrap { background:#0f172a !important; }
+      .surface { background:#1e293b !important; border-color:#334155 !important; }
+      .header { background:linear-gradient(135deg,#15803d,#16a34a 55%,#22c55e) !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellpadding="0" cellspacing="0" style="max-width:620px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(17,24,39,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#15803d,#16a34a 55%,#22c55e);padding:28px 24px 22px;text-align:center;">
+              <h1 style="margin:0;font-size:24px;font-weight:700;color:#ffffff;">🎉 Parabéns!</h1>
+              <p style="margin:10px 0 0;font-size:13px;color:#dcfce7;">Você foi aprovado na entrevista!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 40px 18px;font-size:15px;color:#1f2937;">
+              <p style="margin:0 0 14px;">Olá <strong>{{ solicitacao.interessado.usuario.first_name }}</strong>,</p>
+              <p style="margin:0 0 18px;">Você foi aprovado na entrevista para adoção do <strong>{{ solicitacao.pet.nome }}</strong>! 🎉</p>
+              <p style="margin:0 0 18px;">O local de adoção irá agendar a data para você buscar seu novo companheiro. Você receberá um novo e-mail assim que a data de retirada for definida.</p>
+            </td>
+          </tr>
+          {% if observacoes %}
+          <tr>
+            <td style="padding:0 40px 20px;">
+              <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 18px;">
+                <p style="margin:0;font-size:13px;color:#166534;"><strong>Observações:</strong> {{ observacoes }}</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td style="padding:18px 40px 26px;font-size:11px;text-align:center;color:#94a3b8;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;">Harmony Pets &middot; © {% now "Y" %}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

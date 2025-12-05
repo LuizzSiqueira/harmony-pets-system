@@ -136,7 +136,7 @@
                         <div class="alert-entrevista">
                             <h5><i class="fas fa-calendar-check"></i> Entrevista Agendada!</h5>
                             <hr style="border-color: rgba(0,0,0,0.2);">
-                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_entrevista|date:"d/m/Y às H:i" }}</p>
+                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_entrevista|date:"d/m/Y" }} às {{ solicitacao.data_entrevista|date:"H:i" }}</p>
                             <p class="mb-2"><strong>📍 Local:</strong><br>{{ solicitacao.local_entrevista }}</p>
                             {% if solicitacao.observacoes_entrevista %}
                             <p class="mb-0"><strong>📝 Observações:</strong><br>{{ solicitacao.observacoes_entrevista }}</p>
@@ -193,7 +193,7 @@
                         <div class="alert alert-primary">
                             <h5><i class="fas fa-heart"></i> Retirada Agendada!</h5>
                             <hr>
-                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_retirada|date:"d/m/Y às H:i" }}</p>
+                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_retirada|date:"d/m/Y" }} às {{ solicitacao.data_retirada|date:"H:i" }}</p>
                             {% if solicitacao.observacoes_retirada %}
                             <p class="mb-0"><strong>📋 Instruções:</strong><br>{{ solicitacao.observacoes_retirada }}</p>
                             {% endif %}
@@ -202,7 +202,7 @@
                         {% if solicitacao.termo_aceito %}
                         <div class="alert alert-success">
                             <h6><i class="fas fa-check-circle"></i> Termo de Responsabilidade Aceito</h6>
-                            <p class="mb-1">Você aceitou o termo em {{ solicitacao.data_aceite_termo|date:"d/m/Y às H:i" }}</p>
+                            <p class="mb-1">Você aceitou o termo em {{ solicitacao.data_aceite_termo|date:"d/m/Y" }} às {{ solicitacao.data_aceite_termo|date:"H:i" }}</p>
                             <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTermoResponsabilidade{{ solicitacao.id }}">
                                 <i class="fas fa-file-alt"></i> Rever Termo
                             </button>

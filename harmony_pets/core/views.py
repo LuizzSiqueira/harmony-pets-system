@@ -42,9 +42,48 @@ from django.views.generic import FormView
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
+
+
+def enviar_email_notificacao(destinatario_email, assunto, mensagem_texto, template_html=None, context=None):
+    """
+    Função auxiliar para enviar e-mails de notificação estilizados
+    
+    Args:
+        destinatario_email: E-mail do destinatário
+        assunto: Assunto do e-mail
+        mensagem_texto: Mensagem em texto plano
+        template_html: Nome do template HTML (opcional)
+        context: Contexto para renderizar o template (opcional)
+    """
+    try:
+        if template_html and context:
+            # Renderizar template HTML
+            mensagem_html = render_to_string(template_html, context)
+            email = EmailMultiAlternatives(
+                subject=assunto,
+                body=mensagem_texto,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[destinatario_email]
+            )
+            email.attach_alternative(mensagem_html, "text/html")
+            email.send(fail_silently=False)
+        else:
+            send_mail(
+                subject=assunto,
+                message=mensagem_texto,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[destinatario_email],
+                fail_silently=False
+            )
+        logger.info(f"E-mail enviado com sucesso para {destinatario_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao enviar e-mail para {destinatario_email}: {str(e)}")
+        return False
+
 
 class AppPasswordResetView(FormView):
     """
@@ -741,13 +780,64 @@ def solicitar_adocao_view(request, pet_id):
         situacao_moradia = request.POST.get('situacao_moradia')
         
         if motivo and experiencia_pets and situacao_moradia:
-            SolicitacaoAdocao.objects.create(
+            solicitacao = SolicitacaoAdocao.objects.create(
                 pet=pet,
                 interessado=interessado,
                 motivo=motivo,
                 experiencia_pets=experiencia_pets,
                 situacao_moradia=situacao_moradia
             )
+            
+            # Enviar e-mail para o interessado confirmando a solicitação
+            assunto_interessado = f'Solicitação de Adoção Enviada - {pet.nome}'
+            mensagem_interessado = f"""Olá {interessado.usuario.first_name},
+
+Sua solicitação de adoção para o pet {pet.nome} foi enviada com sucesso!
+
+O local de adoção irá analisar sua solicitação e entrará em contato em breve.
+
+Atenciosamente,
+Equipe Harmony Pets"""
+            
+            context_interessado = {
+                'interessado': interessado,
+                'pet': pet,
+            }
+            enviar_email_notificacao(
+                interessado.usuario.email,
+                assunto_interessado,
+                mensagem_interessado,
+                'core/email_solicitacao_enviada.html',
+                context_interessado
+            )
+            
+            # Enviar e-mail para o local de adoção notificando nova solicitação
+            assunto_local = f'Nova Solicitação de Adoção - {pet.nome}'
+            mensagem_local = f"""Olá {pet.local_adocao.usuario.first_name},
+
+Você recebeu uma nova solicitação de adoção para o pet {pet.nome}!
+
+Interessado: {interessado.usuario.first_name} {interessado.usuario.last_name}
+E-mail: {interessado.usuario.email}
+
+Acesse o painel de solicitações para analisar e responder.
+
+Atenciosamente,
+Equipe Harmony Pets"""
+            
+            context_local = {
+                'pet': pet,
+                'interessado': interessado,
+                'solicitacoes_url': request.build_absolute_uri(reverse('solicitacoes_adocao')),
+            }
+            enviar_email_notificacao(
+                pet.local_adocao.usuario.email,
+                assunto_local,
+                mensagem_local,
+                'core/email_nova_solicitacao.html',
+                context_local
+            )
+            
             messages.success(request, 'Solicitação de adoção enviada com sucesso!')
             return redirect('pet_detail', pet_id=pet_id)
         else:
@@ -1240,6 +1330,36 @@ def agendar_entrevista(request, solicitacao_id):
                 solicitacao.status = 'em_entrevista'
                 solicitacao.save()
                 
+                # Enviar e-mail para o interessado sobre o agendamento da entrevista
+                assunto = f'Entrevista Agendada - Adoção de {solicitacao.pet.nome}'
+                mensagem = f"""Olá {solicitacao.interessado.usuario.first_name},
+
+Sua entrevista para adoção do pet {solicitacao.pet.nome} foi agendada!
+
+Data e Hora: {data_entrevista.strftime('%d/%m/%Y às %H:%M')}
+Local: {local_entrevista}
+
+Compareça no horário marcado.
+
+Atenciosamente,
+{solicitacao.pet.local_adocao.usuario.first_name}"""
+                
+                context = {
+                    'solicitacao': solicitacao,
+                    'data_hora': data_entrevista.strftime('%d/%m/%Y às %H:%M'),
+                    'local': local_entrevista,
+                    'observacoes': observacoes,
+                    'contato_email': solicitacao.pet.local_adocao.usuario.email,
+                    'contato_telefone': solicitacao.pet.local_adocao.telefone,
+                }
+                enviar_email_notificacao(
+                    solicitacao.interessado.usuario.email,
+                    assunto,
+                    mensagem,
+                    'core/email_entrevista_agendada.html',
+                    context
+                )
+                
                 messages.success(request, 'Entrevista agendada com sucesso!')
             except ValueError:
                 messages.error(request, 'Data inválida.')
@@ -1277,6 +1397,28 @@ def responder_entrevista(request, solicitacao_id):
                 solicitacao.observacoes_entrevista = f"{solicitacao.observacoes_entrevista}\n\nResultado: Aprovado".strip()
             solicitacao.data_resposta = timezone.now()
             solicitacao.save()
+            
+            # Enviar e-mail de aprovação na entrevista
+            assunto = f'Parabéns! Entrevista Aprovada - {solicitacao.pet.nome}'
+            mensagem = f"""Olá {solicitacao.interessado.usuario.first_name},
+
+Você foi aprovado na entrevista para adoção do {solicitacao.pet.nome}! 🎉
+
+Atenciosamente,
+Equipe Harmony Pets"""
+            
+            context = {
+                'solicitacao': solicitacao,
+                'observacoes': observacoes,
+            }
+            enviar_email_notificacao(
+                solicitacao.interessado.usuario.email,
+                assunto,
+                mensagem,
+                'core/email_entrevista_aprovada.html',
+                context
+            )
+            
             messages.success(request, 'Entrevista aprovada! Agora você pode agendar a retirada do pet.')
         elif resultado == 'rejeitar':
             solicitacao.status = 'entrevista_rejeitada'
@@ -1285,6 +1427,31 @@ def responder_entrevista(request, solicitacao_id):
             solicitacao.resposta_local = observacoes
             solicitacao.data_resposta = timezone.now()
             solicitacao.save()
+            
+            # Enviar e-mail de rejeição na entrevista
+            assunto = f'Resultado da Entrevista - {solicitacao.pet.nome}'
+            mensagem = f"""Olá {solicitacao.interessado.usuario.first_name},
+
+Agradecemos seu interesse em adotar o {solicitacao.pet.nome}.
+
+Após análise, não foi possível aprovar sua solicitação neste momento.
+
+Atenciosamente,
+Equipe Harmony Pets"""
+            
+            context = {
+                'solicitacao': solicitacao,
+                'observacoes': observacoes,
+                'pets_url': request.build_absolute_uri(reverse('pets_list')),
+            }
+            enviar_email_notificacao(
+                solicitacao.interessado.usuario.email,
+                assunto,
+                mensagem,
+                'core/email_entrevista_rejeitada.html',
+                context
+            )
+            
             messages.info(request, 'Entrevista rejeitada.')
         else:
             messages.error(request, 'Ação inválida.')
@@ -1336,6 +1503,33 @@ def agendar_retirada(request, solicitacao_id):
                     data_resposta=timezone.now()
                 )
                 
+                # Enviar e-mail com data de retirada agendada
+                assunto = f'Retirada Agendada! Seu novo pet {solicitacao.pet.nome} te espera! 🎉'
+                mensagem = f"""Olá {solicitacao.interessado.usuario.first_name},
+
+A retirada do {solicitacao.pet.nome} foi agendada!
+
+Data e Hora: {data_retirada.strftime('%d/%m/%Y às %H:%M')}
+
+Atenciosamente,
+Equipe Harmony Pets"""
+                
+                context = {
+                    'solicitacao': solicitacao,
+                    'data_hora': data_retirada.strftime('%d/%m/%Y às %H:%M'),
+                    'endereco': solicitacao.pet.local_adocao.endereco,
+                    'observacoes': observacoes,
+                    'contato_email': solicitacao.pet.local_adocao.usuario.email,
+                    'contato_telefone': solicitacao.pet.local_adocao.telefone,
+                }
+                enviar_email_notificacao(
+                    solicitacao.interessado.usuario.email,
+                    assunto,
+                    mensagem,
+                    'core/email_retirada_agendada.html',
+                    context
+                )
+                
                 messages.success(request, f'Retirada agendada para {data_retirada.strftime("%d/%m/%Y às %H:%M")}!')
             except ValueError:
                 messages.error(request, 'Data inválida.')
@@ -1365,6 +1559,28 @@ def aceitar_termo(request, solicitacao_id):
         solicitacao.termo_aceito = True
         solicitacao.data_aceite_termo = timezone.now()
         solicitacao.save()
+        
+        # Notificar o local de adoção que o termo foi aceito
+        assunto = f'Termo Aceito - {solicitacao.interessado.usuario.first_name} para {solicitacao.pet.nome}'
+        mensagem = f"""Olá {solicitacao.pet.local_adocao.usuario.first_name},
+
+{solicitacao.interessado.usuario.first_name} aceitou o Termo de Responsabilidade para adoção do {solicitacao.pet.nome}.
+
+Atenciosamente,
+Equipe Harmony Pets"""
+        
+        context = {
+            'solicitacao': solicitacao,
+            'data_aceite': timezone.now().strftime('%d/%m/%Y às %H:%M'),
+            'data_retirada': solicitacao.data_retirada.strftime('%d/%m/%Y às %H:%M') if solicitacao.data_retirada else None,
+        }
+        enviar_email_notificacao(
+            solicitacao.pet.local_adocao.usuario.email,
+            assunto,
+            mensagem,
+            'core/email_termo_aceito.html',
+            context
+        )
         
         messages.success(request, 'Termo de responsabilidade aceito com sucesso! ✓')
     
@@ -1398,6 +1614,37 @@ def cancelar_solicitacao(request, solicitacao_id):
         solicitacao.justificativa_cancelamento = justificativa
         solicitacao.data_cancelamento = timezone.now()
         solicitacao.save()
+        
+        # Se o pet estava reservado, liberar para outras solicitações
+        if solicitacao.pet.status == 'reservado' and solicitacao.pet.adotado_por == interessado:
+            solicitacao.pet.status = 'disponivel'
+            solicitacao.pet.adotado_por = None
+            solicitacao.pet.save()
+        
+        # Notificar o local de adoção sobre o cancelamento
+        assunto = f'Solicitação Cancelada - {solicitacao.pet.nome}'
+        mensagem = f"""Olá {solicitacao.pet.local_adocao.usuario.first_name},
+
+{interessado.usuario.first_name} cancelou a solicitação de adoção do {solicitacao.pet.nome}.
+
+O pet foi liberado novamente.
+
+Atenciosamente,
+Equipe Harmony Pets"""
+        
+        context = {
+            'solicitacao': solicitacao,
+            'interessado': interessado,
+            'data_cancelamento': timezone.now().strftime('%d/%m/%Y às %H:%M'),
+            'justificativa': justificativa,
+        }
+        enviar_email_notificacao(
+            solicitacao.pet.local_adocao.usuario.email,
+            assunto,
+            mensagem,
+            'core/email_solicitacao_cancelada.html',
+            context
+        )
         
         messages.success(request, 'Solicitação cancelada com sucesso.')
     
@@ -1443,15 +1690,29 @@ def confirmar_adocao(request, solicitacao_id):
     """View para confirmar que o pet foi retirado e a adoção foi concluída"""
     try:
         local = request.user.localadocao
-        solicitacao = get_object_or_404(
-            SolicitacaoAdocao, 
-            id=solicitacao_id, 
-            pet__local_adocao=local,
-            status='agendado'
-        )
     except LocalAdocao.DoesNotExist:
-        messages.error(request, 'Acesso negado.')
+        messages.error(request, 'Acesso negado. Apenas locais de adoção podem confirmar adoções.')
         return redirect('home')
+    
+    # Buscar solicitação sem filtro de status primeiro para dar mensagem específica
+    try:
+        solicitacao = SolicitacaoAdocao.objects.get(
+            id=solicitacao_id, 
+            pet__local_adocao=local
+        )
+    except SolicitacaoAdocao.DoesNotExist:
+        messages.error(request, 'Solicitação de adoção não encontrada.')
+        return redirect('solicitacoes_adocao')
+    
+    # Verificar se a adoção já foi concluída
+    if solicitacao.status == 'concluida':
+        messages.info(request, 'Esta adoção já foi concluída anteriormente.')
+        return redirect('solicitacoes_adocao')
+    
+    # Verificar se a solicitação está em status válido para confirmação
+    if solicitacao.status not in ['agendado', 'entrevista_aprovada']:
+        messages.error(request, f'Não é possível confirmar esta adoção. Status atual: {solicitacao.get_status_display()}')
+        return redirect('solicitacoes_adocao')
     
     if request.method == 'POST':
         # Verificar se o interessado aceitou o termo
@@ -1465,6 +1726,31 @@ def confirmar_adocao(request, solicitacao_id):
         # Marcar pet como adotado
         solicitacao.pet.status = 'adotado'
         solicitacao.pet.save()
+        
+        # Enviar e-mail de conclusão da adoção
+        assunto = f'Parabéns! Adoção Concluída - {solicitacao.pet.nome} ❤️'
+        mensagem = f"""Olá {solicitacao.interessado.usuario.first_name},
+
+A adoção do {solicitacao.pet.nome} foi concluída com sucesso! 🎉
+
+Desejamos muita felicidade!
+
+Atenciosamente,
+Equipe Harmony Pets"""
+        
+        context = {
+            'solicitacao': solicitacao,
+            'contato_nome': solicitacao.pet.local_adocao.usuario.first_name,
+            'contato_email': solicitacao.pet.local_adocao.usuario.email,
+            'contato_telefone': solicitacao.pet.local_adocao.telefone,
+        }
+        enviar_email_notificacao(
+            solicitacao.interessado.usuario.email,
+            assunto,
+            mensagem,
+            'core/email_adocao_concluida.html',
+            context
+        )
         
         messages.success(request, 'Adoção concluída com sucesso! 🎉')
     
