@@ -2,12 +2,29 @@
 """
 Script unificado para popular o banco de dados com pets de exemplo.
 
-Execute: python manage.py shell < populate_pets.py
+LOCALIZAÇÃO: harmony-pets-system/scripts/populate_pets.py
+
+COMO EXECUTAR:
+    cd harmony-pets-system/harmony_pets
+    python manage.py shell < ../scripts/populate_pets.py
+
+OU (da raiz do projeto):
+    cd harmony-pets-system
+    python harmony_pets/manage.py shell < scripts/populate_pets.py
 
 Este script cria:
-- Locais de adoção em diferentes cidades (SP capital, Mogi, etc)
-- Pets variados com coordenadas geográficas reais
-- Dados realistas para teste do sistema
+- 5 locais de adoção em diferentes regiões de São Paulo
+- 3 pets por local (total de 15 pets)
+- Coordenadas geográficas reais para testar funcionalidade de geolocalização
+- Dados realistas com nomes, raças, idades e características variadas
+
+CONFIGURAÇÕES:
+- LIMPAR_BANCO: Define se deve limpar dados existentes antes de popular
+- QUANTIDADE_PETS_POR_LOCAL: Número de pets criados por local de adoção
+
+DEPENDÊNCIAS:
+- Django models: User, Pet, LocalAdocao
+- Requer banco de dados configurado e migrado
 """
 
 import random
@@ -242,18 +259,60 @@ def criar_pets(locais):
 # EXECUÇÃO PRINCIPAL
 # ============================================================================
 
-print("="*70)
-print(" SCRIPT DE POPULAÇÃO DO BANCO DE DADOS - HARMONY PETS")
-print("="*70)
-print()
-
-with transaction.atomic():
-    if LIMPAR_BANCO:
-        limpar_banco()
+def main():
+    """Função principal para executar a população do banco."""
+    print("="*70)
+    print(" SCRIPT DE POPULAÇÃO DO BANCO DE DADOS - HARMONY PETS")
+    print("="*70)
+    print()
+    print(f"Configuração:")
+    print(f"  - Limpar banco antes: {'Sim' if LIMPAR_BANCO else 'Não'}")
+    print(f"  - Pets por local: {QUANTIDADE_PETS_POR_LOCAL}")
+    print(f"  - Total de locais: {len(locais_adocao)}")
+    print(f"  - Total esperado de pets: {len(locais_adocao) * QUANTIDADE_PETS_POR_LOCAL}")
+    print()
     
-    locais = criar_locais()
-    criar_pets(locais)
+    try:
+        with transaction.atomic():
+            if LIMPAR_BANCO:
+                limpar_banco()
+            
+            locais = criar_locais()
+            criar_pets(locais)
+        
+        print("="*70)
+        print(" POPULAÇÃO CONCLUÍDA COM SUCESSO!")
+        print("="*70)
+        print()
+        print("Dados criados com sucesso!")
+        print()
+        print("Para acessar o sistema:")
+        print("  1. Inicie o servidor: python manage.py runserver")
+        print("  2. Acesse: http://localhost:8000")
+        print()
+        print("Credenciais dos locais de adoção:")
+        print("  Usuário: ong_pinheiros, ong_moema, ong_tatuape, ong_mogi, ong_sp_centro")
+        print("  Senha: 123")
+        print()
+        
+    except Exception as e:
+        print()
+        print("="*70)
+        print(" ERRO AO POPULAR BANCO DE DADOS")
+        print("="*70)
+        print()
+        print(f"Erro: {str(e)}")
+        print()
+        print("Verifique se:")
+        print("  1. O banco de dados está configurado corretamente")
+        print("  2. As migrações foram executadas: python manage.py migrate")
+        print("  3. Você está executando o script da maneira correta")
+        print()
+        raise
 
-print("="*70)
-print(" POPULAÇÃO CONCLUÍDA COM SUCESSO!")
-print("="*70)
+# Executar script
+if __name__ == "__main__":
+    main()
+else:
+    # Quando executado via manage.py shell
+    main()

@@ -13,13 +13,24 @@
    - Configure restrições de segurança
 
 ### 2. CONFIGURAR A CHAVE NO PROJETO
-   Substitua "SUA_CHAVE_API_GOOGLE_MAPS" nos seguintes arquivos:
-   - core/config_maps.py
-   - core/templates/core/pets_proximos.html
-   - core/utils.py (função geocodificar_endereco)
+   Crie um arquivo `.env` em `harmony_pets/.env` (mesmo nível do manage.py) e adicione:
+   ```
+   GOOGLE_MAPS_API_KEY=sua_chave_aqui
+   ```
+   
+   A chave será carregada automaticamente nos arquivos:
+   - harmony_pets/core/config_maps.py
+   - harmony_pets/core/templates/core/pets_proximos.html
+   - harmony_pets/core/utils.py (função geocodificar_endereco)
+   
+   Consulte `docs/ENV_README.md` para mais detalhes sobre variáveis de ambiente.
 
-### 3. INSTALAR BIBLIOTECA REQUESTS
-   pip install requests
+### 3. INSTALAR DEPENDÊNCIAS
+   ```bash
+   pip install -r requirements.txt
+   ```
+   
+   Isso instalará todas as dependências necessárias, incluindo requests para a API do Google Maps.
 
 ### 4. ATUALIZAR FORMULÁRIOS PARA INCLUIR LOCALIZAÇÃO
    - Adicionar campo de endereço detalhado
@@ -27,8 +38,16 @@
    - Validar coordenadas antes de salvar
 
 ### 5. POPULAR DADOS DE TESTE
-   - Adicionar coordenadas para usuários existentes
-   - Criar pets em locais diferentes para testar
+   Use os scripts disponíveis em `scripts/`:
+   ```bash
+   # Popular com dados de exemplo
+   python manage.py shell < scripts/populate_pets.py
+   
+   # Ou popular com dados específicos de São Paulo
+   python manage.py shell < scripts/populate_pets_sp.py
+   ```
+   
+   Consulte `scripts/README.md` para mais opções de população de dados.
 
 ## ARQUIVOS IMPLEMENTADOS:
 

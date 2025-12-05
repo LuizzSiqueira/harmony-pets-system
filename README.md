@@ -150,27 +150,56 @@ python manage.py runserver
 5. **Atualize status** dos pets
 6. **Comunique-se** com interessados
 
+## 📚 Documentação e Scripts
+
+### Documentação (`docs/`)
+Todos os guias e documentação técnica estão organizados na pasta `docs/`:
+- Guias de configuração (2FA, Google Maps, variáveis de ambiente)
+- Lista de implementações e funcionalidades
+- Consulte `docs/README.md` para mais detalhes
+
+### Scripts (`scripts/`)
+Scripts utilitários e ferramentas de automação estão na pasta `scripts/`:
+- Scripts de população de dados
+- Scripts de teste e cobertura
+- Ferramentas de debug e manutenção
+- Consulte `scripts/README.md` para instruções de uso
+
 ## 🗂️ Estrutura do Projeto
 
 ```
 harmony-pets-system/
-├── harmony_pets/
-│   ├── core/                    # App principal
+├── harmony_pets/               # Projeto Django principal
+│   ├── core/                   # App principal
 │   │   ├── models.py           # Modelos de dados
 │   │   ├── views.py            # Lógica de negócio
 │   │   ├── forms.py            # Formulários e validações
 │   │   ├── urls.py             # URLs da aplicação
 │   │   ├── middleware.py       # Middleware personalizado
 │   │   ├── templates/          # Templates HTML
-│   │   └── static/             # Arquivos estáticos
+│   │   ├── static/             # Arquivos estáticos
+│   │   ├── tests/              # Testes automatizados
+│   │   └── management/         # Comandos customizados
 │   ├── harmony_pets/           # Configurações do projeto
 │   ├── manage.py               # Gerenciador Django
-│   ├── populate_pets.py        # Script para popular dados
-│   ├── populate_pets_sp.py     # Script com dados geográficos SP
+│   ├── logs/                   # Logs do sistema
 │   ├── htmlcov/                # Relatório HTML de coverage (gerado)
 │   └── coverage.xml            # Relatório XML de coverage (gerado)
-├── venv/                       # Ambiente virtual
+├── scripts/                    # Scripts utilitários
+│   ├── populate_pets.py        # Script para popular dados
+│   ├── populate_pets_sp.py     # Script com dados geográficos SP
+│   ├── test_email_debug.py     # Teste de configuração de email
+│   └── run_tests_coverage.sh   # Script de cobertura de testes
+├── docs/                       # Documentação e guias
+│   ├── GUIA_2FA.md            # Guia de autenticação 2FA
+│   ├── GUIA_GOOGLE_MAPS.md    # Guia de configuração do Maps
+│   ├── ENV_README.md          # Documentação de variáveis de ambiente
+│   └── implementacoes.txt     # Lista de implementações
+├── .venv/                      # Ambiente virtual
 ├── README.md                   # Este arquivo
+├── requirements.txt            # Dependências principais
+├── requirements-dev.txt        # Dependências de desenvolvimento
+├── Makefile                    # Comandos úteis make
 └── .gitignore                  # Arquivos ignorados pelo Git
 ```
 
