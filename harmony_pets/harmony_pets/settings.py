@@ -21,6 +21,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import sys
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
@@ -133,8 +134,18 @@ if 'test' in sys.argv:
             'NAME': os.path.join(BASE_DIR, 'db_test.sqlite3'),
         }
     }
+elif os.environ.get('DATABASE_URL'):
+    # Produção (Render) - usa DATABASE_URL do ambiente
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
 else:
-    # Configuração PostgreSQL/Supabase para produção no Render
+    # Desenvolvimento local - usa variáveis separadas
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

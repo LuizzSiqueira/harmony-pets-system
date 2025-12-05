@@ -29,3 +29,6 @@ gunicorn==23.0.0         # Servidor WSGI para deploy
 # Whitenoise para servir arquivos estáticos
 whitenoise==6.8.2        # Servir arquivos estáticos em produção
 
+# Database URL parser
+dj-database-url==2.2.0   # Parser de DATABASE_URL para Render
+
