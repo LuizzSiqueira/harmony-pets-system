@@ -139,11 +139,17 @@ elif os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
+            conn_max_age=0,  # Desabilita connection pooling (usa pooler do Supabase)
             conn_health_checks=True,
             ssl_require=True,
         )
     }
+    # Configurações para Supabase Connection Pooler (pgBouncer)
+    if os.environ.get('PGBOUNCER_PREPARED_STATEMENTS') == 'False':
+        DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+        if 'OPTIONS' not in DATABASES['default']:
+            DATABASES['default']['OPTIONS'] = {}
+        DATABASES['default']['OPTIONS']['options'] = '-c statement_timeout=30000'
 else:
     # Desenvolvimento local - usa variáveis separadas
     DATABASES = {
