@@ -9,8 +9,6 @@ services:
         value: 3.12.0
       - key: DEBUG
         value: False
-      - key: USE_DB
-        value: web
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS

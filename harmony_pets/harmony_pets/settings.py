@@ -125,11 +125,6 @@ WSGI_APPLICATION = 'harmony_pets.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Seleção de banco de dados:
-# - USE_DB=local -> SQLite (útil para apresentação/offline)
-# - USE_DB=web   -> Postgres/Supabase (usa DB_* do ambiente)
-USE_DB = (os.environ.get('USE_DB') or '').lower()
-
 if 'test' in sys.argv:
     # Durante testes: usar SQLite isolado
     DATABASES = {
@@ -138,15 +133,8 @@ if 'test' in sys.argv:
             'NAME': os.path.join(BASE_DIR, 'db_test.sqlite3'),
         }
     }
-elif USE_DB == 'local':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-    }
 else:
-    # Padrão (ou USE_DB=web): Postgres/Supabase
+    # Configuração PostgreSQL/Supabase para produção no Render
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -156,7 +144,7 @@ else:
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
             'OPTIONS': {
-                'sslmode': os.environ.get('DB_SSLMODE', 'require'),  # Supabase requer SSL
+                'sslmode': os.environ.get('DB_SSLMODE', 'require'),
                 'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '5')),
                 'keepalives': 1,
                 'keepalives_idle': int(os.environ.get('DB_KEEPALIVES_IDLE', '20')),
