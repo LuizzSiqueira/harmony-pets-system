@@ -56,10 +56,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
 if DEBUG:
     # Permitir hosts comuns em desenvolvimento e testes internos
     ALLOWED_HOSTS.extend(['127.0.0.1','localhost','testserver'])
+else:
+    # Em produção, adicionar domínio do Render se não especificado
+    if not ALLOWED_HOSTS:
+        ALLOWED_HOSTS = ['.onrender.com']
 
 
 # Application definition
@@ -79,6 +83,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise para servir estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -207,9 +212,13 @@ PASSWORD_RESET_TIMEOUT = 3600  # 1 hora
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "core" / "static",
 ]
+
+# Whitenoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (uploads de imagens de pets)
 MEDIA_URL = '/media/'
