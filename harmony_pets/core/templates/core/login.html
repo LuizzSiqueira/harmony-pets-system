@@ -42,12 +42,7 @@
                     <div class="text-danger mt-1">{{ form.password.errors }}</div>
                 {% endif %}
             </div>
-            {% if error_message %}
-                <div class="alert alert-danger">
-                    Usuário ou senha inválidos.
-                </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary" {% if blocked_message %}disabled{% endif %}>
+            <button type="submit" class="btn btn-primary">
                 Entrar
             </button>
             <div class="text-center mt-3">

@@ -6,6 +6,13 @@
     margin: -30px -15px 30px -15px;
     border-radius: 0 0 15px 15px;
 }
+
+.hero-header .btn-light:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(255, 255, 255, 1) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+}
 .pet-card {
     border: none;
     border-radius: 15px;
@@ -20,6 +27,13 @@
 .pet-emoji {
     font-size: 4rem;
     margin-bottom: 15px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+.pet-emoji:hover {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.2));
 }
 .pet-name {
     color: #667eea;

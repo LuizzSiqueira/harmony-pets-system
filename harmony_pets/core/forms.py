@@ -300,7 +300,7 @@ class PetForm(forms.ModelForm):
         fields = [
             'nome', 'especie', 'raca', 'idade', 'sexo', 'porte', 'cor', 'peso',
             'castrado', 'vacinado', 'vermifugado', 'docil', 'brincalhao', 'calmo',
-            'descricao', 'cuidados_especiais', 'foto', 'foto_url', 'emoji',
+            'descricao', 'cuidados_especiais', 'foto', 'emoji',
             'latitude', 'longitude'
         ]
         widgets = {
@@ -317,7 +317,6 @@ class PetForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Descreva o pet, seu comportamento, características especiais...'}),
             'cuidados_especiais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Medicamentos, dieta especial, limitações... (opcional)'}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'foto_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL da foto (opcional)'}),
             'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '�', 'maxlength': '10'}),
         }
         labels = {
@@ -338,7 +337,6 @@ class PetForm(forms.ModelForm):
             'descricao': 'Descrição',
             'cuidados_especiais': 'Cuidados Especiais',
             'foto': 'Foto do Pet',
-            'foto_url': 'URL da Foto',
             'emoji': 'Emoji Representativo',
         }
     def clean_foto(self):

@@ -195,6 +195,10 @@ class Pet(models.Model):
     data_cadastro = models.DateTimeField(auto_now_add=True)
     data_adocao = models.DateTimeField(null=True, blank=True)
     
+    # Soft delete - Pet continua no banco mas fica oculto
+    ativo = models.BooleanField(default=True, help_text="Se False, o pet está oculto mas mantém os dados e vínculos")
+    data_exclusao = models.DateTimeField(null=True, blank=True, help_text="Data em que o pet foi ocultado/excluído")
+    
     # Foto (upload seguro e/ou URL)
     foto = models.ImageField(upload_to='pets/', blank=True, null=True, help_text="Foto do pet (upload)")
     foto_url = models.URLField(blank=True, help_text="URL da foto do pet (opcional)")
@@ -222,7 +226,11 @@ class Pet(models.Model):
 class SolicitacaoAdocao(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
-        ('aprovada', 'Aprovada'),
+        ('em_entrevista', 'Em Entrevista'),
+        ('entrevista_aprovada', 'Entrevista Aprovada'),
+        ('entrevista_rejeitada', 'Entrevista Rejeitada'),
+        ('agendado', 'Agendado para Retirada'),
+        ('concluida', 'Adoção Concluída'),
         ('rejeitada', 'Rejeitada'),
         ('cancelada', 'Cancelada'),
     ]
@@ -234,10 +242,27 @@ class SolicitacaoAdocao(models.Model):
     experiencia_pets = models.TextField(help_text="Conte sobre sua experiência com pets")
     situacao_moradia = models.TextField(help_text="Descreva sua situação de moradia (casa, apartamento, quintal, etc.)")
     
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pendente')
     data_solicitacao = models.DateTimeField(auto_now_add=True)
     data_resposta = models.DateTimeField(null=True, blank=True)
     resposta_local = models.TextField(blank=True, help_text="Resposta do local de adoção")
+    
+    # Campos para entrevista
+    data_entrevista = models.DateTimeField(null=True, blank=True, help_text="Data e hora da entrevista")
+    local_entrevista = models.TextField(blank=True, help_text="Local ou link da entrevista (presencial/online)")
+    observacoes_entrevista = models.TextField(blank=True, help_text="Observações sobre a entrevista")
+    
+    # Campos para agendamento da retirada
+    data_retirada = models.DateTimeField(null=True, blank=True, help_text="Data e hora agendada para retirar o pet")
+    observacoes_retirada = models.TextField(blank=True, help_text="Observações sobre a retirada do pet")
+    
+    # Campo para aceite do termo de responsabilidade
+    termo_aceito = models.BooleanField(default=False, help_text="Se o interessado aceitou o termo de responsabilidade")
+    data_aceite_termo = models.DateTimeField(null=True, blank=True, help_text="Data e hora do aceite do termo")
+    
+    # Campos para cancelamento pelo interessado
+    justificativa_cancelamento = models.TextField(blank=True, help_text="Justificativa do interessado para cancelar a solicitação")
+    data_cancelamento = models.DateTimeField(null=True, blank=True, help_text="Data e hora do cancelamento")
     
     class Meta:
         verbose_name = "Solicitação de Adoção"

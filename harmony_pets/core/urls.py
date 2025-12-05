@@ -33,10 +33,17 @@ urlpatterns = [
     path('meus-pets/<int:pet_id>/editar/', views.editar_pet, name='editar_pet'),
     path('meus-pets/<int:pet_id>/excluir/', views.excluir_pet, name='excluir_pet'),
     path('meus-pets/<int:pet_id>/status/', views.alterar_status_pet, name='alterar_status_pet'),
+    path('meus-pets/<int:pet_id>/historico/', views.historico_pet, name='historico_pet'),
     
     # URLs para solicitações de adoção
     path('solicitacoes/', views.solicitacoes_adocao, name='solicitacoes_adocao'),
     path('solicitacoes/<int:solicitacao_id>/responder/', views.responder_solicitacao, name='responder_solicitacao'),
+    path('solicitacoes/<int:solicitacao_id>/agendar-entrevista/', views.agendar_entrevista, name='agendar_entrevista'),
+    path('solicitacoes/<int:solicitacao_id>/responder-entrevista/', views.responder_entrevista, name='responder_entrevista'),
+    path('solicitacoes/<int:solicitacao_id>/agendar-retirada/', views.agendar_retirada, name='agendar_retirada'),
+    path('solicitacoes/<int:solicitacao_id>/aceitar-termo/', views.aceitar_termo, name='aceitar_termo'),
+    path('solicitacoes/<int:solicitacao_id>/cancelar/', views.cancelar_solicitacao, name='cancelar_solicitacao'),
+    path('solicitacoes/<int:solicitacao_id>/confirmar-adocao/', views.confirmar_adocao, name='confirmar_adocao'),
     
     # URLs para 2FA
     path('2fa/setup/', views.setup_2fa, name='setup_2fa'),

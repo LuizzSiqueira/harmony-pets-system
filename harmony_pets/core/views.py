@@ -146,12 +146,18 @@ def anonimizar_interessados(request):
     messages.success(request, 'Dados sensíveis anonimizados com sucesso!')
     return redirect('admin:index')
 @login_required
+@login_required
 def minhas_solicitacoes_adocao(request):
     try:
         interessado = request.user.interessadoadocao
-        solicitacoes = interessado.solicitacoes.select_related('pet').order_by('-data_solicitacao')
+        solicitacoes = interessado.solicitacoes.select_related('pet', 'pet__local_adocao').order_by('-data_solicitacao')
         return render(request, 'core/minhas_solicitacoes_adocao.html', {'solicitacoes': solicitacoes})
-    except Exception:
+    except InteressadoAdocao.DoesNotExist:
+        messages.warning(request, 'Você precisa completar seu cadastro como interessado em adoção para acessar suas solicitações. Preencha seus dados abaixo.')
+        return redirect('/edit-profile/?criar_perfil=interessado')
+    except Exception as e:
+        import traceback
+        print(f"Erro ao recuperar solicitações: {traceback.format_exc()}")
         messages.error(request, 'Não foi possível recuperar suas solicitações de adoção.')
         return redirect('profile')
 
@@ -228,8 +234,6 @@ def delete_account_view(request):
     return redirect('profile')
 
 def login_view(request):
-    error_message = None
-    blocked_message = None
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         username = request.POST.get('username')
@@ -244,9 +248,10 @@ def login_view(request):
             from .models import UserLoginAttempt
             login_attempt, _ = UserLoginAttempt.objects.get_or_create(user=user_obj)
             if login_attempt.is_blocked():
-                blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+                messages.error(request, f"🔒 Sua conta está temporariamente bloqueada por excesso de tentativas de login. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y às %H:%M:%S')}.")
         if login_attempt and login_attempt.is_blocked():
-            blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+            messages.error(request, f"🔒 Sua conta está temporariamente bloqueada por excesso de tentativas de login. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y às %H:%M:%S')}.")
+            logger.warning(f"Tentativa de login em conta bloqueada: '{username}' do IP {get_client_ip(request)}")
         elif form.is_valid() and user_obj:
             password = form.cleaned_data.get('password')
             user = authenticate(username=username, password=password)
@@ -275,25 +280,39 @@ def login_view(request):
                     return redirect(f"{reverse('verify_2fa')}?next={next_url}")
                 return redirect(request.GET.get('next', 'home'))
             else:
+                # Senha incorreta
                 if login_attempt:
                     login_attempt.failed_attempts += 1
+                    remaining_attempts = 5 - login_attempt.failed_attempts
                     if login_attempt.failed_attempts >= 5:
                         login_attempt.block()
-                        blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+                        messages.error(request, f"🔒 Sua conta foi bloqueada por excesso de tentativas incorretas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y às %H:%M:%S')}.")
+                        logger.warning(f"Conta bloqueada por excesso de tentativas: '{username}' do IP {get_client_ip(request)}")
+                    else:
+                        messages.warning(request, f"❌ Senha incorreta. Você tem mais {remaining_attempts} tentativa(s) antes do bloqueio.")
+                        logger.warning(f"Senha incorreta para usuário '{username}' do IP {get_client_ip(request)} - {remaining_attempts} tentativa(s) restante(s)")
                     login_attempt.save()
-                error_message = "Usuário ou senha inválidos."
-                logger.warning(f"Falha de login para usuário '{username}' do IP {get_client_ip(request)}")
+                else:
+                    messages.error(request, "❌ Senha incorreta. Verifique suas credenciais e tente novamente.")
+                    logger.warning(f"Falha de login para usuário '{username}' do IP {get_client_ip(request)}")
         elif not form.is_valid() and user_obj and login_attempt:
             # Se o usuário existe, mas o formulário não é válido, conta tentativa
             login_attempt.failed_attempts += 1
+            remaining_attempts = 5 - login_attempt.failed_attempts
             if login_attempt.failed_attempts >= 5:
                 login_attempt.block()
-                blocked_message = f"Usuário bloqueado por excesso de tentativas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y %H:%M:%S')}."
+                messages.error(request, f"🔒 Sua conta foi bloqueada por excesso de tentativas incorretas. Tente novamente após {login_attempt.blocked_until.strftime('%d/%m/%Y às %H:%M:%S')}.")
+                logger.warning(f"Conta bloqueada por excesso de tentativas: '{username}' do IP {get_client_ip(request)}")
+            else:
+                messages.warning(request, f"❌ Credenciais inválidas. Você tem mais {remaining_attempts} tentativa(s) antes do bloqueio.")
+                logger.warning(f"Credenciais inválidas para usuário '{username}' do IP {get_client_ip(request)} - {remaining_attempts} tentativa(s) restante(s)")
             login_attempt.save()
-            error_message = "Usuário ou senha inválidos."
+        elif not user_obj:
+            messages.error(request, "❌ Usuário não encontrado. Verifique o nome de usuário digitado.")
+            logger.warning(f"Tentativa de login com usuário inexistente: '{username}' do IP {get_client_ip(request)}")
     else:
         form = AuthenticationForm()
-    return render(request, 'core/login.html', {'form': form, 'error_message': error_message, 'blocked_message': blocked_message})
+    return render(request, 'core/login.html', {'form': form})
 
 def logout_view(request):
     """Tela de logout: confirma em GET e encerra sessão em POST."""
@@ -308,8 +327,31 @@ def logout_view(request):
 
 def home(request):
     # Mostrar alguns pets em destaque na página inicial
-    pets_destaque = Pet.objects.filter(status='disponivel')[:6]
-    return render(request, 'core/home.html', {'pets_destaque': pets_destaque})
+    pets_destaque = Pet.objects.filter(status='disponivel', ativo=True)[:6]
+    
+    context = {'pets_destaque': pets_destaque}
+    
+    # Se o usuário for um interessado, buscar suas solicitações e pets adotados
+    if request.user.is_authenticated:
+        try:
+            interessado = InteressadoAdocao.objects.get(usuario=request.user)
+            # Buscar solicitações recentes
+            solicitacoes = SolicitacaoAdocao.objects.filter(interessado=interessado).order_by('-data_solicitacao')[:3]
+            # Buscar pets adotados através das solicitações concluídas (incluir todos, mesmo inativos)
+            solicitacoes_concluidas = SolicitacaoAdocao.objects.filter(
+                interessado=interessado,
+                status='concluida'
+            ).select_related('pet')
+            pets_adotados = [sol.pet for sol in solicitacoes_concluidas if sol.pet]
+            
+            context['interessado'] = interessado
+            context['solicitacoes_recentes'] = solicitacoes
+            context['pets_adotados'] = pets_adotados
+            context['total_solicitacoes'] = SolicitacaoAdocao.objects.filter(interessado=interessado).count()
+        except InteressadoAdocao.DoesNotExist:
+            pass
+    
+    return render(request, 'core/home.html', context)
 
 @login_required
 def profile_view(request):
@@ -439,6 +481,7 @@ def edit_profile_view(request):
     user = request.user
     interessado = None
     local = None
+    criar_perfil = request.GET.get('criar_perfil')  # Parâmetro para permitir criação de perfil
     
     try:
         interessado = InteressadoAdocao.objects.get(usuario=user)
@@ -446,14 +489,19 @@ def edit_profile_view(request):
         try:
             local = LocalAdocao.objects.get(usuario=user)
         except LocalAdocao.DoesNotExist:
-            pass
+            # Se não tem nenhum perfil e não está explicitamente criando, pode criar
+            if criar_perfil == 'interessado':
+                interessado = InteressadoAdocao(usuario=user)
     
     if request.method == 'POST':
         user_form = EditUserForm(request.POST, instance=user)
         interessado_form = None
         local_form = None
         
-        if interessado:
+        # Criar novo perfil se solicitado
+        if not interessado and not local and request.POST.get('criar_como') == 'interessado':
+            interessado_form = EditInteressadoForm(request.POST)
+        elif interessado:
             interessado_form = EditInteressadoForm(request.POST, instance=interessado)
         elif local:
             local_form = EditLocalForm(request.POST, instance=local)
@@ -468,7 +516,14 @@ def edit_profile_view(request):
         if forms_valid:
             user_form.save()
             if interessado_form:
-                interessado_form.save()
+                if interessado_form.instance.pk:
+                    interessado_form.save()
+                else:
+                    # Criar novo perfil de interessado
+                    novo_interessado = interessado_form.save(commit=False)
+                    novo_interessado.usuario = user
+                    novo_interessado.save()
+                    messages.success(request, 'Perfil de interessado criado com sucesso!')
             elif local_form:
                 local_form.save()
             
@@ -476,7 +531,11 @@ def edit_profile_view(request):
             return redirect('profile')
     else:
         user_form = EditUserForm(instance=user)
-        interessado_form = EditInteressadoForm(instance=interessado) if interessado else None
+        # Permitir criação de perfil se não existe nenhum
+        if not interessado and not local and criar_perfil == 'interessado':
+            interessado_form = EditInteressadoForm()
+        else:
+            interessado_form = EditInteressadoForm(instance=interessado) if interessado else None
         local_form = EditLocalForm(instance=local) if local else None
     
     context = {
@@ -485,6 +544,8 @@ def edit_profile_view(request):
         'local_form': local_form,
         'interessado': interessado,
         'local': local,
+        'criar_perfil': criar_perfil,
+        'pode_criar_perfil': not interessado and not local,  # Só pode criar se não tem nenhum perfil
     }
     
     return render(request, 'core/edit_profile.html', context)
@@ -512,8 +573,81 @@ def change_password_view(request):
 
 
 def pets_list_view(request):
-    """View para listar todos os pets disponíveis para adoção"""
-    pets = Pet.objects.filter(status='disponivel')
+    """View unificada para listar pets disponíveis, pets próximos e pets adotados"""
+    
+    # Verificar se quer ver pets adotados
+    mostrar_adotados = request.GET.get('adotados') == 'true'
+    
+    if mostrar_adotados and request.user.is_authenticated:
+        try:
+            interessado = InteressadoAdocao.objects.get(usuario=request.user)
+            # Buscar pets através das solicitações concluídas
+            solicitacoes_concluidas = SolicitacaoAdocao.objects.filter(
+                interessado=interessado,
+                status='concluida'
+            ).select_related('pet', 'pet__local_adocao')
+            
+            # Extrair os pets das solicitações concluídas (incluir todos, mesmo inativos)
+            pets = [solicitacao.pet for solicitacao in solicitacoes_concluidas if solicitacao.pet]
+            
+            # Paginação
+            paginator = Paginator(pets, 12)
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            
+            context = {
+                'page_obj': page_obj,
+                'mostrar_adotados': True,
+                'especies_choices': Pet.ESPECIES_CHOICES,
+                'portes_choices': Pet.PORTES_CHOICES,
+                'sexos_choices': Pet.SEXOS_CHOICES,
+            }
+            return render(request, 'core/pets_list.html', context)
+        except InteressadoAdocao.DoesNotExist:
+            pass
+    
+    pets = Pet.objects.filter(status='disponivel', ativo=True).select_related('local_adocao')
+    
+    # Verificar se quer ver pets próximos
+    mostrar_proximos = request.GET.get('proximos') == 'true'
+    user_lat = None
+    user_lon = None
+    pets_com_distancia = {}  # Inicializar dicionário de distâncias
+    
+    if mostrar_proximos and request.user.is_authenticated:
+        try:
+            interessado = InteressadoAdocao.objects.get(usuario=request.user)
+            if interessado.latitude and interessado.longitude:
+                user_lat = interessado.latitude
+                user_lon = interessado.longitude
+                
+                # Filtrar pets que tenham coordenadas
+                pets_com_localizacao = []
+                pets_com_distancia = {}  # Dicionário para armazenar distâncias por pet ID
+                
+                for pet in pets:
+                    local = pet.local_adocao
+                    if local.latitude and local.longitude:
+                        from math import radians, sin, cos, sqrt, atan2
+                        # Calcular distância usando fórmula de Haversine
+                        lat1, lon1 = radians(user_lat), radians(user_lon)
+                        lat2, lon2 = radians(local.latitude), radians(local.longitude)
+                        
+                        dlat = lat2 - lat1
+                        dlon = lon2 - lon1
+                        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                        c = 2 * atan2(sqrt(a), sqrt(1-a))
+                        distancia_km = 6371 * c
+                        
+                        if distancia_km <= 50:  # Raio de 50km
+                            pets_com_localizacao.append((pet, distancia_km))
+                            pets_com_distancia[pet.id] = round(distancia_km, 1)
+                
+                # Ordenar por distância
+                pets_com_localizacao.sort(key=lambda x: x[1])
+                pets = [pet for pet, _ in pets_com_localizacao]
+        except InteressadoAdocao.DoesNotExist:
+            mostrar_proximos = False
     
     # Filtros
     especie = request.GET.get('especie')
@@ -522,17 +656,20 @@ def pets_list_view(request):
     search = request.GET.get('search')
     
     if especie:
-        pets = pets.filter(especie=especie)
+        pets = [pet for pet in pets if pet.especie == especie] if mostrar_proximos else pets.filter(especie=especie)
     if porte:
-        pets = pets.filter(porte=porte)
+        pets = [pet for pet in pets if pet.porte == porte] if mostrar_proximos else pets.filter(porte=porte)
     if sexo:
-        pets = pets.filter(sexo=sexo)
+        pets = [pet for pet in pets if pet.sexo == sexo] if mostrar_proximos else pets.filter(sexo=sexo)
     if search:
-        pets = pets.filter(
-            Q(nome__icontains=search) | 
-            Q(raca__icontains=search) | 
-            Q(descricao__icontains=search)
-        )
+        if mostrar_proximos:
+            pets = [pet for pet in pets if search.lower() in pet.nome.lower() or search.lower() in pet.raca.lower()]
+        else:
+            pets = pets.filter(
+                Q(nome__icontains=search) | 
+                Q(raca__icontains=search) | 
+                Q(descricao__icontains=search)
+            )
     
     # Paginação
     paginator = Paginator(pets, 12)  # 12 pets por página
@@ -545,6 +682,9 @@ def pets_list_view(request):
         'porte_atual': porte,
         'sexo_atual': sexo,
         'search_atual': search,
+        'mostrar_proximos': mostrar_proximos,
+        'tem_localizacao': user_lat is not None,
+        'pets_com_distancia': pets_com_distancia,
         'especies_choices': Pet.ESPECIES_CHOICES,
         'portes_choices': Pet.PORTES_CHOICES,
         'sexos_choices': Pet.SEXOS_CHOICES,
@@ -828,8 +968,8 @@ def gerenciar_pets(request):
         messages.error(request, 'Apenas organizações podem gerenciar pets.')
         return redirect('home')
     
-    # Buscar pets do local com paginação
-    pets = Pet.objects.filter(local_adocao=local).order_by('-data_cadastro')
+    # Buscar apenas pets ativos (não excluídos) do local com paginação
+    pets = Pet.objects.filter(local_adocao=local, ativo=True).order_by('-data_cadastro')
     
     # Estatísticas
     total_pets = pets.count()
@@ -915,7 +1055,7 @@ def editar_pet(request, pet_id):
 
 @login_required
 def excluir_pet(request, pet_id):
-    """View para excluir pet"""
+    """View para ocultar pet (soft delete) - mantém dados e vínculos"""
     try:
         local = request.user.localadocao
         pet = get_object_or_404(Pet, id=pet_id, local_adocao=local)
@@ -925,9 +1065,12 @@ def excluir_pet(request, pet_id):
     
     if request.method == 'POST':
         nome_pet = pet.nome
-        pet.delete()
-        messages.success(request, f'Pet {nome_pet} removido com sucesso.')
-        logger.warning(f"Pet excluído: id={pet_id} nome='{nome_pet}' por '{request.user.username}'")
+        # Soft delete - apenas oculta o pet
+        pet.ativo = False
+        pet.data_exclusao = timezone.now()
+        pet.save()
+        messages.success(request, f'Pet {nome_pet} foi ocultado com sucesso. Os dados e histórico foram preservados.')
+        logger.warning(f"Pet ocultado (soft delete): id={pet_id} nome='{nome_pet}' por '{request.user.username}'")
         return redirect('gerenciar_pets')
     
     return render(request, 'core/confirmar_exclusao_pet.html', {'pet': pet})
@@ -986,7 +1129,11 @@ def solicitacoes_adocao(request):
     
     # Filtros
     status_filtro = request.GET.get('status')
-    if status_filtro and status_filtro in ['pendente', 'aprovada', 'rejeitada', 'cancelada']:
+    status_validos = [
+        'pendente', 'em_entrevista', 'entrevista_aprovada', 'entrevista_rejeitada',
+        'agendado', 'concluida', 'rejeitada', 'cancelada'
+    ]
+    if status_filtro and status_filtro in status_validos:
         solicitacoes = solicitacoes.filter(status=status_filtro)
     
     # Paginação
@@ -998,8 +1145,10 @@ def solicitacoes_adocao(request):
     stats = {
         'total': SolicitacaoAdocao.objects.filter(pet__local_adocao=local).count(),
         'pendentes': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='pendente').count(),
-        'aprovadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='aprovada').count(),
-        'rejeitadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='rejeitada').count(),
+        'em_entrevista': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='em_entrevista').count(),
+        'aprovadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='entrevista_aprovada').count(),
+        'agendadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='agendado').count(),
+        'concluidas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='concluida').count(),
     }
     
     context = {
@@ -1056,6 +1205,268 @@ def responder_solicitacao(request, solicitacao_id):
             messages.success(request, f'Solicitação {action_text} com sucesso!')
         else:
             messages.error(request, 'Ação inválida.')
+    
+    return redirect('solicitacoes_adocao')
+
+@login_required
+def agendar_entrevista(request, solicitacao_id):
+    """View para agendar entrevista com o interessado"""
+    try:
+        local = request.user.localadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            pet__local_adocao=local,
+            status='pendente'
+        )
+    except LocalAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        from django.utils import timezone
+        from datetime import datetime
+        
+        data_entrevista_str = request.POST.get('data_entrevista')
+        local_entrevista = request.POST.get('local_entrevista', '')
+        observacoes = request.POST.get('observacoes_entrevista', '')
+        
+        if data_entrevista_str:
+            try:
+                data_entrevista = datetime.strptime(data_entrevista_str, '%Y-%m-%dT%H:%M')
+                solicitacao.data_entrevista = data_entrevista
+                solicitacao.local_entrevista = local_entrevista
+                solicitacao.observacoes_entrevista = observacoes
+                solicitacao.status = 'em_entrevista'
+                solicitacao.save()
+                
+                messages.success(request, 'Entrevista agendada com sucesso!')
+            except ValueError:
+                messages.error(request, 'Data inválida.')
+        else:
+            messages.error(request, 'Por favor, informe a data da entrevista.')
+    
+    return redirect('solicitacoes_adocao')
+
+@login_required
+def responder_entrevista(request, solicitacao_id):
+    """View para aprovar ou rejeitar após entrevista"""
+    try:
+        local = request.user.localadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            pet__local_adocao=local,
+            status='em_entrevista'
+        )
+    except LocalAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        from django.utils import timezone
+        
+        resultado = request.POST.get('resultado')  # 'aprovar' ou 'rejeitar'
+        observacoes = request.POST.get('observacoes', '')
+        
+        if resultado == 'aprovar':
+            solicitacao.status = 'entrevista_aprovada'
+            if observacoes:
+                solicitacao.observacoes_entrevista = f"{solicitacao.observacoes_entrevista}\n\nResultado: Aprovado\n{observacoes}".strip()
+            else:
+                solicitacao.observacoes_entrevista = f"{solicitacao.observacoes_entrevista}\n\nResultado: Aprovado".strip()
+            solicitacao.data_resposta = timezone.now()
+            solicitacao.save()
+            messages.success(request, 'Entrevista aprovada! Agora você pode agendar a retirada do pet.')
+        elif resultado == 'rejeitar':
+            solicitacao.status = 'entrevista_rejeitada'
+            if observacoes:
+                solicitacao.observacoes_entrevista = f"{solicitacao.observacoes_entrevista}\n\nResultado: Rejeitado\nMotivo: {observacoes}".strip()
+            solicitacao.resposta_local = observacoes
+            solicitacao.data_resposta = timezone.now()
+            solicitacao.save()
+            messages.info(request, 'Entrevista rejeitada.')
+        else:
+            messages.error(request, 'Ação inválida.')
+    
+    return redirect('solicitacoes_adocao')
+
+@login_required
+def agendar_retirada(request, solicitacao_id):
+    """View para agendar data de retirada do pet"""
+    try:
+        local = request.user.localadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            pet__local_adocao=local,
+            status='entrevista_aprovada'
+        )
+    except LocalAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        from datetime import datetime
+        
+        data_retirada_str = request.POST.get('data_retirada')
+        observacoes = request.POST.get('observacoes_retirada', '')
+        
+        if data_retirada_str:
+            try:
+                data_retirada = datetime.strptime(data_retirada_str, '%Y-%m-%dT%H:%M')
+                solicitacao.data_retirada = data_retirada
+                solicitacao.observacoes_retirada = observacoes
+                solicitacao.status = 'agendado'
+                solicitacao.save()
+                
+                # Marcar pet como reservado
+                solicitacao.pet.status = 'reservado'
+                solicitacao.pet.adotado_por = solicitacao.interessado
+                solicitacao.pet.save()
+                
+                # Rejeitar outras solicitações pendentes para o mesmo pet
+                from django.utils import timezone
+                SolicitacaoAdocao.objects.filter(
+                    pet=solicitacao.pet,
+                    status__in=['pendente', 'em_entrevista']
+                ).exclude(id=solicitacao.id).update(
+                    status='rejeitada',
+                    resposta_local='Pet já foi reservado para outro interessado.',
+                    data_resposta=timezone.now()
+                )
+                
+                messages.success(request, f'Retirada agendada para {data_retirada.strftime("%d/%m/%Y às %H:%M")}!')
+            except ValueError:
+                messages.error(request, 'Data inválida.')
+        else:
+            messages.error(request, 'Por favor, informe a data da retirada.')
+    
+    return redirect('solicitacoes_adocao')
+
+@login_required
+def aceitar_termo(request, solicitacao_id):
+    """View para o interessado aceitar o termo de responsabilidade"""
+    try:
+        interessado = request.user.interessadoadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            interessado=interessado,
+            status__in=['agendado', 'em_entrevista', 'entrevista_aprovada']
+        )
+    except InteressadoAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        from django.utils import timezone
+        
+        solicitacao.termo_aceito = True
+        solicitacao.data_aceite_termo = timezone.now()
+        solicitacao.save()
+        
+        messages.success(request, 'Termo de responsabilidade aceito com sucesso! ✓')
+    
+    return redirect('minhas_solicitacoes_adocao')
+
+@login_required
+def cancelar_solicitacao(request, solicitacao_id):
+    """View para o interessado cancelar sua solicitação de adoção com justificativa"""
+    try:
+        interessado = request.user.interessadoadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            interessado=interessado,
+            status__in=['pendente', 'em_entrevista', 'entrevista_aprovada', 'agendado']
+        )
+    except InteressadoAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        justificativa = request.POST.get('justificativa', '').strip()
+        
+        if not justificativa or len(justificativa) < 10:
+            messages.error(request, 'Por favor, forneça uma justificativa válida (mínimo 10 caracteres).')
+            return redirect('minhas_solicitacoes_adocao')
+        
+        from django.utils import timezone
+        
+        solicitacao.status = 'cancelada'
+        solicitacao.justificativa_cancelamento = justificativa
+        solicitacao.data_cancelamento = timezone.now()
+        solicitacao.save()
+        
+        messages.success(request, 'Solicitação cancelada com sucesso.')
+    
+    return redirect('minhas_solicitacoes_adocao')
+
+@login_required
+def historico_pet(request, pet_id):
+    """View para o local de adoção visualizar o histórico completo do pet"""
+    try:
+        local = request.user.localadocao
+        pet = get_object_or_404(Pet, id=pet_id, local_adocao=local)
+    except LocalAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    # Buscar todas as solicitações relacionadas ao pet, ordenadas por data
+    solicitacoes = SolicitacaoAdocao.objects.filter(pet=pet).select_related(
+        'interessado__usuario'
+    ).order_by('-data_solicitacao')
+    
+    # Estatísticas do histórico
+    stats = {
+        'total': solicitacoes.count(),
+        'pendentes': solicitacoes.filter(status='pendente').count(),
+        'em_entrevista': solicitacoes.filter(status='em_entrevista').count(),
+        'aprovadas': solicitacoes.filter(status='entrevista_aprovada').count(),
+        'agendadas': solicitacoes.filter(status='agendado').count(),
+        'concluidas': solicitacoes.filter(status='concluida').count(),
+        'rejeitadas': solicitacoes.filter(status__in=['rejeitada', 'entrevista_rejeitada']).count(),
+        'canceladas': solicitacoes.filter(status='cancelada').count(),
+    }
+    
+    context = {
+        'pet': pet,
+        'solicitacoes': solicitacoes,
+        'stats': stats,
+    }
+    
+    return render(request, 'core/historico_pet.html', context)
+
+@login_required
+def confirmar_adocao(request, solicitacao_id):
+    """View para confirmar que o pet foi retirado e a adoção foi concluída"""
+    try:
+        local = request.user.localadocao
+        solicitacao = get_object_or_404(
+            SolicitacaoAdocao, 
+            id=solicitacao_id, 
+            pet__local_adocao=local,
+            status='agendado'
+        )
+    except LocalAdocao.DoesNotExist:
+        messages.error(request, 'Acesso negado.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        # Verificar se o interessado aceitou o termo
+        if not solicitacao.termo_aceito:
+            messages.error(request, 'Não é possível confirmar a adoção. O interessado ainda não aceitou o termo de responsabilidade.')
+            return redirect('solicitacoes_adocao')
+        
+        solicitacao.status = 'concluida'
+        solicitacao.save()
+        
+        # Marcar pet como adotado
+        solicitacao.pet.status = 'adotado'
+        solicitacao.pet.save()
+        
+        messages.success(request, 'Adoção concluída com sucesso! 🎉')
     
     return redirect('solicitacoes_adocao')
 

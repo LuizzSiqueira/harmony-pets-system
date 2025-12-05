@@ -9,7 +9,7 @@
 
 {% block content %}
     <!-- Hero Section com Vídeo de Fundo -->
-    <div class="hero-section position-relative overflow-hidden" style="min-height: 70vh; display: flex; align-items: center; background-color: white;">
+    <div class="hero-section position-relative overflow-hidden" style="min-height: 50vh; display: flex; align-items: center; background-color: white;">
         <!-- Vídeo de fundo -->
         <video autoplay muted loop playsinline class="position-absolute w-100 h-100 hero-video" style="background-color: white;">
             <source src="{% static 'core/videos/hero-animation.mp4' %}" type="video/mp4">
@@ -22,39 +22,37 @@
         <!-- Conteúdo -->
         <div class="container position-relative" style="z-index: 2;">
             <div class="hero-content text-center">
-                <div class="pet-icon mb-3" style="font-size: 5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));">🐾</div>
-                <h1 class="hero-title fw-bold mb-2" style="font-size: 2.8rem; color: #5a67d8; text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.9), 0 0 20px rgba(233, 216, 253, 0.8); letter-spacing: 2px;">Bem-vindo ao Harmony Pets!</h1>
-                <p class="hero-subtitle mb-4" style="font-size: 1.3rem; color: #374151; font-weight: 600; text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.9);">Onde a felicidade de um pet encontra a alegria de uma família.</p>
-                <div class="d-flex justify-content-center flex-wrap gap-3 mb-3">
+                <div class="pet-icon mb-2" style="font-size: 3.5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));">🐾</div>
+                <h1 class="hero-title fw-bold mb-2" style="font-size: 2.2rem; color: #5a67d8; text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.9), 0 0 20px rgba(233, 216, 253, 0.8); letter-spacing: 1px;">Bem-vindo ao Harmony Pets!</h1>
+                <p class="hero-subtitle mb-3" style="font-size: 1.1rem; color: #374151; font-weight: 600; text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.9);">Onde a felicidade de um pet encontra a alegria de uma família.</p>
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-2">
                     {% if user.is_authenticated %}
                         {% if user.localadocao %}
-                            <a href="{% url 'gerenciar_pets' %}" class="btn btn-primary rounded-pill px-4">🐾 Meus Pets</a>
-                            <a href="{% url 'solicitacoes_adocao' %}" class="btn btn-outline-secondary rounded-pill px-4">📨 Solicitações</a>
-                            <a href="{% url 'adicionar_pet' %}" class="btn btn-outline-primary rounded-pill px-4">➕ Adicionar Pet</a>
+                            <a href="{% url 'adicionar_pet' %}" class="btn rounded-pill px-4 py-2 shadow-sm" style="font-size: 1rem; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(245, 87, 108, 0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">➕ Adicionar Pet</a>
                         {% elif user.interessadoadocao %}
-                            <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4">Ver Pets para Adoção</a>
-                            <a href="{% url 'pets_proximos' %}" class="btn rounded-pill px-4" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white; border: none; font-weight: 600;">🗺️ Pets Próximos</a>
-                            <a href="{% url 'profile' %}" class="btn btn-outline-dark rounded-pill px-4">Meu Perfil</a>
+                            <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4 py-2" style="font-size: 1rem; font-weight: 600;">
+                                <i class="fas fa-paw"></i> Ver Todos os Pets
+                            </a>
+                            <a href="{% url 'pets_list' %}?proximos=true" class="btn rounded-pill px-4 py-2" style="font-size: 1rem; background: linear-gradient(135deg, #17a2b8, #138496); color: white; border: none; font-weight: 600;">
+                                <i class="fas fa-map-marker-alt"></i> Pets Próximos
+                            </a>
                         {% else %}
-                            <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4">Ver Pets para Adoção</a>
-                            <a href="{% url 'profile' %}" class="btn btn-outline-dark rounded-pill px-4">Meu Perfil</a>
+                            <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4 py-2" style="font-size: 1rem; font-weight: 600;">
+                                <i class="fas fa-paw"></i> Ver Pets para Adoção
+                            </a>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4">Ver Pets para Adoção</a>
-                        <a href="{% url 'register' %}" class="btn btn-outline-dark rounded-pill px-4">Cadastrar-se</a>
+                        <a href="{% url 'pets_list' %}" class="btn btn-primary rounded-pill px-4 py-2" style="font-size: 1rem; font-weight: 600;">
+                            <i class="fas fa-paw"></i> Ver Pets para Adoção
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline-light rounded-pill px-4 py-2" style="font-size: 1rem; font-weight: 600; border-width: 2px;">
+                            <i class="fas fa-user-plus"></i> Cadastrar-se
+                        </a>
                     {% endif %}
                 </div>
-                {% if user.is_authenticated %}
-                <div class="mt-2">
-                    <a href="{% url 'logout' %}" class="text-dark fw-semibold" style="text-decoration: none; opacity: 0.8;">
-                        Sair da conta
-                    </a>
-                </div>
-                {% endif %}
             </div>
         </div>
-            </div>
-        </div>
+    </div>
         
         <style>
             /* Animação do vídeo - aparece, fica visível e depois desaparece */
@@ -126,25 +124,30 @@
             }
         </style>
     </div>
-    
-    <!-- Seção de pets em destaque -->
+
+    <!-- Seção de Pets em Destaque - Cards que mudam a cada exibição -->
     {% if pets_destaque %}
-    <div class="container py-5">
-        <div class="text-center mb-5">
-            <h2 class="pets-destaque-title">🐾 Pets Esperando por Você</h2>
-            <p class="pets-destaque-desc">Conheça alguns dos nossos amiguinhos que estão procurando um lar</p>
+    <div class="container py-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold" style="color: #ffffff; font-size: 1.8rem; text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);">
+                <i class="fas fa-star"></i> Pets Esperando por Você
+            </h2>
+            <p style="color: #f8f9fa; font-size: 0.95rem; font-weight: 500; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);">Conheça alguns amiguinhos que estão procurando um lar</p>
         </div>
-        <div class="row">
+        
+        <div class="row g-4" id="petsContainer">
             {% for pet in pets_destaque %}
-            <div class="col-md-4 col-lg-2 mb-4">
-                <div class="card h-100" style="border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
-                    <div class="card-body text-center">
-                        <div style="font-size: 3rem; margin-bottom: 15px;">{{ pet.emoji }}</div>
-                        <h5 class="card-title" style="color: #667eea;">{{ pet.nome }}</h5>
-                        <p class="card-text">
-                            <small class="text-muted">{{ pet.get_especie_display }} • {{ pet.get_idade_display }}</small>
+            <div class="col-md-6 col-lg-3 pet-card-wrapper" data-pet-index="{{ forloop.counter0 }}">
+                <div class="card h-100 shadow-sm pet-card-animated" style="border-radius: 15px; border: none; overflow: hidden; transition: all 0.3s ease;">
+                    <div class="card-body text-center p-3">
+                        <div class="pet-emoji mb-2" style="font-size: 3.5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15)); transition: all 0.3s ease;">
+                            {{ pet.emoji }}
+                        </div>
+                        <h5 class="card-title fw-bold mb-2" style="color: #667eea; font-size: 1.1rem;">{{ pet.nome }}</h5>
+                        <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                            {{ pet.get_especie_display }} • {{ pet.get_idade_display }}
                         </p>
-                        <a href="{% url 'pet_detail' pet.id %}" class="btn btn-sm" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border-radius: 20px;">
+                        <a href="{% url 'pet_detail' pet.id %}" class="btn btn-sm w-100" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border-radius: 20px; padding: 0.5rem; font-weight: 600; font-size: 0.85rem;">
                             Ver Detalhes
                         </a>
                     </div>
@@ -152,9 +155,66 @@
             </div>
             {% endfor %}
         </div>
+        
         <div class="text-center mt-4">
-            <a href="{% url 'pets_list' %}" class="btn btn-custom btn-primary-custom">Ver Todos os Pets</a>
+            <a href="{% url 'pets_list' %}" class="btn btn-lg shadow" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 30px; padding: 0.8rem 2.5rem; font-weight: 600; border: none;">
+                <i class="fas fa-th"></i> Ver Todos os Pets
+            </a>
         </div>
     </div>
+    
+    <style>
+        .pet-card-animated {
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+        
+        .pet-card-wrapper:nth-child(1) .pet-card-animated { animation-delay: 0.1s; }
+        .pet-card-wrapper:nth-child(2) .pet-card-animated { animation-delay: 0.2s; }
+        .pet-card-wrapper:nth-child(3) .pet-card-animated { animation-delay: 0.3s; }
+        .pet-card-wrapper:nth-child(4) .pet-card-animated { animation-delay: 0.4s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pet-card-animated:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3) !important;
+        }
+        
+        .pet-card-animated:hover .pet-emoji {
+            transform: scale(1.2) rotate(10deg);
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+        }
+    </style>
+    
+    <script>
+        // Rotaciona os pets exibidos a cada carregamento da página
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('petsContainer');
+            const cards = Array.from(container.querySelectorAll('.pet-card-wrapper'));
+            
+            // Embaralha os cards aleatoriamente
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                container.appendChild(cards[j]);
+            }
+            
+            // Mostra apenas 4 cards aleatórios
+            cards.forEach((card, index) => {
+                if (index >= 4) {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
     {% endif %}
+
 {% endblock %}
