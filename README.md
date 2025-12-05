@@ -47,16 +47,44 @@ Sistema completo de adoção de pets em Django, incluindo autenticação de dois
 - **Histórico de solicitações** e status
 - **Notificações e feedback** do processo
 
+## 🏗️ Arquitetura do Projeto
+
+Este projeto segue o padrão **MVT (Model-View-Template)** do Django:
+
+- **Model (Modelo)**: Define a estrutura de dados e regras de negócio
+  - Localização: `harmony_pets/core/models.py`
+  - Exemplos: `Pet`, `InteressadoAdocao`, `LocalAdocao`, `SolicitacaoAdocao`, `TwoFactorAuth`
+  - Responsabilidades: Validações, relacionamentos, métodos de negócio
+
+- **View (Visão)**: Contém a lógica de processamento e controle
+  - Localização: `harmony_pets/core/views.py`
+  - Exemplos: `login_view`, `listar_pets`, `solicitar_adocao`, `dashboard_admin`
+  - Responsabilidades: Receber requisições, processar dados, retornar respostas
+
+- **Template (Modelo de apresentação)**: Define a interface do usuário
+  - Localização: `harmony_pets/core/templates/`
+  - Exemplos: `base.html`, `pets_list.html`, `login.html`, `perfil.html`
+  - Responsabilidades: Renderização HTML, apresentação de dados
+
+### Componentes Adicionais
+
+- **Forms**: Validação e processamento de formulários (`forms.py`)
+- **URLs**: Roteamento de requisições (`urls.py`)
+- **Middleware**: Interceptadores de requisição/resposta (`middleware.py`)
+- **Static Files**: CSS, JavaScript, imagens (`static/`)
+- **Template Tags**: Filtros e tags customizadas (`templatetags/`)
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **Backend**: Django 5.2.5, Python 3.12
 - **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
-- **Banco de dados**: PostgreSQL
+- **Banco de dados**: PostgreSQL (produção), SQLite (desenvolvimento/testes)
 - **Autenticação**: Microsoft Authenticator (TOTP)
 - **Mapas**: Google Maps API
 - **Emojis**: API Ninjas (opcional)
 - **Validações**: CPF/CNPJ, e-mail, telefone
 - **Segurança**: Middleware personalizado, LGPD compliance
+- **Testes**: Django TestCase, unittest, coverage, pytest
 
 ## 🚀 Instalação e Configuração
 
@@ -165,43 +193,65 @@ Scripts utilitários e ferramentas de automação estão na pasta `scripts/`:
 - Ferramentas de debug e manutenção
 - Consulte `scripts/README.md` para instruções de uso
 
-## 🗂️ Estrutura do Projeto
+## 🗂️ Estrutura do Projeto (MVT)
 
 ```
 harmony-pets-system/
 ├── harmony_pets/               # Projeto Django principal
-│   ├── core/                   # App principal
-│   │   ├── models.py           # Modelos de dados
-│   │   ├── views.py            # Lógica de negócio
-│   │   ├── forms.py            # Formulários e validações
-│   │   ├── urls.py             # URLs da aplicação
-│   │   ├── middleware.py       # Middleware personalizado
-│   │   ├── templates/          # Templates HTML
-│   │   ├── static/             # Arquivos estáticos
-│   │   ├── tests/              # Testes automatizados
-│   │   └── management/         # Comandos customizados
-│   ├── harmony_pets/           # Configurações do projeto
-│   ├── manage.py               # Gerenciador Django
-│   ├── logs/                   # Logs do sistema
-│   ├── htmlcov/                # Relatório HTML de coverage (gerado)
-│   └── coverage.xml            # Relatório XML de coverage (gerado)
-├── scripts/                    # Scripts utilitários
-│   ├── populate_pets.py        # Script para popular dados
-│   ├── populate_pets_sp.py     # Script com dados geográficos SP
+│   ├── core/                   # App principal (MVT)
+│   │   ├── models.py           # 📊 MODEL: Modelos de dados e regras de negócio
+│   │   ├── views.py            # 🎯 VIEW: Lógica de controle e processamento
+│   │   ├── forms.py            # 📝 Formulários e validações
+│   │   ├── urls.py             # 🔗 Roteamento de URLs
+│   │   ├── middleware.py       # 🛡️ Interceptadores de requisição
+│   │   ├── templates/          # 🎨 TEMPLATE: Interface do usuário (HTML)
+│   │   │   ├── core/           # Templates da aplicação
+│   │   │   └── registration/   # Templates de autenticação
+│   │   ├── static/             # 📁 Arquivos estáticos (CSS, JS, imagens)
+│   │   │   └── core/
+│   │   │       ├── css/        # Estilos CSS
+│   │   │       ├── js/         # Scripts JavaScript
+│   │   │       └── img/        # Imagens
+│   │   ├── tests/              # 🧪 Testes automatizados (15 arquivos)
+│   │   ├── templatetags/       # 🏷️ Filtros e tags customizadas
+│   │   └── management/         # ⚙️ Comandos Django customizados
+│   │       └── commands/
+│   ├── harmony_pets/           # ⚙️ Configurações do projeto Django
+│   │   ├── settings.py         # Configurações principais
+│   │   ├── urls.py             # URLs do projeto
+│   │   └── wsgi.py             # Interface WSGI
+│   ├── manage.py               # 🔧 Gerenciador Django
+│   ├── logs/                   # 📋 Logs do sistema
+│   ├── htmlcov/                # 📊 Relatório HTML de coverage (gerado)
+│   └── coverage.xml            # 📊 Relatório XML de coverage (gerado)
+├── scripts/                    # 🛠️ Scripts utilitários
+│   ├── populate_pets.py        # Popular banco com dados de teste
+│   ├── populate_pets_sp.py     # Popular com dados geográficos SP
 │   ├── test_email_debug.py     # Teste de configuração de email
-│   └── run_tests_coverage.sh   # Script de cobertura de testes
-├── docs/                       # Documentação e guias
+│   └── run_tests_coverage.sh   # Execução de testes com cobertura
+├── docs/                       # 📚 Documentação e guias
 │   ├── GUIA_2FA.md            # Guia de autenticação 2FA
 │   ├── GUIA_GOOGLE_MAPS.md    # Guia de configuração do Maps
+│   ├── GUIA_TESTES.md         # Guia completo de testes
 │   ├── ENV_README.md          # Documentação de variáveis de ambiente
-│   └── implementacoes.txt     # Lista de implementações
-├── .venv/                      # Ambiente virtual
-├── README.md                   # Este arquivo
-├── requirements.txt            # Dependências principais
-├── requirements-dev.txt        # Dependências de desenvolvimento
-├── Makefile                    # Comandos úteis make
-└── .gitignore                  # Arquivos ignorados pelo Git
+│   ├── implementacoes.txt     # Lista de implementações
+│   └── README.md              # Índice da documentação
+├── .venv/                      # 🐍 Ambiente virtual Python
+├── README.md                   # 📖 Este arquivo
+├── requirements.txt            # 📦 Dependências principais
+├── requirements-dev.txt        # 📦 Dependências de desenvolvimento
+├── Makefile                    # ⚡ Comandos úteis make
+└── .gitignore                  # 🚫 Arquivos ignorados pelo Git
 ```
+
+### Fluxo MVT no Projeto
+
+1. **Requisição do usuário** → `urls.py` (roteamento)
+2. **View processa** → `views.py` (lógica de negócio)
+3. **Model consulta/salva** → `models.py` (banco de dados)
+4. **View prepara contexto** → Dados para o template
+5. **Template renderiza** → `templates/` (HTML final)
+6. **Resposta HTTP** → Enviada ao navegador
 
 ## 🔒 Segurança e LGPD
 
@@ -211,15 +261,43 @@ harmony-pets-system/
 - **Autenticação robusta** com 2FA opcional (ativável pelo usuário, middleware exige quando configurado)
 - **Validação de dados** rigorosa
 
-## 📋 Modelos de Dados
+## 📋 Modelos de Dados (Model - MVT)
 
-- **User**: Usuários do sistema (Django padrão)
-- **InteressadoAdocao**: Pessoas interessadas em adotar
-- **LocalAdocao**: Organizações/locais que oferecem pets
+### Principais Models em `core/models.py`
+
+- **User**: Usuários do sistema (Django padrão - `django.contrib.auth`)
+  - Base para autenticação e permissões
+
+- **InteressadoAdocao**: Pessoas interessadas em adotar pets
+  - Campos: CPF, telefone, endereço, latitude, longitude
+  - Relacionamento: OneToOne com User
+
+- **LocalAdocao**: Organizações/locais que oferecem pets para adoção
+  - Campos: CNPJ, telefone, endereço, latitude, longitude
+  - Relacionamento: OneToOne com User
+
 - **Pet**: Animais disponíveis para adoção
-- **SolicitacaoAdocao**: Solicitações de adoção
-- **TwoFactorAuth**: Configurações de 2FA (secret, método preferido, códigos de backup)
+  - Campos: nome, espécie, porte, sexo, idade, descrição, foto, emoji, coordenadas
+  - Status: disponível, em processo, adotado
+  - Relacionamento: ForeignKey com LocalAdocao
+
+- **SolicitacaoAdocao**: Registro de solicitações de adoção
+  - Campos: motivo, status, data_solicitacao
+  - Relacionamentos: ForeignKey com Pet e InteressadoAdocao
+
+- **TwoFactorAuth**: Configurações de autenticação 2FA
+  - Campos: secret_key, método preferido (authenticator/sms), códigos de backup
+  - Relacionamento: OneToOne com User
+
 - **AceitacaoTermos**: Controle de aceitação LGPD
+  - Campos: data_aceitacao, ip_address, versao_termos
+  - Relacionamento: ForeignKey com User
+
+- **UserLoginAttempt**: Registro de tentativas de login (segurança)
+  - Campos: username, ip_address, success, timestamp
+
+- **AuditLog**: Logs de auditoria de ações críticas
+  - Campos: user, action, model, timestamp, details
 
 ## 🤝 Contribuindo
 

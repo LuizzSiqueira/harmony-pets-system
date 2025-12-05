@@ -1,10 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Script para rodar testes com coverage localmente.
-# - ativa ../venv se existir
-# - instala dependências dev
-# - executa coverage e gera html/xml
+# ============================================================================
+# Script de Cobertura de Testes - Harmony Pets
+# ============================================================================
+#
+# DESCRIÇÃO:
+#   Executa todos os testes unitários do projeto com relatório de cobertura
+#   de código, gerando relatórios em HTML e XML.
+#
+# LOCALIZAÇÃO: harmony-pets-system/scripts/run_tests_coverage.sh
+#
+# COMO EXECUTAR:
+#   bash scripts/run_tests_coverage.sh
+#
+# FUNCIONALIDADES:
+#   - Ativa automaticamente o ambiente virtual se disponível
+#   - Instala dependências de desenvolvimento (requirements-dev.txt)
+#   - Executa todos os testes unitários
+#   - Gera relatório de cobertura em HTML (htmlcov/index.html)
+#   - Gera relatório de cobertura em XML (coverage.xml)
+#   - Exibe relatório resumido no console
+#
+# BIBLIOTECAS DE TESTE UTILIZADAS:
+#   - coverage: Medição de cobertura de código
+#   - Django TestCase: Framework de testes do Django
+#   - unittest: Biblioteca padrão de testes Python
+#
+# SAÍDA:
+#   - Console: Relatório de cobertura com percentuais
+#   - HTML: harmony_pets/htmlcov/index.html (navegável)
+#   - XML: harmony_pets/coverage.xml (para CI/CD)
+#
+# ============================================================================
 
 ROOT_DIR="$(dirname "$(dirname "$0")")"
 HARMONY_DIR="$ROOT_DIR/harmony_pets"
