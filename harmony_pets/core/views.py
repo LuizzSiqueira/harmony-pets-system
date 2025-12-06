@@ -144,27 +144,42 @@ class AppPasswordResetView(FormView):
             text_body = render_to_string('registration/password_reset_email.txt', context)
             html_body = render_to_string('registration/password_reset_email.html', context)
             
-            # Criar e enviar e-mail usando EmailMultiAlternatives (IDÊNTICO ao 2FA)
-            message = EmailMultiAlternatives(
-                subject=subject,
-                body=text_body,
-                to=[user.email]
-            )
-            message.attach_alternative(html_body, 'text/html')
+            # Criar e enviar e-mail usando EmailMultiAlternatives com timeout
+            import socket
+            
+            # Configurar timeout para evitar travamento
+            original_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(15)  # 15 segundos
             
             try:
-                message.send()
+                logger.info(f"Password reset: tentando enviar para {user.email}")
+                
+                message = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_body,
+                    to=[user.email]
+                )
+                message.attach_alternative(html_body, 'text/html')
+                message.send(fail_silently=False)
+                
                 logger.info(
-                    "Password reset: e-mail enviado manualmente via EmailMultiAlternatives para %s (uid=%s)",
+                    "✅ Password reset: e-mail enviado com sucesso para %s (uid=%s)",
                     user.email,
                     uid
                 )
+            except socket.timeout:
+                logger.error(f"❌ Password reset: timeout ao enviar para {user.email}")
             except Exception as e:
                 logger.error(
-                    "Password reset: erro ao enviar e-mail para %s: %s",
+                    "❌ Password reset: erro ao enviar e-mail para %s: %s - %s",
                     user.email,
+                    type(e).__name__,
                     str(e)
                 )
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
+            finally:
+                socket.setdefaulttimeout(original_timeout)
         
         # Sempre redirecionar para success_url (mesmo que nenhum usuário seja encontrado)
         # para não revelar se o e-mail existe no sistema (segurança)
