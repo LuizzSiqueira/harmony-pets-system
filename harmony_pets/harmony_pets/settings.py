@@ -30,6 +30,9 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
 
+# Reduzir logging em produção para economizar recursos
+LOG_LEVEL = 'WARNING' if not DEBUG else 'INFO'
+
 
 
 # Configurações de e-mail para redefinição de senha (usando variáveis de ambiente)
@@ -139,17 +142,23 @@ elif os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
-            conn_max_age=0,  # Desabilita connection pooling (usa pooler do Supabase)
+            conn_max_age=60,  # Reutiliza conexões por 60s (economiza recursos)
             conn_health_checks=True,
             ssl_require=True,
         )
     }
+    # Configurações otimizadas para reduzir consumo de recursos
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    
+    DATABASES['default']['OPTIONS'].update({
+        'connect_timeout': 10,
+        'options': '-c statement_timeout=15000 -c idle_in_transaction_session_timeout=10000',
+    })
+    
     # Configurações para Supabase Connection Pooler (pgBouncer)
     if os.environ.get('PGBOUNCER_PREPARED_STATEMENTS') == 'False':
         DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
-        if 'OPTIONS' not in DATABASES['default']:
-            DATABASES['default']['OPTIONS'] = {}
-        DATABASES['default']['OPTIONS']['options'] = '-c statement_timeout=30000'
 else:
     # Desenvolvimento local - usa variáveis separadas
     DATABASES = {
@@ -247,11 +256,11 @@ LOGGING = {
     },
     'handlers': {
         'app_file': {
-            'level': 'INFO',
+            'level': LOG_LEVEL,
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOG_DIR, 'app.log'),
-            'maxBytes': 1024*1024*5,  # 5MB
-            'backupCount': 3,
+            'maxBytes': 1024*1024*2,  # 2MB (reduzido de 5MB)
+            'backupCount': 2,  # Reduzido de 3 para 2
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
@@ -259,12 +268,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['app_file'],
-            'level': 'INFO',
+            'level': LOG_LEVEL,
             'propagate': True,
         },
         'core': {
             'handlers': ['app_file'],
-            'level': 'INFO',
+            'level': LOG_LEVEL,
             'propagate': False,
         },
     },
@@ -273,3 +282,43 @@ LOGGING = {
 # Política de exclusão de conta (tornar opcional via ambiente)
 # Quando False, a exclusão de conta é desativada para os usuários finais.
 ACCOUNT_DELETION_ENABLED = os.environ.get('ACCOUNT_DELETION_ENABLED', 'True') == 'True'
+
+# Configuração de Cache para otimizar performance e reduzir carga no banco
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'harmony-pets-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 500,  # Limitar entrada de cache
+        }
+    }
+}
+
+# Timeout padrão do cache (5 minutos)
+CACHE_TIMEOUT = 300
+
+# Configurações de sessão otimizadas
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Usa cache + DB
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400  # 1 dia (reduzido)
+SESSION_SAVE_EVERY_REQUEST = False  # Só salva quando modificada
+
+# Otimizações adicionais de performance
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB (reduzido de 2.5MB padrão)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DEFAULT_CHARSET = 'utf-8'
+
+# Otimizar geração de URLs
+PREPEND_WWW = False
+APPEND_SLASH = True
+
+# Desabilitar recursos desnecessários em produção
+if not DEBUG:
+    # Desabilitar debug toolbar e features de debug
+    TEMPLATE_DEBUG = False
+    
+    # Otimizar static files
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # Timeout de request menor
+    CONN_MAX_AGE = 60  # Manter conexões por no máximo 60 segundos

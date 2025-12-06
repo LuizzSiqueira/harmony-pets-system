@@ -8,6 +8,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 import xml.etree.ElementTree as ET
 import json
 from datetime import datetime
@@ -1058,8 +1060,8 @@ def gerenciar_pets(request):
         messages.error(request, 'Apenas organizações podem gerenciar pets.')
         return redirect('home')
     
-    # Buscar apenas pets ativos (não excluídos) do local com paginação
-    pets = Pet.objects.filter(local_adocao=local, ativo=True).order_by('-data_cadastro')
+    # Buscar apenas pets ativos (não excluídos) do local com paginação (otimizado)
+    pets = Pet.objects.filter(local_adocao=local, ativo=True).select_related('local_adocao').order_by('-data_cadastro')
     
     # Estatísticas
     total_pets = pets.count()
@@ -1212,10 +1214,10 @@ def solicitacoes_adocao(request):
         messages.error(request, 'Apenas organizações podem ver solicitações.')
         return redirect('home')
     
-    # Buscar solicitações para pets do local
+    # Buscar solicitações para pets do local (otimizado com select_related)
     solicitacoes = SolicitacaoAdocao.objects.filter(
         pet__local_adocao=local
-    ).order_by('-data_solicitacao')
+    ).select_related('pet', 'interessado', 'interessado__usuario').order_by('-data_solicitacao')
     
     # Filtros
     status_filtro = request.GET.get('status')
@@ -1231,15 +1233,21 @@ def solicitacoes_adocao(request):
     page_number = request.GET.get('page')
     solicitacoes_page = paginator.get_page(page_number)
     
-    # Estatísticas
-    stats = {
-        'total': SolicitacaoAdocao.objects.filter(pet__local_adocao=local).count(),
-        'pendentes': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='pendente').count(),
-        'em_entrevista': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='em_entrevista').count(),
-        'aprovadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='entrevista_aprovada').count(),
-        'agendadas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='agendado').count(),
-        'concluidas': SolicitacaoAdocao.objects.filter(pet__local_adocao=local, status='concluida').count(),
-    }
+    # Estatísticas (com cache de 2 minutos)
+    cache_key = f'solicitacoes_stats_{local.id}'
+    stats = cache.get(cache_key)
+    
+    if stats is None:
+        base_query = SolicitacaoAdocao.objects.filter(pet__local_adocao=local)
+        stats = {
+            'total': base_query.count(),
+            'pendentes': base_query.filter(status='pendente').count(),
+            'em_entrevista': base_query.filter(status='em_entrevista').count(),
+            'aprovadas': base_query.filter(status='entrevista_aprovada').count(),
+            'agendadas': base_query.filter(status='agendado').count(),
+            'concluidas': base_query.filter(status='concluida').count(),
+        }
+        cache.set(cache_key, stats, 120)  # Cache por 2 minutos
     
     context = {
         'solicitacoes': solicitacoes_page,

@@ -113,9 +113,13 @@ class AuditLogMiddleware(MiddlewareMixin):
     """Middleware para registrar ações (auditoria) em banco.
 
     Registra apenas métodos de escrita (POST, PUT, PATCH, DELETE) para evitar ruído.
+    Em produção, registra apenas ações críticas para economizar recursos.
     """
 
     WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+    
+    # Paths críticos que sempre devem ser logados mesmo em produção
+    CRITICAL_PATHS = {'/admin/', '/login', '/register', '/delete', '/aceitar_termos'}
 
     def process_request(self, request: HttpRequest):
         request._auditlog_start = timezone.now()
@@ -126,8 +130,16 @@ class AuditLogMiddleware(MiddlewareMixin):
         try:
             if request.method in self.WRITE_METHODS:
                 path = request.path or ''
-                if path.startswith('/static/'):
+                if path.startswith('/static/') or path.startswith('/media/'):
                     return response
+                
+                # Em produção, só loga paths críticos ou falhas
+                from django.conf import settings
+                if not settings.DEBUG:
+                    is_critical = any(critical in path for critical in self.CRITICAL_PATHS)
+                    is_error = getattr(response, 'status_code', 200) >= 400
+                    if not (is_critical or is_error):
+                        return response
 
                 view_name = ''
                 try:
@@ -139,11 +151,19 @@ class AuditLogMiddleware(MiddlewareMixin):
                 user = request.user if hasattr(request, 'user') and request.user.is_authenticated else None
                 ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
                 user_agent = (request.META.get('HTTP_USER_AGENT') or '')[:500]
-                params = dict(request.GET) if request.GET else {}
-                try:
-                    body = sanitize_payload({k: request.POST.getlist(k)[0] if len(request.POST.getlist(k)) == 1 else request.POST.getlist(k) for k in request.POST.keys()})
-                except Exception:
-                    body = {}
+                
+                # Simplificar params em produção
+                params = {}
+                if settings.DEBUG:
+                    params = dict(request.GET) if request.GET else {}
+                
+                # Sanitizar body apenas se necessário
+                body = {}
+                if settings.DEBUG or user is None:  # Registra body completo apenas em dev ou quando não autenticado
+                    try:
+                        body = sanitize_payload({k: request.POST.getlist(k)[0] if len(request.POST.getlist(k)) == 1 else request.POST.getlist(k) for k in request.POST.keys()})
+                    except Exception:
+                        body = {}
 
                 duracao_ms = 0
                 try:
