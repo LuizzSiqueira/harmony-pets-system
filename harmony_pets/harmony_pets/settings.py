@@ -37,8 +37,9 @@ import os
 
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 465))  # Porta 465 (SSL) ao invés de 587 (TLS)
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False") == "True"  # Desabilitado para SSL
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "True") == "True"   # SSL habilitado
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 # Remover espaços da senha de app do Gmail
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "").replace(" ", "")
