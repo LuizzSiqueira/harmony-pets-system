@@ -1823,23 +1823,35 @@ def verify_2fa(request):
             cache_key = f"email_2fa_code_{request.user.id}"
             cache.set(cache_key, code, timeout=600)  # 10 minutos
 
-            # Enviar e-mail com o código
+            # Enviar e-mail com o código (com timeout)
             from django.core.mail import EmailMultiAlternatives
             from django.template.loader import render_to_string
-            subject = 'Seu código de verificação (2FA) - Harmony Pets'
-            context = {
-                'user': request.user,
-                'code': code,
-            }
-            text_body = render_to_string('core/email_2fa_code.txt', context)
-            html_body = render_to_string('core/email_2fa_code.html', context)
-            message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
-            message.attach_alternative(html_body, 'text/html')
+            import socket
+            
+            # Configurar timeout para evitar bloqueio
+            original_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(10)  # 10 segundos
+            
             try:
+                subject = 'Seu código de verificação (2FA) - Harmony Pets'
+                context = {
+                    'user': request.user,
+                    'code': code,
+                }
+                text_body = render_to_string('core/email_2fa_code.txt', context)
+                html_body = render_to_string('core/email_2fa_code.html', context)
+                message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
+                message.attach_alternative(html_body, 'text/html')
                 message.send()
                 messages.info(request, 'Código enviado por e-mail. Verifique sua caixa de entrada (e também o spam).')
-            except Exception:
-                messages.error(request, 'Não foi possível enviar o e-mail com o código. Tente novamente mais tarde.')
+            except socket.timeout:
+                logger.error(f"Timeout ao enviar email 2FA para {request.user.email}")
+                messages.error(request, 'O envio do e-mail está demorando. Por favor, use o código do aplicativo ou tente novamente.')
+            except Exception as e:
+                logger.error(f"Erro ao enviar email 2FA: {e}")
+                messages.error(request, 'Não foi possível enviar o e-mail com o código. Use o aplicativo autenticador.')
+            finally:
+                socket.setdefaulttimeout(original_timeout)
 
             form = TwoFactorLoginForm(user=request.user)
         else:
@@ -1867,22 +1879,35 @@ def verify_2fa(request):
             cache_key = f"email_2fa_code_{request.user.id}"
             if cache.get(cache_key) is None:
                 try:
-                    # Gera e envia
+                    # Gera e envia (com timeout)
                     import secrets
+                    import socket
                     code = f"{secrets.randbelow(1000000):06d}"
                     cache.set(cache_key, code, timeout=600)
-                    from django.core.mail import EmailMultiAlternatives
-                    from django.template.loader import render_to_string
-                    subject = 'Seu código de verificação (2FA) - Harmony Pets'
-                    context = {'user': request.user, 'code': code}
-                    text_body = render_to_string('core/email_2fa_code.txt', context)
-                    html_body = render_to_string('core/email_2fa_code.html', context)
-                    message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
-                    message.attach_alternative(html_body, 'text/html')
-                    message.send()
-                    messages.info(request, 'Enviamos um código de verificação para o seu e-mail.')
-                except Exception:
-                    messages.error(request, 'Não foi possível enviar o código por e-mail. Tente novamente.')
+                    
+                    # Configurar timeout
+                    original_timeout = socket.getdefaulttimeout()
+                    socket.setdefaulttimeout(10)
+                    
+                    try:
+                        from django.core.mail import EmailMultiAlternatives
+                        from django.template.loader import render_to_string
+                        subject = 'Seu código de verificação (2FA) - Harmony Pets'
+                        context = {'user': request.user, 'code': code}
+                        text_body = render_to_string('core/email_2fa_code.txt', context)
+                        html_body = render_to_string('core/email_2fa_code.html', context)
+                        message = EmailMultiAlternatives(subject, text_body, to=[request.user.email])
+                        message.attach_alternative(html_body, 'text/html')
+                        message.send()
+                        messages.info(request, 'Enviamos um código de verificação para o seu e-mail.')
+                    except socket.timeout:
+                        logger.warning(f"Timeout ao enviar email 2FA automático para {request.user.email}")
+                        messages.warning(request, 'O envio do e-mail está demorando. Use o aplicativo autenticador.')
+                    finally:
+                        socket.setdefaulttimeout(original_timeout)
+                except Exception as e:
+                    logger.error(f"Erro ao enviar email 2FA automático: {e}")
+                    messages.error(request, 'Não foi possível enviar o código por e-mail. Use o aplicativo.')
         form = TwoFactorLoginForm(user=request.user, initial=initial)
     
     # Determinar preferência para o template

@@ -38,7 +38,11 @@ git push origin deploy-render
      ```
    - **Start Command**: 
      ```bash
-     cd harmony_pets && gunicorn harmony_pets.wsgi:application
+     cd harmony_pets && gunicorn harmony_pets.wsgi:application -c ../gunicorn_config.py
+     ```
+     Ou simplesmente (se o arquivo de config não funcionar):
+     ```bash
+     cd harmony_pets && gunicorn harmony_pets.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120
      ```
    - **Plan**: Starter (ou superior)
 
