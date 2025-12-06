@@ -110,6 +110,15 @@ class AppPasswordResetView(FormView):
         """
         email = form.cleaned_data['email']
         
+        # Log das configurações de email
+        logger.info(f"=== PASSWORD RESET INICIADO ===")
+        logger.info(f"Email solicitado: {email}")
+        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        logger.info(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+        logger.info(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+        
         # Buscar usuários ativos com este e-mail
         from django.contrib.auth import get_user_model
         UserModel = get_user_model()
@@ -117,6 +126,8 @@ class AppPasswordResetView(FormView):
             email__iexact=email,
             is_active=True
         )
+        
+        logger.info(f"Usuários encontrados com email {email}: {active_users.count()}")
         
         for user in active_users:
             # Gerar token e uid (equivalente ao código do 2FA)
@@ -152,7 +163,10 @@ class AppPasswordResetView(FormView):
             socket.setdefaulttimeout(15)  # 15 segundos
             
             try:
-                logger.info(f"Password reset: tentando enviar para {user.email}")
+                logger.info(f"📧 Iniciando envio para {user.email}")
+                logger.info(f"Assunto: {subject}")
+                logger.info(f"De: {settings.DEFAULT_FROM_EMAIL}")
+                logger.info(f"Para: {user.email}")
                 
                 message = EmailMultiAlternatives(
                     subject=subject,
@@ -160,13 +174,17 @@ class AppPasswordResetView(FormView):
                     to=[user.email]
                 )
                 message.attach_alternative(html_body, 'text/html')
+                
+                logger.info(f"🔄 Conectando ao servidor SMTP...")
                 message.send(fail_silently=False)
+                logger.info(f"✅ SMTP retornou sucesso!")
                 
                 logger.info(
-                    "✅ Password reset: e-mail enviado com sucesso para %s (uid=%s)",
+                    "✅✅✅ PASSWORD RESET: E-MAIL ENVIADO COM SUCESSO para %s (uid=%s)",
                     user.email,
                     uid
                 )
+                print(f"[PASSWORD RESET] Email enviado com sucesso para {user.email}")  # Print adicional
             except socket.timeout:
                 logger.error(f"❌ Password reset: timeout ao enviar para {user.email}")
             except Exception as e:
