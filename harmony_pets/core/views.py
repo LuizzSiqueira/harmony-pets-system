@@ -110,14 +110,14 @@ class AppPasswordResetView(FormView):
         """
         email = form.cleaned_data['email']
         
-        # Log das configurações de email
-        logger.info(f"=== PASSWORD RESET INICIADO ===")
-        logger.info(f"Email solicitado: {email}")
-        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
-        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
-        logger.info(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-        logger.info(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+        # Log das configurações de email (WARNING para aparecer em produção)
+        logger.warning(f"=== PASSWORD RESET INICIADO ===")
+        logger.warning(f"Email solicitado: {email}")
+        logger.warning(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        logger.warning(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        logger.warning(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+        logger.warning(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+        logger.warning(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
         
         # Buscar usuários ativos com este e-mail
         from django.contrib.auth import get_user_model
@@ -127,7 +127,7 @@ class AppPasswordResetView(FormView):
             is_active=True
         )
         
-        logger.info(f"Usuários encontrados com email {email}: {active_users.count()}")
+        logger.warning(f"Usuários encontrados com email {email}: {active_users.count()}")
         
         for user in active_users:
             # Gerar token e uid (equivalente ao código do 2FA)
@@ -163,10 +163,10 @@ class AppPasswordResetView(FormView):
             socket.setdefaulttimeout(15)  # 15 segundos
             
             try:
-                logger.info(f"📧 Iniciando envio para {user.email}")
-                logger.info(f"Assunto: {subject}")
-                logger.info(f"De: {settings.DEFAULT_FROM_EMAIL}")
-                logger.info(f"Para: {user.email}")
+                logger.warning(f"📧 Iniciando envio para {user.email}")
+                logger.warning(f"Assunto: {subject}")
+                logger.warning(f"De: {settings.DEFAULT_FROM_EMAIL}")
+                logger.warning(f"Para: {user.email}")
                 
                 message = EmailMultiAlternatives(
                     subject=subject,
@@ -175,11 +175,11 @@ class AppPasswordResetView(FormView):
                 )
                 message.attach_alternative(html_body, 'text/html')
                 
-                logger.info(f"🔄 Conectando ao servidor SMTP...")
+                logger.warning(f"🔄 Conectando ao servidor SMTP...")
                 message.send(fail_silently=False)
-                logger.info(f"✅ SMTP retornou sucesso!")
+                logger.warning(f"✅ SMTP retornou sucesso!")
                 
-                logger.info(
+                logger.warning(
                     "✅✅✅ PASSWORD RESET: E-MAIL ENVIADO COM SUCESSO para %s (uid=%s)",
                     user.email,
                     uid
