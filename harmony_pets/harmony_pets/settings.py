@@ -56,10 +56,21 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
-if DEBUG:
-    # Permitir hosts comuns em desenvolvimento e testes internos
-    ALLOWED_HOSTS.extend(['127.0.0.1','localhost','testserver'])
+
+# ALLOWED_HOSTS via variável de ambiente (separado por vírgula)
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_ENV.split(',') if h.strip()]
+    # Sempre permitir localhost e 127.0.0.1 em desenvolvimento
+    if DEBUG:
+        for dev_host in ['localhost', '127.0.0.1', 'testserver']:
+            if dev_host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(dev_host)
+else:
+    # Padrão seguro para desenvolvimento
+    ALLOWED_HOSTS = []
+    if DEBUG:
+        ALLOWED_HOSTS.extend(['127.0.0.1','localhost','testserver'])
 
 
 # Application definition

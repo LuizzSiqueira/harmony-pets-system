@@ -7,6 +7,36 @@
 <link rel="stylesheet" href="{% static 'core/css/pets_list.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleciona o botão "Ver Pets Próximos" pelo ícone
+    const btnProximos = Array.from(document.querySelectorAll('a.btn-light.btn-lg.shadow-sm')).find(a => a.innerHTML.includes('fa-map-marker-alt'));
+    if (btnProximos) {
+        btnProximos.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    // Monta URL mantendo outros parâmetros
+                    let url = btnProximos.getAttribute('href');
+                    if (url.indexOf('?') === -1) url += '?';
+                    else if (!url.endsWith('&') && !url.endsWith('?')) url += '&';
+                    url += `lat=${lat}&lon=${lon}`;
+                    window.location.href = url;
+                }, function(error) {
+                    alert('Não foi possível obter sua localização. Permita o acesso ou cadastre manualmente.');
+                });
+            } else {
+                alert('Seu navegador não suporta geolocalização.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
 {% block content %}
     <!-- Header -->
     <div class="hero-header">
@@ -73,19 +103,18 @@
             <form method="GET" class="mb-4">
                 <div class="row">
                     <div class="col-md-8">
-                        <input type="text" name="search" class="form-control" placeholder="Buscar por nome, raça ou descrição..." value="{{ search_atual }}">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por nome, raça ou descrição..." value="{% if search_atual and search_atual != 'None' %}{{ search_atual }}{% endif %}">
                     </div>
                     <div class="col-md-4">
                         <button type="submit" class="btn btn-primary-custom w-100">Buscar</button>
                     </div>
                 </div>
-                
-                <!-- Filtros ocultos para manter outros filtros ativos -->
-                {% if especie_atual %}<input type="hidden" name="especie" value="{{ especie_atual }}">{% endif %}
-                {% if porte_atual %}<input type="hidden" name="porte" value="{{ porte_atual }}">{% endif %}
-                {% if sexo_atual %}<input type="hidden" name="sexo" value="{{ sexo_atual }}">{% endif %}
-                {% if request.GET.proximos %}<input type="hidden" name="proximos" value="true">{% endif %}
-            </form>
+                    <!-- Filtros ocultos para manter outros filtros ativos -->
+                    {% if especie_atual %}<input type="hidden" name="especie" value="{{ especie_atual }}">{% endif %}
+                    {% if porte_atual and porte_atual != 'None' %}<input type="hidden" name="porte" value="{{ porte_atual }}">{% endif %}
+                    {% if sexo_atual and sexo_atual != 'None' %}<input type="hidden" name="sexo" value="{{ sexo_atual }}">{% endif %}
+                    {% if request.GET.proximos %}<input type="hidden" name="proximos" value="true">{% endif %}
+                </form>
             
             <!-- Filtros por categoria -->
             <div class="row">
@@ -93,7 +122,7 @@
                     <h6>Espécie:</h6>
                     <div class="filter-buttons">
                         <a href="?{% if porte_atual %}porte={{ porte_atual }}&{% endif %}{% if sexo_atual %}sexo={{ sexo_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}&{% endif %}{% if request.GET.proximos %}proximos=true{% endif %}" 
-                           class="filter-btn {% if not especie_atual %}active{% endif %}">Todas</a>
+                           class="filter-btn {% if not especie_atual or especie_atual == 'None' %}active{% endif %}">Todas</a>
                         {% for value, label in especies_choices %}
                             <a href="?especie={{ value }}{% if porte_atual %}&porte={{ porte_atual }}{% endif %}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}{% if request.GET.proximos %}&proximos=true{% endif %}" 
                                class="filter-btn {% if especie_atual == value %}active{% endif %}">{{ label }}</a>
@@ -105,7 +134,7 @@
                     <h6>Porte:</h6>
                     <div class="filter-buttons">
                         <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if sexo_atual %}sexo={{ sexo_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}&{% endif %}{% if request.GET.proximos %}proximos=true{% endif %}" 
-                           class="filter-btn {% if not porte_atual %}active{% endif %}">Todos</a>
+                           class="filter-btn {% if not porte_atual or porte_atual == 'None' %}active{% endif %}">Todos</a>
                         {% for value, label in portes_choices %}
                             <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}porte={{ value }}{% if sexo_atual %}&sexo={{ sexo_atual }}{% endif %}{% if search_atual %}&search={{ search_atual }}{% endif %}{% if request.GET.proximos %}&proximos=true{% endif %}" 
                                class="filter-btn {% if porte_atual == value %}active{% endif %}">{{ label }}</a>
@@ -117,7 +146,7 @@
                     <h6>Sexo:</h6>
                     <div class="filter-buttons">
                         <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if porte_atual %}porte={{ porte_atual }}&{% endif %}{% if search_atual %}search={{ search_atual }}&{% endif %}{% if request.GET.proximos %}proximos=true{% endif %}" 
-                           class="filter-btn {% if not sexo_atual %}active{% endif %}">Todos</a>
+                           class="filter-btn {% if not sexo_atual or sexo_atual == 'None' %}active{% endif %}">Todos</a>
                         {% for value, label in sexos_choices %}
                             <a href="?{% if especie_atual %}especie={{ especie_atual }}&{% endif %}{% if porte_atual %}porte={{ porte_atual }}&{% endif %}sexo={{ value }}{% if search_atual %}&search={{ search_atual }}{% endif %}{% if request.GET.proximos %}&proximos=true{% endif %}" 
                                class="filter-btn {% if sexo_atual == value %}active{% endif %}">{{ label }}</a>

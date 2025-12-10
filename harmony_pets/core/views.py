@@ -651,42 +651,46 @@ def pets_list_view(request):
     mostrar_proximos = request.GET.get('proximos') == 'true'
     user_lat = None
     user_lon = None
-    pets_com_distancia = {}  # Inicializar dicionário de distâncias
-    
-    if mostrar_proximos and request.user.is_authenticated:
-        try:
-            interessado = InteressadoAdocao.objects.get(usuario=request.user)
-            if interessado.latitude and interessado.longitude:
-                user_lat = interessado.latitude
-                user_lon = interessado.longitude
-                
-                # Filtrar pets que tenham coordenadas
-                pets_com_localizacao = []
-                pets_com_distancia = {}  # Dicionário para armazenar distâncias por pet ID
-                
-                for pet in pets:
-                    local = pet.local_adocao
-                    if local.latitude and local.longitude:
-                        from math import radians, sin, cos, sqrt, atan2
-                        # Calcular distância usando fórmula de Haversine
-                        lat1, lon1 = radians(user_lat), radians(user_lon)
-                        lat2, lon2 = radians(local.latitude), radians(local.longitude)
-                        
-                        dlat = lat2 - lat1
-                        dlon = lon2 - lon1
-                        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-                        c = 2 * atan2(sqrt(a), sqrt(1-a))
-                        distancia_km = 6371 * c
-                        
-                        if distancia_km <= 50:  # Raio de 50km
-                            pets_com_localizacao.append((pet, distancia_km))
-                            pets_com_distancia[pet.id] = round(distancia_km, 1)
-                
-                # Ordenar por distância
-                pets_com_localizacao.sort(key=lambda x: x[1])
-                pets = [pet for pet, _ in pets_com_localizacao]
-        except InteressadoAdocao.DoesNotExist:
-            mostrar_proximos = False
+    pets_com_distancia = {}
+
+    if mostrar_proximos:
+        # Prioridade: parâmetros GET > perfil do usuário
+        lat_param = request.GET.get('lat')
+        lon_param = request.GET.get('lon')
+        if lat_param and lon_param:
+            try:
+                user_lat = float(lat_param)
+                user_lon = float(lon_param)
+            except ValueError:
+                user_lat = user_lon = None
+        elif request.user.is_authenticated:
+            try:
+                interessado = InteressadoAdocao.objects.get(usuario=request.user)
+                if interessado.latitude and interessado.longitude:
+                    user_lat = interessado.latitude
+                    user_lon = interessado.longitude
+            except InteressadoAdocao.DoesNotExist:
+                pass
+
+        if user_lat is not None and user_lon is not None:
+            pets_com_localizacao = []
+            pets_com_distancia = {}
+            for pet in pets:
+                local = pet.local_adocao
+                if local and local.latitude and local.longitude:
+                    from math import radians, sin, cos, sqrt, atan2
+                    lat1, lon1 = radians(user_lat), radians(user_lon)
+                    lat2, lon2 = radians(local.latitude), radians(local.longitude)
+                    dlat = lat2 - lat1
+                    dlon = lon2 - lon1
+                    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                    c = 2 * atan2(sqrt(a), sqrt(1-a))
+                    distancia_km = 6371 * c
+                    if distancia_km <= 50:
+                        pets_com_localizacao.append((pet, distancia_km))
+                        pets_com_distancia[pet.id] = round(distancia_km, 1)
+            pets_com_localizacao.sort(key=lambda x: x[1])
+            pets = [pet for pet, _ in pets_com_localizacao]
     
     # Filtros
     especie = request.GET.get('especie')
@@ -1323,7 +1327,8 @@ def agendar_entrevista(request, solicitacao_id):
         
         if data_entrevista_str:
             try:
-                data_entrevista = datetime.strptime(data_entrevista_str, '%Y-%m-%dT%H:%M')
+                data_entrevista_naive = datetime.strptime(data_entrevista_str, '%Y-%m-%dT%H:%M')
+                data_entrevista = timezone.make_aware(data_entrevista_naive)
                 solicitacao.data_entrevista = data_entrevista
                 solicitacao.local_entrevista = local_entrevista
                 solicitacao.observacoes_entrevista = observacoes
@@ -1475,13 +1480,15 @@ def agendar_retirada(request, solicitacao_id):
     
     if request.method == 'POST':
         from datetime import datetime
-        
+        from django.utils import timezone
+
         data_retirada_str = request.POST.get('data_retirada')
         observacoes = request.POST.get('observacoes_retirada', '')
-        
+
         if data_retirada_str:
             try:
-                data_retirada = datetime.strptime(data_retirada_str, '%Y-%m-%dT%H:%M')
+                data_retirada_naive = datetime.strptime(data_retirada_str, '%Y-%m-%dT%H:%M')
+                data_retirada = timezone.make_aware(data_retirada_naive)
                 solicitacao.data_retirada = data_retirada
                 solicitacao.observacoes_retirada = observacoes
                 solicitacao.status = 'agendado'

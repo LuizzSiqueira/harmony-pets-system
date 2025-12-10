@@ -1,3 +1,27 @@
+# --- Função utilitária para anonimização de usuário e interessado ---
+def anonymize_user_and_interessado(user):
+    """
+    Anonimiza dados pessoais do usuário e do InteressadoAdocao vinculado.
+    Mantém vínculo com pets adotados, mas remove dados sensíveis.
+    """
+    user.first_name = "Usuário"
+    user.last_name = "Anonimizado"
+    user.email = f"anon_{user.id}@anon.com"
+    user.username = f"anon{user.id}"
+    user.is_active = False
+    user.set_unusable_password()
+    user.save()
+    try:
+        interessado = InteressadoAdocao.objects.get(usuario=user)
+        interessado.cpf = None
+        interessado.telefone = ""
+        interessado.endereco = ""
+        interessado.latitude = None
+        interessado.longitude = None
+        interessado.save()
+    except InteressadoAdocao.DoesNotExist:
+        pass
+
 from django.db import models
 from django.contrib.auth.models import User
 import pyotp
@@ -65,7 +89,7 @@ class UserLoginAttempt(models.Model):
         self.save()
 
 class InteressadoAdocao(models.Model):
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    usuario = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
     cpf = models.CharField(max_length=14, unique=True)
     telefone = models.CharField(max_length=15, blank=True)
     endereco = models.TextField(blank=True)
@@ -188,7 +212,7 @@ class Pet(models.Model):
     
     # Relacionamentos
     local_adocao = models.ForeignKey(LocalAdocao, on_delete=models.CASCADE, related_name='pets')
-    adotado_por = models.ForeignKey(InteressadoAdocao, on_delete=models.SET_NULL, null=True, blank=True, related_name='pets_adotados')
+    adotado_por = models.ForeignKey('InteressadoAdocao', on_delete=models.SET_NULL, null=True, blank=True, related_name='pets_adotados')
     
     # Status e datas
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='disponivel')
