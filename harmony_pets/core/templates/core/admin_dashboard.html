@@ -1,0 +1,261 @@
+{% extends 'core/base.html' %}
+{% block title %}Dashboard Administrativo - Harmony Pets{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="h3 mb-3"><i class="fas fa-chart-line me-2"></i>Dashboard Administrativo</h1>
+  <div class="row g-3">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Usuários</div>
+          <div class="h4 mb-0">{{ kpis.users_total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Interessados</div>
+          <div class="h4 mb-0">{{ kpis.interessados_total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Locais</div>
+          <div class="h4 mb-0">{{ kpis.locais_total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Pets (Disp./Adot./Res.)</div>
+          <div class="h6 mb-0">{{ kpis.pets_disponiveis|default:0 }} / {{ kpis.pets_adotados|default:0 }} / {{ kpis.pets_reservados|default:0 }}</div>
+          <small class="text-muted">Total: {{ kpis.pets_total|default:0 }}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Solicitações (Pend./Aprov./Rej.)</div>
+          <div class="h6 mb-0">{{ kpis.sol_pendentes|default:0 }} / {{ kpis.sol_aprovadas|default:0 }} / {{ kpis.sol_rejeitadas|default:0 }}</div>
+          <small class="text-muted">Total: {{ kpis.sol_total|default:0 }}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="text-muted small">2FA</div>
+          <div class="h6 mb-0">{{ kpis.twofa_ativos|default:0 }} ativos</div>
+          <small class="text-muted">Taxa: {{ kpis.twofa_taxa|default:0 }}%</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100 border-info">
+        <div class="card-body">
+          <div class="text-muted small">Cobertura Global</div>
+          <div class="h4 mb-0">{% if coverage_global %}{{ coverage_global }}%{% else %}-{% endif %}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100 border-info">
+        <div class="card-body">
+          <div class="text-muted small">Cobertura Core</div>
+          <div class="h4 mb-0">{% if coverage_core %}{{ coverage_core }}%{% else %}-{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header py-2"><strong><i class="fas fa-stream"></i> Últimas Ações</strong></div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush small">
+            {% for ev in audit_recent %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" style="max-width:75%;">
+                  <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span> {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                </div>
+                <span class="badge bg-light text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+              </div>
+            {% empty %}
+              <div class="list-group-item">Sem registros ainda.</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="card-footer py-2 text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_logs' %}"><i class="fas fa-file-alt"></i> Ver logs</a></div>
+      </div>
+    </div>
+    <div class="col-md-6 mt-3 mt-md-0">
+      <div class="card h-100 border-warning">
+        <div class="card-header py-2"><strong class="text-warning"><i class="fas fa-exclamation-triangle"></i> Erros Recentes</strong></div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush small">
+            {% for ev in audit_errors_recent %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" style="max-width:75%;">
+                  <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span> {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                </div>
+                <span class="badge bg-warning text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+              </div>
+            {% empty %}
+              <div class="list-group-item">Sem erros recentes.</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="card-footer py-2 text-end"><a class="btn btn-sm btn-outline-warning" href="{% url 'admin_logs' %}"><i class="fas fa-eye"></i> Acompanhar</a></div>
+      </div>
+    </div>
+  </div>
+  
+    <!-- Gráficos lado a lado (compactos) -->
+    <div class="row mt-4 g-3">
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header"><strong><i class="fas fa-chart-pie"></i> Pets por Status</strong></div>
+          <div class="card-body">
+            <div class="d-flex justify-content-center">
+              <div style="max-width: 260px; width: 100%;">
+                <canvas id="petsStatusChart" style="height: 170px;"
+                  data-disponiveis="{{ kpis.pets_disponiveis|default:0 }}"
+                  data-adotados="{{ kpis.pets_adotados|default:0 }}"
+                  data-reservados="{{ kpis.pets_reservados|default:0 }}"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header"><strong><i class="fas fa-chart-bar"></i> Solicitações por Status</strong></div>
+          <div class="card-body">
+            <div class="d-flex justify-content-center">
+              <div style="max-width: 300px; width: 100%;">
+                <canvas id="solicitacoesChart" style="height: 170px;"
+                  data-pendentes="{{ kpis.sol_pendentes|default:0 }}"
+                  data-aprovadas="{{ kpis.sol_aprovadas|default:0 }}"
+                  data-rejeitadas="{{ kpis.sol_rejeitadas|default:0 }}"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header"><strong><i class="fas fa-shield-alt"></i> Adoção de 2FA</strong></div>
+          <div class="card-body">
+            <div class="d-flex justify-content-center">
+              <div style="max-width: 260px; width: 100%;">
+                <canvas id="twofaChart" style="height: 170px;"
+                  data-ativos="{{ kpis.twofa_ativos|default:0 }}"
+                  data-total="{{ kpis.twofa_total|default:0 }}"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {% block extra_js %}{% endblock %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      try {
+        // Pets por status (pizza)
+        const ctxPets = document.getElementById('petsStatusChart');
+        if (ctxPets) {
+          const disponiveis = parseInt(ctxPets.dataset.disponiveis || '0', 10);
+          const adotados = parseInt(ctxPets.dataset.adotados || '0', 10);
+          const reservados = parseInt(ctxPets.dataset.reservados || '0', 10);
+          const dataPets = {
+            labels: ['Disponíveis', 'Adotados', 'Reservados'],
+            datasets: [{
+              data: [disponiveis, adotados, reservados],
+              backgroundColor: ['#38bdf8','#34d399','#f97316'],
+              hoverOffset: 6,
+              borderWidth: 1
+            }]
+          };
+          new Chart(ctxPets, {
+            type: 'pie',
+            data: dataPets,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              aspectRatio: 1,
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                tooltip: { mode: 'index', intersect: false }
+              }
+            }
+          });
+        }
+
+        // Solicitações por status (barra)
+        const ctxSol = document.getElementById('solicitacoesChart');
+        if (ctxSol) {
+          const pend = parseInt(ctxSol.dataset.pendentes || '0', 10);
+          const aprov = parseInt(ctxSol.dataset.aprovadas || '0', 10);
+          const rej = parseInt(ctxSol.dataset.rejeitadas || '0', 10);
+          new Chart(ctxSol, {
+            type: 'bar',
+            data: {
+              labels: ['Pendentes', 'Aprovadas', 'Rejeitadas'],
+              datasets: [{
+                label: 'Solicitações',
+                data: [pend, aprov, rej],
+                backgroundColor: ['#f59e0b', '#10b981', '#ef4444']
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { font: { size: 11 } } },
+                y: { beginAtZero: true }
+              }
+            }
+          });
+        }
+
+        // 2FA (doughnut)
+        const ctx2fa = document.getElementById('twofaChart');
+        if (ctx2fa) {
+          const twofaAtivos = parseInt(ctx2fa.dataset.ativos || '0', 10);
+          const twofaTotal = parseInt(ctx2fa.dataset.total || '0', 10);
+          const twofaInativos = Math.max(0, (twofaTotal - twofaAtivos));
+          new Chart(ctx2fa, {
+            type: 'doughnut',
+            data: {
+              labels: ['Ativos', 'Inativos'],
+              datasets: [{
+                data: [twofaAtivos, twofaInativos],
+                backgroundColor: ['#22c55e', '#e5e7eb'],
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              aspectRatio: 1,
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Chart init error', e);
+      }
+    })();
+  </script>
+</div>
+{% endblock %}

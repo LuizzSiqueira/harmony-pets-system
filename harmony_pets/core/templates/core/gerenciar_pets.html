@@ -59,7 +59,7 @@
             <h2>🐾 Gerenciar Pets</h2>
             <p class="text-muted">{{ local.nome_fantasia|default:local.usuario.username }}</p>
         </div>
-        <a href="{% url 'adicionar_pet' %}" class="btn btn-primary">
+        <a href="{% url 'core:adicionar_pet' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Adicionar Pet
         </a>
     </div>
@@ -121,11 +121,14 @@
                         
                         <!-- Botões de Ação -->
                         <div class="action-buttons">
-                            <a href="{% url 'pet_detail' pet.id %}" class="btn btn-outline-primary btn-sm-custom">
+                            <a href="{% url 'core:pet_detail' pet.id %}" class="btn btn-outline-primary btn-sm-custom">
                                 <i class="fas fa-eye"></i> Ver
                             </a>
-                            <a href="{% url 'editar_pet' pet.id %}" class="btn btn-outline-warning btn-sm-custom">
+                            <a href="{% url 'core:editar_pet' pet.id %}" class="btn btn-outline-warning btn-sm-custom">
                                 <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <a href="{% url 'core:historico_pet' pet.id %}" class="btn btn-outline-info btn-sm-custom">
+                                <i class="fas fa-history"></i> Histórico
                             </a>
                             
                             <!-- Botão de Status -->
@@ -136,7 +139,7 @@
                                 <ul class="dropdown-menu">
                                     {% if pet.status != 'disponivel' %}
                                     <li>
-                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'core:alterar_status_pet' pet.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <input type="hidden" name="status" value="disponivel">
                                             <button type="submit" class="dropdown-item">
@@ -147,7 +150,7 @@
                                     {% endif %}
                                     {% if pet.status != 'reservado' %}
                                     <li>
-                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'core:alterar_status_pet' pet.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <input type="hidden" name="status" value="reservado">
                                             <button type="submit" class="dropdown-item">
@@ -158,7 +161,7 @@
                                     {% endif %}
                                     {% if pet.status != 'adotado' %}
                                     <li>
-                                        <form method="post" action="{% url 'alterar_status_pet' pet.id %}" class="d-inline">
+                                        <form method="post" action="{% url 'core:alterar_status_pet' pet.id %}" class="d-inline">
                                             {% csrf_token %}
                                             <input type="hidden" name="status" value="adotado">
                                             <button type="submit" class="dropdown-item">
@@ -170,7 +173,7 @@
                                 </ul>
                             </div>
                             
-                            <a href="{% url 'excluir_pet' pet.id %}" class="btn btn-outline-danger btn-sm-custom">
+                            <a href="{% url 'core:excluir_pet' pet.id %}" class="btn btn-outline-danger btn-sm-custom">
                                 <i class="fas fa-trash"></i> Excluir
                             </a>
                         </div>
@@ -214,7 +217,7 @@
         <div class="text-center py-5">
             <h3>📝 Nenhum pet cadastrado</h3>
             <p class="text-muted">Comece adicionando pets para adoção!</p>
-            <a href="{% url 'adicionar_pet' %}" class="btn btn-primary">
+            <a href="{% url 'core:adicionar_pet' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Adicionar Primeiro Pet
             </a>
         </div>

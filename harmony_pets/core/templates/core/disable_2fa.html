@@ -32,10 +32,10 @@
                         </div>
 
                         <div class="mb-3">
-                            {{ form.verification_code.label_tag }}
-                            {{ form.verification_code }}
-                            {% if form.verification_code.errors %}
-                                <div class="text-danger">{{ form.verification_code.errors }}</div>
+                            {{ form.token.label_tag }}
+                            {{ form.token }}
+                            {% if form.token.errors %}
+                                <div class="text-danger">{{ form.token.errors }}</div>
                             {% endif %}
                             <small class="form-text text-muted">
                                 Digite o código atual do Microsoft Authenticator.

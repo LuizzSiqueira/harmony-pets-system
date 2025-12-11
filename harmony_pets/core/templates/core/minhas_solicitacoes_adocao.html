@@ -1,0 +1,478 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/pets_list.css' %}">
+<style>
+    .solicitation-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .solicitation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .status-badge {
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .status-pendente { background-color: #17a2b8; color: white; }
+    .status-em_entrevista { background-color: #ffc107; color: #000; }
+    .status-entrevista_aprovada { background-color: #20c997; color: white; }
+    .status-entrevista_rejeitada { background-color: #dc3545; color: white; }
+    .status-agendado { background-color: #007bff; color: white; }
+    .status-concluida { background-color: #28a745; color: white; }
+    .status-rejeitada { background-color: #dc3545; color: white; }
+    .status-cancelada { background-color: #6c757d; color: white; }
+    
+    .pet-emoji {
+        font-size: 4rem;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .info-box h5 {
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    
+    .timeline-item {
+        border-left: 3px solid #667eea;
+        padding-left: 20px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: "●";
+        position: absolute;
+        left: -8px;
+        background: white;
+        color: #667eea;
+        font-size: 1.2rem;
+    }
+    
+    .alert-entrevista {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        color: #000;
+        border: none;
+        border-radius: 15px;
+        padding: 20px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    .card-header-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>📋 Minhas Solicitações de Adoção</h2>
+            <p class="text-muted">Acompanhe o status das suas solicitações</p>
+        </div>
+        <a href="{% url 'core:profile' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    {% if solicitacoes %}
+        <div class="row g-3">
+            {% for solicitacao in solicitacoes %}
+            <div class="col-12 col-md-6 mb-4 d-flex">
+                <div class="card solicitation-card h-100">
+                    <div class="card-header-custom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ solicitacao.pet.nome }}</h5>
+                            <span class="status-badge status-{{ solicitacao.status }}">
+                                {{ solicitacao.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="text-center">
+                            <div class="pet-emoji">{{ solicitacao.pet.emoji }}</div>
+                            <p class="text-muted">{{ solicitacao.pet.get_especie_display }} - {{ solicitacao.pet.raca }}</p>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Status Pendente -->
+                        {% if solicitacao.status == 'pendente' %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-clock"></i> <strong>Aguardando análise</strong><br>
+                            <small>Sua solicitação está sendo analisada pelo local de adoção.</small>
+                        </div>
+                        
+                        <!-- Status Em Entrevista -->
+                        {% elif solicitacao.status == 'em_entrevista' %}
+                        <div class="alert-entrevista">
+                            <h5><i class="fas fa-calendar-check"></i> Entrevista Agendada!</h5>
+                            <hr style="border-color: rgba(0,0,0,0.2);">
+                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_entrevista|date:"d/m/Y" }} às {{ solicitacao.data_entrevista|date:"H:i" }}</p>
+                            <p class="mb-2"><strong>📍 Local:</strong><br>{{ solicitacao.local_entrevista }}</p>
+                            {% if solicitacao.observacoes_entrevista %}
+                            <p class="mb-0"><strong>📝 Observações:</strong><br>{{ solicitacao.observacoes_entrevista }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle"></i> <strong>Importante:</strong> Compareça no horário marcado. O local de adoção avaliará sua solicitação após a entrevista.
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-book"></i> Prepare-se para a entrevista</h6>
+                            <p class="mb-2">Durante a entrevista, serão avaliados seus conhecimentos sobre:</p>
+                            <ul class="mb-2 small">
+                                <li>Cuidados básicos com animais (alimentação, higiene, saúde)</li>
+                                <li>Condições de moradia e espaço disponível</li>
+                                <li>Disponibilidade de tempo e recursos financeiros</li>
+                                <li>Consciência sobre posse responsável</li>
+                            </ul>
+                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalTermoResponsabilidade{{ solicitacao.id }}">
+                                <i class="fas fa-file-alt"></i> Conhecer Responsabilidades
+                            </button>
+                        </div>
+                        
+                        <!-- Status Entrevista Aprovada -->
+                        {% elif solicitacao.status == 'entrevista_aprovada' %}
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle"></i> Parabéns! Você foi aprovado na entrevista!</h5>
+                            <hr>
+                            <p class="mb-0">O local de adoção está agendando a data para você buscar seu novo pet. Aguarde o contato.</p>
+                        </div>
+                        {% if solicitacao.observacoes_entrevista %}
+                        <div class="info-box">
+                            <h6>📝 Observações da Entrevista:</h6>
+                            <p class="mb-0">{{ solicitacao.observacoes_entrevista }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-clipboard-check"></i> Próximos Passos</h6>
+                            <p class="mb-2">Enquanto aguarda o agendamento da retirada, você pode:</p>
+                            <ul class="mb-2 small">
+                                <li>Preparar o ambiente para receber o pet</li>
+                                <li>Providenciar utensílios básicos (comedouro, bebedouro, caminha)</li>
+                                <li>Pesquisar sobre veterinários na sua região</li>
+                                <li>Ler sobre os cuidados específicos da espécie</li>
+                            </ul>
+                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalTermoResponsabilidade{{ solicitacao.id }}">
+                                <i class="fas fa-file-alt"></i> Revisar Termo de Responsabilidade
+                            </button>
+                        </div>
+                        
+                        <!-- Status Agendado -->
+                        {% elif solicitacao.status == 'agendado' %}
+                        <div class="alert alert-primary">
+                            <h5><i class="fas fa-heart"></i> Retirada Agendada!</h5>
+                            <hr>
+                            <p class="mb-2"><strong>📅 Data e Hora:</strong><br>{{ solicitacao.data_retirada|date:"d/m/Y" }} às {{ solicitacao.data_retirada|date:"H:i" }}</p>
+                            {% if solicitacao.observacoes_retirada %}
+                            <p class="mb-0"><strong>📋 Instruções:</strong><br>{{ solicitacao.observacoes_retirada }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        {% if solicitacao.termo_aceito %}
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Termo de Responsabilidade Aceito</h6>
+                            <p class="mb-1">Você aceitou o termo em {{ solicitacao.data_aceite_termo|date:"d/m/Y" }} às {{ solicitacao.data_aceite_termo|date:"H:i" }}</p>
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalTermoResponsabilidade{{ solicitacao.id }}">
+                                <i class="fas fa-file-alt"></i> Rever Termo
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-file-contract"></i> ⚠️ Termo de Responsabilidade - OBRIGATÓRIO</h6>
+                            <p class="mb-2"><strong>Você precisa ler e aceitar o termo antes de retirar o pet!</strong><br>
+                            A ONG só poderá confirmar a adoção após você aceitar o termo.</p>
+                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalTermoResponsabilidade{{ solicitacao.id }}">
+                                <i class="fas fa-file-alt"></i> Ler e Aceitar Termo
+                            </button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> <strong>Prepare-se:</strong> Leve documentos e esteja pronto para receber seu novo amigo!
+                        </div>
+                        
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Lembre-se das suas responsabilidades:</h6>
+                            <ul class="mb-0 small">
+                                <li>Fornecer alimentação adequada e água fresca diariamente</li>
+                                <li>Garantir acompanhamento veterinário regular</li>
+                                <li>Manter vacinação e vermifugação em dia</li>
+                                <li>Proporcionar ambiente seguro e confortável</li>
+                                <li>Não abandonar ou maltratar o animal</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Status Concluída -->
+                        {% elif solicitacao.status == 'concluida' %}
+                        <div class="alert alert-success text-center">
+                            <h4><i class="fas fa-heart"></i> Adoção Concluída!</h4>
+                            <hr>
+                            <p class="mb-0">Parabéns! {{ solicitacao.pet.nome }} agora faz parte da sua família! 🎉</p>
+                        </div>
+                        
+                        <!-- Status Rejeitada/Reprovada -->
+                        {% elif solicitacao.status == 'entrevista_rejeitada' or solicitacao.status == 'rejeitada' %}
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-times-circle"></i> Solicitação não aprovada</h6>
+                            {% if solicitacao.observacoes_entrevista %}
+                            <hr>
+                            <p class="mb-0"><strong>Motivo:</strong> {{ solicitacao.observacoes_entrevista }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-paw"></i> Não desanime! Você pode fazer novas solicitações para outros pets.
+                        </div>
+                        
+                        {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-ban"></i> Solicitação cancelada
+                        </div>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <!-- Timeline -->
+                        <h6 class="mb-3"><i class="fas fa-history"></i> Histórico</h6>
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ solicitacao.data_solicitacao|date:"d/m/Y H:i" }}</small><br>
+                            Solicitação enviada
+                        </div>
+                        {% if solicitacao.data_entrevista %}
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ solicitacao.data_entrevista|date:"d/m/Y H:i" }}</small><br>
+                            Entrevista agendada
+                        </div>
+                        {% endif %}
+                        {% if solicitacao.data_retirada %}
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ solicitacao.data_retirada|date:"d/m/Y H:i" }}</small><br>
+                            Retirada agendada
+                        </div>
+                        {% endif %}
+                        {% if solicitacao.status == 'concluida' %}
+                        <div class="timeline-item">
+                            <small class="text-muted">{{ solicitacao.data_resposta|date:"d/m/Y H:i" }}</small><br>
+                            Adoção concluída ✅
+                        </div>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="/pets/{{ solicitacao.pet.id }}/" class="btn btn-outline-primary">
+                                <i class="fas fa-paw"></i> Ver detalhes do pet
+                            </a>
+                            
+                            <!-- Botão para cancelar solicitação -->
+                            {% if solicitacao.status in 'pendente,em_entrevista,entrevista_aprovada,agendado' %}
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCancelar{{ solicitacao.id }}">
+                                <i class="fas fa-times-circle"></i> Cancelar Solicitação
+                            </button>
+                            {% endif %}
+                            
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-home"></i> Local: {{ solicitacao.pet.local_adocao.nome_fantasia }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5 px-2">
+            <h3 style="font-size:1.5rem;">📭 Nenhuma solicitação encontrada</h3>
+            <p class="text-muted">Você ainda não fez nenhuma solicitação de adoção.</p>
+            <a href="{% url 'pets_list' %}" class="btn btn-primary mt-3 w-100 w-md-auto">
+                <i class="fas fa-search"></i> Buscar Pets para Adotar
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modais de Termo de Responsabilidade -->
+{% for solicitacao in solicitacoes %}
+    {% if solicitacao.status == 'agendado' or solicitacao.status == 'em_entrevista' or solicitacao.status == 'entrevista_aprovada' %}
+    <div class="modal fade" id="modalTermoResponsabilidade{{ solicitacao.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-file-contract"></i> Termo de Responsabilidade e Guarda de Animais</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Importante:</strong> Leia atentamente todas as cláusulas antes de prosseguir com a adoção.
+                    </div>
+                    
+                    <h6 class="mt-3"><strong>DADOS DA ADOÇÃO</strong></h6>
+                    <p><strong>Pet:</strong> {{ solicitacao.pet.nome }} ({{ solicitacao.pet.get_especie_display }})<br>
+                    <strong>Adotante:</strong> {{ user.get_full_name|default:user.username }}<br>
+                    <strong>Local de Adoção:</strong> {{ solicitacao.pet.local_adocao.nome_fantasia }}</p>
+                    
+                    <hr>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 1ª - OBJETO</strong></h6>
+                    <p>O presente termo tem por objeto a adoção responsável do animal acima identificado, comprometendo-se o(a) adotante a cumprir todas as obrigações aqui estabelecidas.</p>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 2ª - RESPONSABILIDADES DO ADOTANTE</strong></h6>
+                    <p>O(A) adotante se compromete a:</p>
+                    <ol>
+                        <li><strong>Alimentação e Água:</strong> Fornecer alimentação adequada e água fresca diariamente, conforme as necessidades nutricionais do animal.</li>
+                        <li><strong>Saúde:</strong> Garantir acompanhamento veterinário regular, mantendo em dia a vacinação, vermifugação e tratamentos preventivos contra parasitas.</li>
+                        <li><strong>Ambiente:</strong> Proporcionar ambiente seguro, limpo e confortável, com abrigo adequado contra intempéries.</li>
+                        <li><strong>Bem-estar:</strong> Garantir exercícios físicos, socialização e estímulos mentais adequados à espécie e porte do animal.</li>
+                        <li><strong>Identificação:</strong> Manter identificação do animal (coleira com placa ou microchip) em bom estado.</li>
+                        <li><strong>Castração:</strong> Realizar a castração do animal na idade recomendada pelo veterinário, quando aplicável.</li>
+                        <li><strong>Não Abandono:</strong> Jamais abandonar o animal em vias públicas ou locais inadequados.</li>
+                        <li><strong>Maus-tratos:</strong> Não submeter o animal a maus-tratos físicos ou psicológicos de qualquer natureza.</li>
+                        <li><strong>Contato:</strong> Permitir visitas do local de adoção para verificação das condições do animal, mediante aviso prévio.</li>
+                    </ol>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 3ª - PROIBIÇÕES</strong></h6>
+                    <p>É expressamente proibido ao(à) adotante:</p>
+                    <ul>
+                        <li>Manter o animal constantemente acorrentado ou confinado em espaços inadequados;</li>
+                        <li>Utilizar o animal para fins comerciais, reprodução ou experiências;</li>
+                        <li>Doar ou transferir a guarda do animal sem autorização prévia do local de adoção;</li>
+                        <li>Submeter o animal a situações de risco ou exposição desnecessária;</li>
+                        <li>Negligenciar cuidados veterinários em caso de doença ou acidente.</li>
+                    </ul>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 4ª - DEVOLUÇÃO</strong></h6>
+                    <p>Caso o(a) adotante não possa mais manter o animal, deverá devolvê-lo ao local de adoção, que se compromete a recebê-lo e encontrar um novo lar responsável. É proibida a doação ou venda do animal a terceiros sem autorização.</p>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 5ª - PENALIDADES</strong></h6>
+                    <p>O descumprimento das cláusulas deste termo poderá acarretar:</p>
+                    <ul>
+                        <li>Recolhimento imediato do animal pelo local de adoção;</li>
+                        <li>Ação judicial para ressarcimento de danos;</li>
+                        <li>Denúncia aos órgãos competentes por maus-tratos (Lei Federal nº 9.605/98 - Lei de Crimes Ambientais).</li>
+                    </ul>
+                    
+                    <h6 class="mt-3"><strong>CLÁUSULA 6ª - DISPOSIÇÕES FINAIS</strong></h6>
+                    <p>Este termo é firmado em caráter irrevogável e irretratável, sendo de conhecimento do(a) adotante que:</p>
+                    <ul>
+                        <li>A adoção de animais é um ato de responsabilidade civil e moral;</li>
+                        <li>O animal adotado é um ser senciente, merecedor de respeito e dignidade;</li>
+                        <li>A guarda responsável é um compromisso vitalício com o bem-estar animal.</li>
+                    </ul>
+                    
+                    <div class="alert alert-success mt-4">
+                        <h6><i class="fas fa-heart"></i> <strong>Compromisso com o Bem-Estar Animal</strong></h6>
+                        <p class="mb-0">Ao concordar com este termo, você está assumindo um compromisso de amor, cuidado e responsabilidade com uma vida. Obrigado por escolher a adoção!</p>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <p class="mb-0"><strong><i class="fas fa-balance-scale"></i> Base Legal:</strong><br>
+                        Este termo está em conformidade com a Lei Federal nº 9.605/98 (Lei de Crimes Ambientais), Decreto Federal nº 6.514/08 e demais legislações pertinentes à proteção animal.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    {% if not solicitacao.termo_aceito and solicitacao.status == 'agendado' %}
+                        <form method="post" action="{% url 'aceitar_termo' solicitacao.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle"></i> Aceitar Termo
+                            </button>
+                        </form>
+                    {% elif solicitacao.termo_aceito %}
+                        <button type="button" class="btn btn-success" disabled>
+                            <i class="fas fa-check-circle"></i> Termo Já Aceito
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Modal para Cancelar Solicitação -->
+    <div class="modal fade" id="modalCancelar{{ solicitacao.id }}" tabindex="-1" aria-labelledby="modalCancelarLabel{{ solicitacao.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalCancelarLabel{{ solicitacao.id }}">
+                        <i class="fas fa-exclamation-triangle"></i> Cancelar Solicitação
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'cancelar_solicitacao' solicitacao.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle"></i> <strong>Atenção!</strong><br>
+                            Você está prestes a cancelar sua solicitação de adoção para <strong>{{ solicitacao.pet.nome }}</strong>.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="justificativa{{ solicitacao.id }}" class="form-label">
+                                <strong>Justificativa do Cancelamento *</strong>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="justificativa{{ solicitacao.id }}" 
+                                name="justificativa" 
+                                rows="4" 
+                                required
+                                minlength="10"
+                                placeholder="Por favor, informe o motivo do cancelamento (mínimo 10 caracteres)..."></textarea>
+                            <small class="text-muted">Mínimo 10 caracteres</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-heart"></i> <strong>Lembre-se:</strong><br>
+                            A adoção é um ato de amor e responsabilidade. Se estiver com dúvidas, entre em contato com o local de adoção antes de cancelar.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Voltar
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-check"></i> Confirmar Cancelamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Fim do Modal de Cancelamento -->
+    
+{% endfor %}
+
+{% endblock %}

@@ -1,140 +1,584 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load formatters %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/profile.css' %}">
+<style>
+    .profile-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 0 80px;
+        margin-top: -20px;
+        color: white;
+    }
+    .profile-main-card {
+        margin-top: -60px;
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        background: white;
+    }
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        border: 5px solid white;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .quick-action-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        font-weight: 600;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    .info-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .info-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    .info-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 15px 15px 0 0 !important;
+        border-bottom: 2px solid #667eea;
+        font-weight: 700;
+        color: #667eea;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 10px 0;
+    }
+</style>
 {% endblock %}
+
 {% block content %}
-<div class="profile-container">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="profile-card">
-                    <div class="profile-header">
-                        <div class="profile-avatar">
-                            {% if interessado %}👨‍👩‍👧‍👦{% elif local %}🏢{% else %}👤{% endif %}
-                        </div>
-                        <h2>{{ user.get_full_name|default:user.username }}</h2>
-                        <p class="text-muted">@{{ user.username }}</p>
+<!-- Hero Section -->
+<div class="profile-hero">
+    <div class="container text-center">
+        <h1 style="font-size: 2.5rem; font-weight: 800; text-shadow: 2px 2px 8px rgba(0,0,0,0.2);">
+            <i class="fas fa-user-circle"></i> Meu Perfil
+        </h1>
+        <p class="lead" style="font-size: 1.2rem;">Gerencie suas informações e configurações</p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="profile-main-card">
+        <div class="p-4 p-md-5">
+            <!-- Cabeçalho do Perfil -->
+            <div class="row align-items-center mb-5">
+                <div class="col-md-auto text-center mb-3 mb-md-0">
+                    <div class="profile-avatar-large">
+                        {% if interessado %}👨‍👩‍👧‍👦{% elif local %}🏢{% else %}👤{% endif %}
+                    </div>
+                </div>
+                <div class="col-md">
+                    <h2 class="mb-2" style="color: #667eea; font-weight: 800; font-size: 2.2rem;">
+                        {{ user.get_full_name|default:user.username }}
+                    </h2>
+                    <p class="text-muted mb-2" style="font-size: 1.1rem;">
+                        <i class="fas fa-at"></i> {{ user.username }}
+                    </p>
+                    <div class="mb-2">
                         {% if interessado %}
-                            <span class="user-type-badge badge-interessado">Interessado em Adoção</span>
+                            <span class="badge" style="background: linear-gradient(135deg, #28a745, #20c997); font-size: 1rem; padding: 8px 16px;">
+                                <i class="fas fa-heart"></i> Interessado em Adoção
+                            </span>
                         {% elif local %}
-                            <span class="user-type-badge badge-local">Local de Adoção</span>
+                            <span class="badge" style="background: linear-gradient(135deg, #17a2b8, #138496); font-size: 1rem; padding: 8px 16px;">
+                                <i class="fas fa-building"></i> Local de Adoção
+                            </span>
                         {% else %}
-                            <span class="user-type-badge badge-interessado">Usuário do Sistema</span>
+                            <span class="badge bg-secondary" style="font-size: 1rem; padding: 8px 16px;">
+                                <i class="fas fa-user"></i> Usuário
+                            </span>
                         {% endif %}
                     </div>
-                    <div class="info-section">
-                        <h4>Informações Básicas</h4>
-                        <div class="info-item">
-                            <span class="info-label">Nome Completo:</span>
-                            <span class="info-value">{{ user.get_full_name|default:"Não informado" }}</span>
+                </div>
+                <div class="col-md-auto">
+                    <div class="dropdown">
+                        <button class="btn btn-lg rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown" 
+                                style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                            <i class="fas fa-cog me-2"></i>Ações
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="{% url 'core:edit_profile' %}"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:change_password' %}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if interessado %}
+                                <li><a class="dropdown-item" href="{% url 'core:minhas_solicitacoes_adocao' %}"><i class="fas fa-list me-2"></i>Minhas Solicitações</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:meus_pets_adotados' %}"><i class="fas fa-paw me-2"></i>Meus Pets Adotados</a></li>
+                            {% elif local %}
+                                <li><a class="dropdown-item" href="{% url 'core:gerenciar_pets' %}"><i class="fas fa-dog me-2"></i>Meus Pets</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:solicitacoes_adocao' %}"><i class="fas fa-inbox me-2"></i>Solicitações Recebidas</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'core:home' %}"><i class="fas fa-home me-2"></i>Voltar ao Início</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'core:home' %}"><i class="fas fa-home me-2"></i>Voltar ao Início</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Informações em Cards -->
+            <div class="row g-4">
+                <!-- Informações Básicas -->
+                <div class="col-md-6">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <i class="fas fa-user me-2"></i>Informações Básicas
                         </div>
-                        <div class="info-item">
-                            <span class="info-label">E-mail:</span>
-                            <span class="info-value">{{ user.email|default:"Não informado" }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Data de Cadastro:</span>
-                            <span class="info-value">{{ user.date_joined|date:"d/m/Y às H:i" }}</span>
+                        <div class="card-body">
+                                <div class="info-item">
+                                    <span class="info-label">Nome Completo:</span>
+                                    <span class="info-value">
+                                        <span id="nome_anon">{{ user.get_full_name|default:"Não informado" }}</span>
+                                        <span id="nome_real" style="display:none;">{{ user_real.get_full_name|default:"Não informado" }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('nome')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">E-mail:</span>
+                                    <span class="info-value">
+                                        <span id="email_anon">{{ user.email|default:"Não informado" }}</span>
+                                        <span id="email_real" style="display:none;">{{ user_real.email|default:"Não informado" }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('email')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Data de Cadastro:</span>
+                                    <span class="info-value">
+                                        {% if user.date_joined %}
+                                            {{ user.date_joined|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            Não informado
+                                        {% endif %}
+                                    </span>
+                                </div>
                         </div>
                     </div>
-                    {% if interessado %}
-                        <div class="info-section">
-                            <h4>Informações do Interessado</h4>
-                            <div class="info-item">
-                                <span class="info-label">CPF:</span>
-                                <span class="info-value">{{ interessado.cpf|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Telefone:</span>
-                                <span class="info-value">{{ interessado.telefone|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Endereço:</span>
-                                <span class="info-value">{{ interessado.endereco|default:"Não informado" }}</span>
-                            </div>
+                </div>
+
+                <!-- Informações Específicas -->
+                <div class="col-md-6">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            {% if interessado %}
+                                <i class="fas fa-heart me-2"></i>Dados do Interessado
+                            {% elif local %}
+                                <i class="fas fa-building me-2"></i>Dados do Local
+                            {% else %}
+                                <i class="fas fa-info-circle me-2"></i>Informações Adicionais
+                            {% endif %}
                         </div>
-                    {% elif local %}
-                        <div class="info-section">
-                            <h4>Informações do Local de Adoção</h4>
-                            <div class="info-item">
-                                <span class="info-label">CNPJ:</span>
-                                <span class="info-value">{{ local.cnpj|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Nome Fantasia:</span>
-                                <span class="info-value">{{ local.nome_fantasia|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Telefone:</span>
-                                <span class="info-value">{{ local.telefone|default:"Não informado" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Endereço:</span>
-                                <span class="info-value">{{ local.endereco|default:"Não informado" }}</span>
-                            </div>
-                        </div>
-                    {% endif %}
-                    <!-- Seção de Segurança -->
-                    <div class="security-section mt-4">
-                        <h4 class="section-title mb-3">
-                            <i class="fas fa-shield-alt text-primary"></i> Configurações de Segurança
-                        </h4>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8">
-                                        <h5 class="mb-2">
-                                            <i class="fas fa-mobile-alt"></i> Autenticação de Dois Fatores
-                                        </h5>
-                                        <p class="text-muted mb-0">
-                                            {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
-                                                <span class="badge bg-success">Ativo</span>
-                                                Sua conta está protegida com autenticação de dois fatores.
-                                            {% else %}
-                                                <span class="badge bg-warning">Inativo</span>
-                                                Adicione uma camada extra de segurança à sua conta.
-                                            {% endif %}
-                                        </p>
+                        <div class="card-body">
+                                {% if interessado %}
+                                    <div class="info-item">
+                                        <span class="info-label">CPF:</span>
+                                        <span class="info-value">
+                                            <span id="cpf_anon">{{ interessado_real.cpf|cpf_mask|default:"Não informado" }}</span>
+                                            <span id="cpf_real" style="display:none;">{{ interessado_real.cpf|cpf_format|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('cpf')" title="Mostrar/ocultar"></i>
+                                        </span>
                                     </div>
-                                    <div class="col-md-4 text-end">
-                                        {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
-                                            <a href="{% url 'disable_2fa' %}" class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-times"></i> Desativar
-                                            </a>
-                                        {% else %}
-                                            <a href="{% url 'setup_2fa' %}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-plus"></i> Configurar
-                                            </a>
-                                        {% endif %}
+                                    <div class="info-item">
+                                        <span class="info-label">Telefone:</span>
+                                        <span class="info-value">
+                                            <span id="telefone_anon">{{ interessado.telefone|default:"Não informado" }}</span>
+                                            <span id="telefone_real" style="display:none;">{{ interessado_real.telefone|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('telefone')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Endereço:</span>
+                                        <span class="info-value">
+                                            <span id="endereco_anon">{{ interessado.endereco|default:"Não informado" }}</span>
+                                            <span id="endereco_real" style="display:none;">{{ interessado_real.endereco|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('endereco')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                {% elif local %}
+                                    <div class="info-item">
+                                        <span class="info-label">CNPJ:</span>
+                                        <span class="info-value">
+                                            <span id="cnpj_anon">{{ local_real.cnpj|cnpj_mask|default:"Não informado" }}</span>
+                                            <span id="cnpj_real" style="display:none;">{{ local_real.cnpj|cnpj_format|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('cnpj')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Telefone:</span>
+                                        <span class="info-value">
+                                            <span id="telefone_anon">{{ local.telefone|default:"Não informado" }}</span>
+                                            <span id="telefone_real" style="display:none;">{{ local_real.telefone|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('telefone')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Endereço:</span>
+                                        <span class="info-value">
+                                            <span id="endereco_anon">{{ local.endereco|default:"Não informado" }}</span>
+                                            <span id="endereco_real" style="display:none;">{{ local_real.endereco|default:"Não informado" }}</span>
+                                            <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('endereco')" title="Mostrar/ocultar"></i>
+                                        </span>
+                                    </div>
+                            {% else %}
+                                <p class="text-muted">Nenhuma informação adicional.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dados Técnicos -->
+                <div class="col-md-6">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <i class="fas fa-server me-2"></i>Dados Técnicos
+                        </div>
+                        <div class="card-body">
+                                <div class="info-item">
+                                    <span class="info-label">Último Login:</span>
+                                    <span class="info-value">{{ user.last_login|default:"Nunca" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">IP:</span>
+                                    <span class="info-value">{{ request.META.HTTP_X_FORWARDED_FOR|default:request.META.REMOTE_ADDR|default:"Não disponível" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Logs de segurança:</span>
+                                    <span class="info-value">
+                                        <span id="logs_anon">{{ logs_anon }}</span>
+                                        <span id="logs_real" style="display:none;">{{ logs_real }}</span>
+                                        <i class="fas fa-eye ms-2" style="cursor:pointer;" onclick="toggleSensitive('logs')" title="Mostrar/ocultar"></i>
+                                    </span>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Segurança -->
+                <div class="col-md-6">
+                    <div class="card info-card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-shield-alt me-2"></i>Segurança
+                        </div>
+                        <div class="card-body">
+                            <h5 class="mb-3">
+                                <i class="fas fa-mobile-alt me-2"></i>Autenticação de Dois Fatores
+                            </h5>
+                            {% if user.two_factor_auth and user.two_factor_auth.is_enabled %}
+                                <div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Ativo</strong> - Sua conta está protegida
+                                </div>
+                                <a href="{% url 'disable_2fa' %}" class="btn btn-danger rounded-pill px-4 w-100">
+                                    <i class="fas fa-times"></i> Desativar 2FA
+                                </a>
+                            {% else %}
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Inativo</strong> - Adicione proteção extra
+                                </div>
+                                <a href="{% url 'core:setup_2fa' %}" class="btn btn-primary rounded-pill px-4 w-100">
+                                    <i class="fas fa-shield-alt"></i> Ativar 2FA
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if request.user.is_staff %}
+            <!-- Painel Administrativo -->
+            <div class="mt-5">
+                <h3 class="mb-4" style="color: #667eea; font-weight: 700;">
+                    <i class="fas fa-tachometer-alt me-2"></i>Painel Administrativo
+                </h3>
+                        <div class="row g-3">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <div class="text-muted small">Usuários</div>
+                                                <div class="h4 mb-0">{{ admin_stats.users_total|default:0 }}</div>
+                                            </div>
+                                            <i class="fas fa-users text-secondary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Interessados</div>
+                                        <div class="h4 mb-0">{{ admin_stats.interessados_total|default:0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Locais de Adoção</div>
+                                        <div class="h4 mb-0">{{ admin_stats.locais_total|default:0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Pets (disp./adot./res.)</div>
+                                        <div class="h6 mb-0">
+                                            {{ admin_stats.pets_disponiveis|default:0 }} / {{ admin_stats.pets_adotados|default:0 }} / {{ admin_stats.pets_reservados|default:0 }}
+                                        </div>
+                                        <small class="text-muted">Total: {{ admin_stats.pets_total|default:0 }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">Solicitações (pend./aprov./rej.)</div>
+                                        <div class="h6 mb-0">
+                                            {{ admin_stats.sol_pendentes|default:0 }} / {{ admin_stats.sol_aprovadas|default:0 }} / {{ admin_stats.sol_rejeitadas|default:0 }}
+                                        </div>
+                                        <small class="text-muted">Total: {{ admin_stats.sol_total|default:0 }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="text-muted small">2FA Ativo</div>
+                                        <div class="h6 mb-0">{{ admin_stats.twofa_ativos|default:0 }} de {{ admin_stats.twofa_total|default:0 }}</div>
+                                        <small class="text-muted">Adoção: {{ admin_stats.twofa_taxa|default:0 }}%</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header py-2">
+                                        <strong><i class="fas fa-stream"></i> Últimas Ações</strong>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush small">
+                                            {% for ev in audit_recent %}
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div class="text-truncate" style="max-width: 75%;">
+                                                        <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span>
+                                                        {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                                                    </div>
+                                                    <span class="badge bg-light text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+                                                </div>
+                                            {% empty %}
+                                                <div class="list-group-item">Sem registros ainda.</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2 text-end">
+                                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'core:admin_logs' %}"><i class="fas fa-file-alt"></i> Ver logs</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/admin/"><i class="fas fa-tools"></i> Admin</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="card h-100 border-warning">
+                                    <div class="card-header py-2">
+                                        <strong class="text-warning"><i class="fas fa-exclamation-triangle"></i> Erros Recentes (HTTP ≥ 400)</strong>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="list-group list-group-flush small">
+                                            {% for ev in audit_errors_recent %}
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div class="text-truncate" style="max-width: 75%;">
+                                                        <span class="text-muted">[{{ ev.criado_em|date:'d/m H:i' }}]</span>
+                                                        {{ ev.metodo }} {{ ev.caminho }} → {{ ev.status_code }}
+                                                    </div>
+                                                    <span class="badge bg-warning text-dark">{{ ev.usuario.username|default:'anon' }}</span>
+                                                </div>
+                                            {% empty %}
+                                                <div class="list-group-item">Sem erros recentes. Ótimo!</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2 text-end">
+                                        <a class="btn btn-sm btn-outline-warning" href="{% url 'core:admin_logs' %}"><i class="fas fa-eye"></i> Acompanhar</a>
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ações da Conta -->
+            <div class="mt-5">
+                <h3 class="mb-4" style="color: #667eea; font-weight: 700;">
+                    <i class="fas fa-cogs me-2"></i>Gerenciar Conta
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card info-card border-warning h-100">
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div class="mb-3">
+                                            <h5 class="card-title mb-1 text-secondary"><i class="fas fa-user-shield"></i> Remoção de Conta conforme Termos</h5>
+                                            <p class="card-text text-muted mb-2">A remoção segue as diretrizes dos <a href="{% url 'core:termos_uso' %}" target="_blank">Termos de Uso</a> e Política de Privacidade (LGPD). Revise antes de prosseguir.</p>
+                                            <div class="alert alert-secondary small" role="alert">
+                                                <ul class="mb-0">
+                                                    <li>Requer aceitação prévia dos termos.</li>
+                                                    <li>Não remove registros técnicos (auditoria de segurança).</li>
+                                                    <li>Irreversível após confirmação.</li>
+                                                    <li>Alternativa: mantenha a conta inativa sem exclusão.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="text-center d-flex flex-column gap-2">
+                                            <a href="{% url 'core:termos_uso' %}" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-file-alt"></i> Revisar Termos de Uso
+                                            </a>
+                                            <a href="{% url 'core:termos_uso' %}#politica-privacidade" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-shield-alt"></i> Revisar Política de Privacidade
+                                            </a>
+                                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalRevogarTermos">
+                                                <i class="fas fa-times-circle"></i> Revogar Aceitação dos Termos
+                                            </button>
+                                            <a href="{% url 'core:contato' %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-question-circle"></i> Suporte
+                                            </a>
+                                        </div>
+                                    </div>
+                        </div>
                     </div>
-                    <div class="text-center mt-4">
-                        <a href="{% url 'edit_profile' %}" class="btn btn-custom btn-primary-custom">
-                            <i class="fas fa-edit"></i> Editar Perfil
-                        </a>
-                        <a href="{% url 'change_password' %}" class="btn btn-custom btn-outline-custom">
-                            <i class="fas fa-key"></i> Alterar Senha
-                        </a>
-                        <a href="{% url 'home' %}" class="btn btn-custom btn-outline-custom">Voltar ao Início</a>
-                    </div>
-                    <div class="text-center mt-4">
-                        <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação é irreversível. A exclusão definitiva ocorrerá em até 3 dias.')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-user-times"></i> Excluir minha conta
-                            </button>
-                        </form>
-                        <p class="text-danger mt-2" style="font-size: 0.95rem;">
-                            Sua conta será marcada para exclusão e removida definitivamente em até 3 dias.
-                        </p>
+                    <div class="col-md-6">
+                        <div class="card info-card border-danger h-100">
+                                    <div class="card-body d-flex flex-column justify-content-between">
+                                        <div class="mb-3">
+                                            <h5 class="card-title mb-1 text-danger"><i class="fas fa-user-times"></i> Excluir minha conta</h5>
+                                            <p class="card-text text-muted mb-2">A exclusão é imediata e permanente. Esta ação não pode ser desfeita.</p>
+                                            <div class="alert alert-danger small" role="alert">
+                                                Ao excluir sua conta:
+                                                <ul class="mb-0">
+                                                    <li>Seu perfil e dados pessoais serão removidos.</li>
+                                                    <li>Suas solicitações de adoção vinculadas serão apagadas.</li>
+                                                    <li>Se for um <strong>Local de Adoção</strong>, os <strong>pets cadastrados</strong> por este perfil e respectivas solicitações também serão removidos.</li>
+                                                    <li>Registros de auditoria (histórico técnico) permanecem para segurança, <em>sem seus dados pessoais</em>.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        {% if account_deletion_enabled %}
+                                        <form method="post" action="{% url 'delete_account' %}" onsubmit="return confirm('Tem certeza que deseja excluir sua conta AGORA? Esta ação é irreversível e removerá seus dados imediatamente.')">
+                                            {% csrf_token %}
+                                            <div class="form-check text-start mb-3">
+                                                <input class="form-check-input" type="checkbox" name="confirm_delete" id="confirm_delete">
+                                                <label for="confirm_delete" class="form-check-label small">
+                                                    Confirmo que li e compreendi as consequências e desejo prosseguir com a exclusão permanente.
+                                                </label>
+                                            </div>
+                                            <div class="text-center">
+                                                <button type="submit" class="btn btn-danger" aria-disabled="false">
+                                                    <i class="fas fa-trash-alt"></i> Excluir definitivamente
+                                                </button>
+                                            </div>
+                                        </form>
+                                        {% else %}
+                                            <div class="alert alert-warning small" role="alert">
+                                                A exclusão de contas está desativada pela política atual da plataforma. Entre em contato com o suporte caso necessário.
+                                            </div>
+                                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal de Revogação de Termos -->
+<div class="modal fade" id="modalRevogarTermos" tabindex="-1" aria-labelledby="modalRevogarTermosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalRevogarTermosLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Revogar Aceitação dos Termos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading"><i class="fas fa-ban"></i> Atenção: Perda de Acesso!</h6>
+                    <p class="mb-2">Ao revogar a aceitação dos Termos de Uso e Política de Privacidade:</p>
+                    <ul class="mb-2">
+                        <li><strong>Você perderá acesso</strong> imediato à plataforma</li>
+                        <li>Não poderá mais visualizar ou solicitar adoções</li>
+                        <li>Todos os recursos da conta ficarão bloqueados</li>
+                        <li>Será necessário aceitar os termos novamente para recuperar o acesso</li>
+                    </ul>
+                    <p class="mb-0"><strong>Esta ação é reversível</strong>, mas você precisará aceitar os termos novamente para usar a plataforma.</p>
+                </div>
+                <p class="text-muted">
+                    <i class="fas fa-info-circle"></i> <strong>Alternativa:</strong> Se você deseja apenas revisar os termos, use os botões "Revisar" acima sem revogar.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <form method="POST" action="{% url 'core:revogar_termos' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Confirmar Revogação
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSensitive(field) {
+    const anon = document.getElementById(field + '_anon');
+    const real = document.getElementById(field + '_real');
+    if (anon && real) {
+        if (anon.style.display === 'none') {
+            anon.style.display = 'inline';
+            real.style.display = 'none';
+        } else {
+            anon.style.display = 'none';
+            real.style.display = 'inline';
+        }
+    }
+}
+
+</script>
 {% endblock %}

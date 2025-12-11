@@ -135,8 +135,20 @@
                             {% endfor %}
                         {% endif %}
 
+                        {% if pode_criar_perfil and criar_perfil == 'interessado' %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Complete seu perfil de interessado</strong><br>
+                                Preencha os dados abaixo para poder fazer solicitações de adoção.
+                            </div>
+                        {% endif %}
+
                         <form method="post">
                             {% csrf_token %}
+                            
+                            {% if pode_criar_perfil and criar_perfil == 'interessado' %}
+                                <input type="hidden" name="criar_como" value="interessado">
+                            {% endif %}
                             
                             <!-- Informações Básicas -->
                             <div class="form-section">

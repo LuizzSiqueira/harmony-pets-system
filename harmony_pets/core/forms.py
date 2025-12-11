@@ -1,10 +1,14 @@
 # core/forms.py
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.auth.models import User
 from .models import InteressadoAdocao, LocalAdocao, Pet, TwoFactorAuth
 import re
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+import logging
+logger = logging.getLogger('core')
 
 def validar_cpf(cpf):
     """Valida CPF"""
@@ -137,6 +141,20 @@ class InteressadoAdocaoForm(UserCreationForm):
             
         return cpf_numeros
 
+    def clean_telefone(self):
+        telefone = self.cleaned_data.get('telefone')
+        if telefone:
+            # Verificar formato do telefone
+            if not re.match(r'^\(\d{2}\) \d{4,5}-\d{4}$', telefone):
+                raise forms.ValidationError('Telefone inválido. Use o formato (11) 99999-9999.')
+        return telefone
+
+    def clean_endereco(self):
+        endereco = self.cleaned_data.get('endereco')
+        if endereco and len(endereco) < 10:
+            raise forms.ValidationError('Endereço muito curto. Forneça mais detalhes.')
+        return endereco
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
@@ -217,6 +235,20 @@ class LocalAdocaoForm(UserCreationForm):
             
         return cnpj_numeros
 
+    def clean_telefone(self):
+        telefone = self.cleaned_data.get('telefone')
+        if telefone:
+            # Verificar formato do telefone
+            if not re.match(r'^\(\d{2}\) \d{4,5}-\d{4}$', telefone):
+                raise forms.ValidationError('Telefone inválido. Use o formato (11) 99999-9999.')
+        return telefone
+
+    def clean_endereco(self):
+        endereco = self.cleaned_data.get('endereco')
+        if endereco and len(endereco) < 10:
+            raise forms.ValidationError('Endereço muito curto. Forneça mais detalhes.')
+        return endereco
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
@@ -226,24 +258,40 @@ class LocalAdocaoForm(UserCreationForm):
 class PetForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
+        latitude = cleaned_data.get('latitude')
+        longitude = cleaned_data.get('longitude')
         local_adocao = getattr(self.instance, 'local_adocao', None)
-        # Se o local_adocao for passado no form, use ele
-        if not local_adocao:
-            local_adocao = self.initial.get('local_adocao') or self.data.get('local_adocao')
-            if hasattr(local_adocao, 'latitude') and hasattr(local_adocao, 'longitude'):
-                pass
+        # Permite: ou localização individual do pet, ou local de adoção válido
+        if not (latitude and longitude):
+            # Se não informou localização do pet, exige local_adocao válido
+            if not local_adocao:
+                local_adocao = self.initial.get('local_adocao') or self.data.get('local_adocao')
+                if hasattr(local_adocao, 'latitude') and hasattr(local_adocao, 'longitude'):
+                    pass
+                else:
+                    from .models import LocalAdocao
+                    try:
+                        local_adocao = LocalAdocao.objects.get(pk=local_adocao)
+                    except Exception:
+                        local_adocao = None
+            if local_adocao:
+                if not (local_adocao.latitude and local_adocao.longitude):
+                    raise forms.ValidationError('O local de adoção selecionado precisa ter latitude e longitude cadastradas.')
             else:
-                # Tenta buscar pelo id
-                from .models import LocalAdocao
-                try:
-                    local_adocao = LocalAdocao.objects.get(pk=local_adocao)
-                except Exception:
-                    local_adocao = None
-        if local_adocao:
-            if not (local_adocao.latitude and local_adocao.longitude):
-                raise forms.ValidationError('O local de adoção selecionado precisa ter latitude e longitude cadastradas.')
-        else:
-            raise forms.ValidationError('Selecione um local de adoção válido.')
+                raise forms.ValidationError('Informe a localização do pet ou selecione um local de adoção válido.')
+        # Emoji automático se não informado
+        especie = cleaned_data.get('especie')
+        emoji = cleaned_data.get('emoji')
+        especie_emoji = {
+            'cao': '🐕',
+            'gato': '🐱',
+            'coelho': '🐰',
+            'passaro': '🐦',
+            'hamster': '🐹',
+            'outro': '🐾',
+        }
+        if not emoji:
+            cleaned_data['emoji'] = especie_emoji.get(especie, '🐾')
         return cleaned_data
     """Formulário para cadastro e edição de pets"""
     
@@ -252,12 +300,15 @@ class PetForm(forms.ModelForm):
         fields = [
             'nome', 'especie', 'raca', 'idade', 'sexo', 'porte', 'cor', 'peso',
             'castrado', 'vacinado', 'vermifugado', 'docil', 'brincalhao', 'calmo',
-            'descricao', 'cuidados_especiais', 'foto', 'foto_url', 'emoji'
+            'descricao', 'cuidados_especiais', 'foto', 'emoji',
+            'latitude', 'longitude'
         ]
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do pet'}),
             'especie': forms.Select(attrs={'class': 'form-select'}),
             'raca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Raça (opcional)'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any', 'placeholder': 'Latitude (opcional)'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any', 'placeholder': 'Longitude (opcional)'}),
             'idade': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '240', 'placeholder': 'Idade em meses'}),
             'sexo': forms.Select(attrs={'class': 'form-select'}),
             'porte': forms.Select(attrs={'class': 'form-select'}),
@@ -266,8 +317,7 @@ class PetForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Descreva o pet, seu comportamento, características especiais...'}),
             'cuidados_especiais': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Medicamentos, dieta especial, limitações... (opcional)'}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'foto_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'URL da foto (opcional)'}),
-            'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '🐕', 'maxlength': '10'}),
+            'emoji': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '�', 'maxlength': '10'}),
         }
         labels = {
             'nome': 'Nome do Pet',
@@ -287,7 +337,6 @@ class PetForm(forms.ModelForm):
             'descricao': 'Descrição',
             'cuidados_especiais': 'Cuidados Especiais',
             'foto': 'Foto do Pet',
-            'foto_url': 'URL da Foto',
             'emoji': 'Emoji Representativo',
         }
     def clean_foto(self):
@@ -317,6 +366,14 @@ class PetForm(forms.ModelForm):
         self.fields['sexo'].required = True
         self.fields['porte'].required = True
         self.fields['descricao'].required = True
+        # Campo emoji pode ser auto-populado pelo clean() se não informado
+        if 'emoji' in self.fields:
+            self.fields['emoji'].required = False
+
+        # Padronizar mensagens de obrigatoriedade em PT-BR para todos os campos obrigatórios
+        for field in self.fields.values():
+            if getattr(field, 'required', False):
+                field.error_messages['required'] = 'Este campo é obrigatório.'
 
     def clean_idade(self):
         idade = self.cleaned_data.get('idade')
@@ -383,59 +440,121 @@ class TwoFactorSetupForm(forms.Form):
         return two_factor
 
 class TwoFactorLoginForm(forms.Form):
-    """Formulário para login com 2FA"""
-    token = forms.CharField(
+    """Formulário para login com 2FA com dois campos: autenticador e e-mail.
+
+    - autenticador: aceita TOTP (6 dígitos) ou código de backup (16 caracteres)
+    - e-mail: aceita código de 6 dígitos enviado ao e-mail do usuário
+    """
+    authenticator_token = forms.CharField(
+        required=False,
+        max_length=16,
+        label='Código do autenticador',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control text-center',
+            'placeholder': '000000 (ou 16 caracteres para backup)',
+            'maxlength': '16',
+            'style': 'font-size: 1.2rem; letter-spacing: 0.3rem;'
+        }),
+        help_text='Digite o código de 6 dígitos do app autenticador ou um código de backup (16 caracteres).'
+    )
+    email_token = forms.CharField(
+        required=False,
         max_length=6,
-        min_length=6,
-        label='Código de Verificação',
+        label='Código enviado por e-mail',
         widget=forms.TextInput(attrs={
             'class': 'form-control text-center',
             'placeholder': '000000',
             'maxlength': '6',
-            'style': 'font-size: 1.5rem; letter-spacing: 0.5rem;',
-            'autofocus': True
+            'style': 'font-size: 1.2rem; letter-spacing: 0.3rem;'
         }),
-        help_text='Digite o código de 6 dígitos do Microsoft Authenticator'
-    )
-    
-    use_backup_code = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label='Usar código de backup'
+        help_text='Digite o código de 6 dígitos recebido por e-mail.'
     )
     
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
     
-    def clean_token(self):
-        token = self.cleaned_data.get('token')
-        use_backup = self.cleaned_data.get('use_backup_code', False)
-        
-        if not token:
-            raise forms.ValidationError('Digite o código de verificação.')
-        
+    def clean(self):
+        cleaned = super().clean()
+        auth_token = cleaned.get('authenticator_token')
+        email_token = cleaned.get('email_token')
+
+        # Bloqueio por tentativas falhas de 2FA
+        from .models import UserLoginAttempt
+        attempt = None
         if self.user:
+            attempt, _ = UserLoginAttempt.objects.get_or_create(user=self.user)
+            if attempt.is_blocked():
+                raise forms.ValidationError('Tentativas excessivas. Tente novamente mais tarde.')
+
+        if not auth_token and not email_token:
+            # conta tentativa
+            if attempt:
+                attempt.failed_attempts += 1
+                if attempt.failed_attempts >= 5:
+                    attempt.block(minutes=15)
+                else:
+                    attempt.save()
+            raise forms.ValidationError('Informe o código do autenticador ou o código recebido por e-mail.')
+
+        # Prioriza validação por e-mail se fornecida
+        if email_token:
+            if not email_token.isdigit() or len(email_token) != 6:
+                self.add_error('email_token', 'O código de e-mail deve ter exatamente 6 dígitos.')
+            else:
+                from django.core.cache import cache
+                cache_key = f"email_2fa_code_{self.user.id}"
+                expected = cache.get(cache_key)
+                if not expected:
+                    self.add_error('email_token', 'Código expirado ou não solicitado. Reenvie o código por e-mail.')
+                elif email_token != expected:
+                    self.add_error('email_token', 'Código de e-mail inválido.')
+                else:
+                    # Consome o código e retorna sucesso geral
+                    cache.delete(cache_key)
+                    if attempt:
+                        attempt.reset_attempts()
+                    return cleaned
+
+        # Se chegou aqui, valida token do autenticador (TOTP/backup)
+        if auth_token:
+            if not self.user:
+                self.add_error('authenticator_token', 'Usuário não autenticado. Faça login novamente.')
+                return cleaned
             try:
                 two_factor = self.user.two_factor_auth
-                
-                if use_backup:
-                    # Validar código de backup
-                    if len(token) != 16:
-                        raise forms.ValidationError('Código de backup deve ter 16 caracteres.')
-                    if not two_factor.verify_backup_code(token.upper()):
-                        raise forms.ValidationError('Código de backup inválido ou já utilizado.')
-                else:
-                    # Validar token TOTP
-                    if not token.isdigit() or len(token) != 6:
-                        raise forms.ValidationError('O código deve ter exatamente 6 dígitos.')
-                    if not two_factor.verify_token(token):
-                        raise forms.ValidationError('Código inválido ou expirado.')
-                        
+            except AttributeError:
+                self.add_error('authenticator_token', 'Usuário não autenticado. Faça login novamente.')
+                return cleaned
             except TwoFactorAuth.DoesNotExist:
-                raise forms.ValidationError('2FA não configurado para este usuário.')
-        
-        return token
+                self.add_error('authenticator_token', '2FA por autenticador não está configurado para este usuário.')
+                return cleaned
+
+            if len(auth_token) == 16 and auth_token.isalnum():
+                # Backup code
+                if not two_factor.verify_backup_code(auth_token.upper()):
+                    self.add_error('authenticator_token', 'Código de backup inválido ou já utilizado.')
+            else:
+                # TOTP 6 dígitos
+                if not auth_token.isdigit() or len(auth_token) != 6:
+                    self.add_error('authenticator_token', 'O código do autenticador deve ter 6 dígitos.')
+                elif not two_factor.verify_token(auth_token):
+                    self.add_error('authenticator_token', 'Código do autenticador inválido ou expirado.')
+
+        # Se houver erros nos campos, incrementar tentativas
+        if any(self.errors.get(f) for f in ['email_token','authenticator_token']):
+            if attempt:
+                attempt.failed_attempts += 1
+                if attempt.failed_attempts >= 5:
+                    attempt.block(minutes=15)
+                else:
+                    attempt.save()
+        else:
+            # Sucesso geral: resetar tentativas
+            if attempt:
+                attempt.reset_attempts()
+
+        return cleaned
 
 class DisableTwoFactorForm(forms.Form):
     """Formulário para desabilitar 2FA"""
@@ -647,3 +766,47 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError('A senha deve ter pelo menos 8 caracteres.')
         
         return password2
+
+
+class AppPasswordResetForm(PasswordResetForm):
+    """Password reset form que envia HTML como corpo principal e texto como alternativa.
+
+    Mantém a lógica padrão de templates/contexts, apenas inverte o corpo principal
+    para maximizar a compatibilidade com clientes que exibem apenas a primeira parte.
+    """
+
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        subject = render_to_string(subject_template_name, context)
+        # Assuntos não podem conter quebras de linha
+        subject = "".join(subject.splitlines())
+
+        # Renderizar versões texto e HTML
+        body_text = render_to_string(email_template_name, context)
+        html_body = (
+            render_to_string(html_email_template_name, context)
+            if html_email_template_name
+            else None
+        )
+
+        if html_body:
+            logger.info("PasswordResetForm: enviando multipart (html principal + texto alternativo) para %s", to_email)
+            message = EmailMultiAlternatives(subject, html_body, from_email, [to_email])
+            message.content_subtype = "html"
+            message.attach_alternative(body_text, "text/plain")
+        else:
+            logger.warning("PasswordResetForm: html_email_template_name ausente, enviando apenas texto para %s", to_email)
+            message = EmailMultiAlternatives(subject, body_text, from_email, [to_email])
+
+        try:
+            message.send()
+            logger.info("PasswordResetForm: e-mail de redefinição enviado com sucesso para %s", to_email)
+        except Exception as e:
+            logger.error("PasswordResetForm: falha ao enviar e-mail para %s - %s", to_email, e)

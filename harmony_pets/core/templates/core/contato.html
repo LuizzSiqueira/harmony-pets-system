@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block title %}Contato - Harmony Pets{% endblock %}
+{% block content %}
+<div class="content-container">
+  <h1 class="mb-4 text-primary"><i class="fas fa-envelope-open-text"></i> Contato</h1>
+  <p class="lead">Aqui estão os meios oficiais para falar conosco. Não há formulário: escolha o canal que preferir.</p>
+  <div class="row mt-4">
+    <div class="col-md-6 mb-4">
+      <div class="p-4 border rounded shadow-sm h-100">
+        <h5 class="text-primary"><i class="fas fa-at"></i> E-mail</h5>
+        <p class="mb-1">{{ meios.email }}</p>
+        <small class="text-muted">Use para dúvidas gerais, suporte ou sugestões.</small>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="p-4 border rounded shadow-sm h-100">
+        <h5 class="text-primary"><i class="fas fa-phone"></i> Telefone</h5>
+        <p class="mb-1">{{ meios.telefone }}</p>
+        <small class="text-muted">Horário comercial: {{ meios.horario }}</small>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="p-4 border rounded shadow-sm h-100">
+        <h5 class="text-primary"><i class="fab fa-instagram"></i> Instagram</h5>
+        <p class="mb-1">{{ meios.instagram }}</p>
+        <small class="text-muted">Acompanhe novidades e campanhas.</small>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="p-4 border rounded shadow-sm h-100">
+        <h5 class="text-primary"><i class="fab fa-facebook"></i> Facebook</h5>
+        <p class="mb-1">{{ meios.facebook }}</p>
+        <small class="text-muted">Comunidade e eventos.</small>
+      </div>
+    </div>
+  </div>
+  <div class="alert alert-info mt-3"><i class="fas fa-info-circle"></i> {{ meios.suporte }}</div>
+  <p class="text-muted mt-4 mb-0">Nunca solicitaremos sua senha ou códigos de verificação por e-mail ou redes sociais.</p>
+</div>
+{% endblock %}

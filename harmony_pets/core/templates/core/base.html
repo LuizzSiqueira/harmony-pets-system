@@ -8,10 +8,22 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
+        html {
+            height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+        }
+        
+        body {
+            background: transparent;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            flex: 1 0 auto;
         }
         .navbar-brand {
             display: flex;
@@ -66,7 +78,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
+            <a class="navbar-brand" href="{% url 'core:home' %}">
                 <img src="{% static 'core/images/harmony_pets_logo.png' %}" alt="Harmony Pets Logo" class="logo">
                 <strong style="color: #667eea;">Harmony Pets</strong>
             </a>
@@ -76,19 +88,24 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">
+                        <a class="nav-link" href="{% url 'core:home' %}">
                             <i class="fas fa-home"></i> Início
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'pets_list' %}">
-                            <i class="fas fa-paw"></i> Pets Disponíveis
+                        <a class="nav-link" href="{% url 'core:pets_list' %}">
+                            <i class="fas fa-paw"></i> Pets para Adoção
                         </a>
                     </li>
-                    {% if user.is_authenticated and user.interessadoadocao %}
+                    {% if user.is_authenticated and user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'pets_proximos' %}">
-                            <i class="fas fa-map-marker-alt"></i> Pets Próximos
+                        <a class="nav-link" href="{% url 'core:admin_logs' %}">
+                            <i class="fas fa-file-alt"></i> Logs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:admin_dashboard' %}">
+                            <i class="fas fa-chart-line"></i> Dashboard
                         </a>
                     </li>
                     {% endif %}
@@ -97,34 +114,53 @@
                     {% if user.is_authenticated %}
                         {% if user.localadocao %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'gerenciar_pets' %}">
+                                <a class="nav-link" href="{% url 'core:gerenciar_pets' %}">
                                     <i class="fas fa-paw"></i> Meus Pets
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'solicitacoes_adocao' %}">
+                                <a class="nav-link" href="{% url 'core:solicitacoes_adocao' %}">
                                     <i class="fas fa-envelope"></i> Solicitações
                                 </a>
                             </li>
+                        {% elif user.interessadoadocao %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'core:minhas_solicitacoes_adocao' %}">
+                                    <i class="fas fa-clipboard-list"></i> Minhas Solicitações
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'core:pets_list' %}?adotados=true">
+                                    <i class="fas fa-heart"></i> Pets Adotados
+                                </a>
+                            </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'profile' %}">
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link" href="{% url 'core:profile' %}">
                                 <i class="fas fa-user"></i> Meu Perfil
                             </a>
+                            <span class="ms-2 fw-bold text-primary" style="font-size: 1rem;">
+                                {{ user.first_name|default:user.username }}
+                            </span>
+                            {% if user.localadocao %}
+                                <span class="ms-1 badge bg-info text-dark">Local de Adoção</span>
+                            {% elif user.interessadoadocao %}
+                                <span class="ms-1 badge bg-success">Interessado</span>
+                            {% endif %}
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
+                            <a class="nav-link" href="{% url 'core:logout' %}">
                                 <i class="fas fa-sign-out-alt"></i> Sair
                             </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
+                            <a class="nav-link" href="{% url 'core:login' %}">
                                 <i class="fas fa-sign-in-alt"></i> Entrar
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
+                            <a class="nav-link" href="{% url 'core:register' %}">
                                 <i class="fas fa-user-plus"></i> Cadastrar
                             </a>
                         </li>
@@ -136,49 +172,144 @@
 
     <!-- Main Content -->
     <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                {% if messages %}
+                <div aria-live="polite" aria-atomic="true" class="position-relative">
+                    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                        {% for message in messages %}
+                            <div class="toast" role="alert" data-bs-delay="6000" data-bs-autohide="true">
+                                <div class="toast-header">
+                                    {% if 'success' in message.tags %}<span class="me-2 text-success"><i class="fas fa-check-circle"></i></span>{% endif %}
+                                    {% if 'error' in message.tags or 'danger' in message.tags %}<span class="me-2 text-danger"><i class="fas fa-exclamation-circle"></i></span>{% endif %}
+                                    {% if 'warning' in message.tags %}<span class="me-2 text-warning"><i class="fas fa-exclamation-triangle"></i></span>{% endif %}
+                                    {% if 'info' in message.tags %}<span class="me-2 text-info"><i class="fas fa-info-circle"></i></span>{% endif %}
+                                    <strong class="me-auto">Harmony Pets</strong>
+                                    <small class="text-muted">Agora</small>
+                                    <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Fechar"></button>
+                                </div>
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
+                {% endif %}
 
         {% block content %}
         {% endblock %}
-        
-        <!-- Rodapé -->
-        <footer class="footer mt-5 py-4 bg-light border-top">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>Harmony Pets</h5>
-                        <p class="text-muted">Conectando corações e patas desde 2025</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Links Úteis</h6>
-                        <ul class="list-unstyled">
-                            <li><a href="{% url 'termos_uso' %}" class="text-decoration-none">Termos de Uso</a></li>
-                            <li><a href="#" class="text-decoration-none">Política de Privacidade</a></li>
-                            <li><a href="#" class="text-decoration-none">Contato</a></li>
-                        </ul>
-                    </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="footer mt-auto py-4" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); flex-shrink: 0; width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="fw-bold" style="color: #667eea;">Harmony Pets</h5>
+                    <p class="text-muted mb-0">Conectando corações e patas desde 2025</p>
                 </div>
-                <hr>
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <p class="text-muted mb-0">
-                            &copy; 2025 Harmony Pets. Todos os direitos reservados.
-                        </p>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3" style="color: #667eea;">Links Úteis</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{% url 'core:termos_uso' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                                <i class="fas fa-file-contract me-2"></i>Termos de Uso
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'core:termos_uso' %}#politica-privacidade" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                                <i class="fas fa-shield-alt me-2"></i>Política de Privacidade
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'core:contato' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                                <i class="fas fa-envelope me-2"></i>Contato
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3" style="color: #667eea;">Redes Sociais</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-decoration-none" style="color: #667eea; font-size: 1.5rem; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none" style="color: #667eea; font-size: 1.5rem; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none" style="color: #667eea; font-size: 1.5rem; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none" style="color: #667eea; font-size: 1.5rem; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-youtube"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-        </footer>
-    </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-muted mb-0">
+                        &copy; 2025 Harmony Pets. Todos os direitos reservados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Mensagens de validação em PT-BR para campos obrigatórios e formatos -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicializa toasts para mensagens Django
+            document.querySelectorAll('.toast').forEach(function(toastEl){
+                try {
+                    var t = new bootstrap.Toast(toastEl);
+                    t.show();
+                } catch(e) {}
+            });
+            const messages = {
+                required: 'Este campo é obrigatório.',
+                select: 'Selecione uma opção.',
+                email: 'Informe um e-mail válido.',
+                url: 'Informe uma URL válida.',
+                number: 'Informe um número válido.',
+                pattern: 'Formato inválido.',
+                minlength: (el) => `Use ao menos ${el.getAttribute('minlength')} caracteres.`,
+                maxlength: (el) => `Use no máximo ${el.getAttribute('maxlength')} caracteres.`
+            };
+
+            function setPtBrValidityMessage(el) {
+                el.setCustomValidity('');
+                const v = el.validity;
+                if (!v) return;
+                if (v.valid) return;
+
+                if (v.valueMissing) {
+                    el.setCustomValidity(el.tagName === 'SELECT' ? messages.select : messages.required);
+                } else if (v.typeMismatch) {
+                    if (el.type === 'email') el.setCustomValidity(messages.email);
+                    else if (el.type === 'url') el.setCustomValidity(messages.url);
+                    else if (el.type === 'number') el.setCustomValidity(messages.number);
+                } else if (v.patternMismatch) {
+                    el.setCustomValidity(messages.pattern);
+                } else if (v.tooShort && el.getAttribute('minlength')) {
+                    el.setCustomValidity(messages.minlength(el));
+                } else if (v.tooLong && el.getAttribute('maxlength')) {
+                    el.setCustomValidity(messages.maxlength(el));
+                }
+            }
+
+            function wire(el) {
+                el.addEventListener('invalid', function () { setPtBrValidityMessage(el); });
+                el.addEventListener('blur', function () { setPtBrValidityMessage(el); });
+                el.addEventListener('input', function () { el.setCustomValidity(''); });
+            }
+
+            document.querySelectorAll('input, textarea, select').forEach(wire);
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

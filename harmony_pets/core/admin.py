@@ -1,5 +1,31 @@
 from django.contrib import admin
-from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos
+from django.contrib.admin import SimpleListFilter
+from django.utils import timezone
+from django.http import HttpResponse
+import csv
+import json
+from datetime import timedelta
+from .models import InteressadoAdocao, LocalAdocao, Pet, SolicitacaoAdocao, TwoFactorAuth, AceitacaoTermos, UserLoginAttempt, AuditLog
+# Admin para tentativas de login
+@admin.register(UserLoginAttempt)
+class UserLoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ['user', 'failed_attempts', 'blocked_until', 'is_blocked_now']
+    search_fields = ['user__username', 'user__email']
+    list_filter = ['blocked_until', 'failed_attempts']
+    readonly_fields = ['user']
+
+    actions = ['reset_attempts']
+
+    def is_blocked_now(self, obj):
+        return obj.is_blocked()
+    is_blocked_now.short_description = 'Bloqueado?' 
+    is_blocked_now.boolean = True
+
+    def reset_attempts(self, request, queryset):
+        for attempt in queryset:
+            attempt.reset_attempts()
+        self.message_user(request, "Tentativas e bloqueio resetados com sucesso.")
+    reset_attempts.short_description = "Resetar tentativas/bloqueio selecionados"
 
 # Register your models here.
 
@@ -100,3 +126,88 @@ class AceitacaoTermosAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ['criado_em', 'usuario', 'metodo', 'caminho', 'status_code', 'duracao_ms']
+    search_fields = ['caminho', 'view_name', 'usuario__username', 'mensagem', 'ip', 'user_agent']
+    readonly_fields = ['criado_em']
+    date_hierarchy = 'criado_em'
+    ordering = ('-criado_em',)
+    list_per_page = 50
+    list_select_related = ('usuario',)
+
+    class StatusClassFilter(SimpleListFilter):
+        title = 'Classe do status'
+        parameter_name = 'status_class'
+
+        def lookups(self, request, model_admin):
+            return (
+                ('2xx', '2xx Sucesso'),
+                ('3xx', '3xx Redirecionamento'),
+                ('4xx', '4xx Erro do Cliente'),
+                ('5xx', '5xx Erro do Servidor'),
+            )
+
+        def queryset(self, request, queryset):
+            val = self.value()
+            if val == '2xx':
+                return queryset.filter(status_code__gte=200, status_code__lt=300)
+            if val == '3xx':
+                return queryset.filter(status_code__gte=300, status_code__lt=400)
+            if val == '4xx':
+                return queryset.filter(status_code__gte=400, status_code__lt=500)
+            if val == '5xx':
+                return queryset.filter(status_code__gte=500, status_code__lt=600)
+            return queryset
+
+    class PeriodoFilter(SimpleListFilter):
+        title = 'Período'
+        parameter_name = 'periodo'
+
+        def lookups(self, request, model_admin):
+            return (
+                ('24h', 'Últimas 24h'),
+                ('7d', 'Últimos 7 dias'),
+                ('30d', 'Últimos 30 dias'),
+            )
+
+        def queryset(self, request, queryset):
+            val = self.value()
+            now = timezone.now()
+            if val == '24h':
+                return queryset.filter(criado_em__gte=now - timedelta(hours=24))
+            if val == '7d':
+                return queryset.filter(criado_em__gte=now - timedelta(days=7))
+            if val == '30d':
+                return queryset.filter(criado_em__gte=now - timedelta(days=30))
+            return queryset
+
+    list_filter = ['metodo', 'status_code', StatusClassFilter, PeriodoFilter, 'criado_em']
+
+    actions = ['exportar_csv']
+
+    def exportar_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="auditlog.csv"'
+        writer = csv.writer(response)
+        headers = ['criado_em', 'usuario', 'metodo', 'caminho', 'view_name', 'status_code', 'ip', 'user_agent', 'params', 'body', 'mensagem', 'duracao_ms']
+        writer.writerow(headers)
+        for obj in queryset.iterator():
+            writer.writerow([
+                timezone.localtime(obj.criado_em).strftime('%Y-%m-%d %H:%M:%S') if obj.criado_em else '',
+                obj.usuario.username if obj.usuario else '',
+                obj.metodo,
+                obj.caminho,
+                obj.view_name,
+                obj.status_code,
+                obj.ip or '',
+                (obj.user_agent or '')[:200],
+                json.dumps(obj.params, ensure_ascii=False)[:10000] if obj.params is not None else '{}',
+                json.dumps(obj.body, ensure_ascii=False)[:10000] if obj.body is not None else '{}',
+                (obj.mensagem or '')[:10000],
+                obj.duracao_ms,
+            ])
+        return response
+    exportar_csv.short_description = 'Exportar selecionados como CSV'

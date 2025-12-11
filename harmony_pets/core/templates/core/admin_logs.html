@@ -1,0 +1,125 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Logs da Aplicação - Harmony Pets{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Logs da Aplicação</h2>
+    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Voltar ao Admin</a>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Buscar</label>
+          <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Conteúdo...">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Nível</label>
+          <select class="form-select" name="level">
+            <option value="" {% if not level %}selected{% endif %}>Todos</option>
+            <option value="INFO" {% if level == 'INFO' %}selected{% endif %}>INFO</option>
+            <option value="WARNING" {% if level == 'WARNING' %}selected{% endif %}>WARNING</option>
+            <option value="ERROR" {% if level == 'ERROR' %}selected{% endif %}>ERROR</option>
+            <option value="CRITICAL" {% if level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
+            <option value="DEBUG" {% if level == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Linhas</label>
+          <input type="number" name="n" value="{{ n }}" min="50" max="5000" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-primary w-100"><i class="fas fa-search"></i> Filtrar</button>
+        </div>
+
+        <div class="col-12"><hr></div>
+        <div class="col-md-4">
+          <label class="form-label">Usuário (AuditLog)</label>
+          <select name="usuario" class="form-select">
+            <option value="">Todos</option>
+            {% for u in audit_users %}
+              <option value="{{ u.id }}" {% if audit_user_param == u.id|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Qtd AuditLog</label>
+          <!-- min ajustado para 1 para alinhar com lógica backend -->
+          <input type="number" name="audit_n" value="{{ audit_limit }}" min="1" max="1000" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Buscar Caminho (AuditLog)</label>
+          <input type="text" name="audit_path" value="{{ request.GET.audit_path }}" class="form-control" placeholder="/api/...">
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-outline-secondary w-100"><i class="fas fa-filter"></i> Filtrar AuditLog</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-warning">
+    {{ error }}<br>
+    <small class="text-muted">Caminho: {{ log_path }}</small>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between">
+      <span><i class="fas fa-file-alt"></i> Últimos registros</span>
+      <small class="text-muted">{{ log_path }}</small>
+    </div>
+    <div class="card-body" style="max-height: 60vh; overflow:auto; background:#0f172a; color:#e2e8f0; font-family: monospace; font-size: 0.9rem;">
+      {% if lines %}
+        {% for ln in lines %}
+          <div>{{ ln|escape }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="text-muted">Sem registros até o momento.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-shield-alt"></i> AuditLog (Banco)</span>
+      <small class="text-muted">Filtrado por usuário: {% if selected_audit_user %}{{ selected_audit_user.username }}{% else %}Todos{% endif %}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Data</th>
+            <th>Usuário</th>
+            <th>Método</th>
+            <th>Caminho</th>
+            <th>Status</th>
+            <th>ms</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if audit_logs %}
+            {% for al in audit_logs %}
+              <tr class="{% if al.status_code >= 400 %}table-danger{% elif al.status_code >= 300 %}table-warning{% endif %}">
+                <td class="text-nowrap">{{ al.criado_em|date:'d/m/Y H:i:s' }}</td>
+                <td>{{ al.usuario.username|default:'anon' }}</td>
+                <td>{{ al.metodo }}</td>
+                <td class="text-truncate" style="max-width:320px" title="{{ al.caminho }}">{{ al.caminho }}</td>
+                <td>{{ al.status_code }}</td>
+                <td>{{ al.duracao_ms }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" class="text-muted">Sem registros de auditoria.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

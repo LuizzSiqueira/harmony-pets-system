@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br" style="margin:0;padding:0;">
+<head>
+  <meta charset="UTF-8" />
+  <title>📝 Solicitação Enviada - Harmony Pets</title>
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background:#0f172a !important; }
+      .wrap { background:#0f172a !important; }
+      .surface { background:#1e293b !important; border-color:#334155 !important; }
+      .header { background:linear-gradient(135deg,#15803d,#16a34a 55%,#22c55e) !important; }
+      .text { color:#f1f5f9 !important; }
+      .muted { color:#cbd5e1 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="wrap" style="background:#f0f4f8;padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="620" cellpadding="0" cellspacing="0" class="surface" style="max-width:620px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(17,24,39,0.08);">
+          <tr>
+            <td class="header" style="background:linear-gradient(135deg,#15803d,#16a34a 55%,#22c55e);padding:28px 24px 22px;text-align:center;">
+              <h1 style="margin:0;font-size:24px;line-height:1.25;font-weight:700;color:#ffffff;">📝 Solicitação Enviada!</h1>
+              <p style="margin:10px 0 0;font-size:13px;color:#dcfce7;">Seu pedido de adoção foi registrado.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 40px 4px;font-size:15px;line-height:1.55;color:#1f2937;" class="text">
+              <p style="margin:0 0 14px;">Olá <strong style="color:#111827;">{{ interessado.usuario.first_name }}</strong>,</p>
+              <p style="margin:0 0 18px;">Sua solicitação de adoção para o pet <strong>{{ pet.nome }}</strong> foi enviada com sucesso!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 20px;">
+              <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:18px 20px;">
+                <h3 style="margin:0 0 12px;font-size:16px;color:#15803d;">🐾 Detalhes do Pet</h3>
+                <p style="margin:0 0 6px;font-size:14px;color:#374151;"><strong>Nome:</strong> {{ pet.nome }}</p>
+                <p style="margin:0 0 6px;font-size:14px;color:#374151;"><strong>Espécie:</strong> {{ pet.get_especie_display }}</p>
+                <p style="margin:0 0 6px;font-size:14px;color:#374151;"><strong>Porte:</strong> {{ pet.get_porte_display }}</p>
+                <p style="margin:0 0 0;font-size:14px;color:#374151;"><strong>Sexo:</strong> {{ pet.get_sexo_display }}</p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 20px;font-size:14px;color:#4b5563;line-height:1.5;">
+              <p style="margin:0 0 12px;"><strong style="color:#111827;">Local de Adoção:</strong> {{ pet.local_adocao.usuario.first_name }}</p>
+              <p style="margin:0 0 18px;">O local de adoção irá analisar sua solicitação e entrará em contato em breve. Você pode acompanhar o status em "Minhas Solicitações".</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 40px 26px;font-size:11px;text-align:center;color:#94a3b8;border-top:1px solid #e5e7eb;">
+              <p style="margin:0 0 6px;">Harmony Pets &middot; © {% now "Y" %}</p>
+              <p style="margin:0;font-size:10px;color:#9ca3af;">E-mail automático – não responda.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

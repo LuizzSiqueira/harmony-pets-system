@@ -5,7 +5,13 @@
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-Sistema completo de adoção de pets desenvolvido com Django, incluindo autenticação de dois fatores, localização com Google Maps e conformidade com a LGPD.
+Sistema completo de adoção de pets em Django, incluindo autenticação de dois fatores (2FA), localização com Google Maps e conformidade com a LGPD. Testes automatizados garantem regras de negócio (CPF/CNPJ, fluxo de adoção, 2FA, termos).
+
+> Resumo rápido:
+> - Servidor: `python manage.py runserver`
+> - Testes: `python manage.py test core.tests -v 2`
+> - Coverage: `bash scripts/run_tests_coverage.sh`
+> - Banco: selecione com `USE_DB=local` (SQLite) ou `USE_DB=web` (Postgres); testes usam SQLite automaticamente.
 
 ## ✨ Funcionalidades
 
@@ -27,6 +33,7 @@ Sistema completo de adoção de pets desenvolvido com Django, incluindo autentic
 - **Filtros avançados** por espécie, porte, sexo e localização
 - **Descrições detalhadas**
 - **Status de adoção** (disponível, em processo, adotado)
+- **Emoji inteligente**: preenchimento automático por espécie e sugestão via API Ninjas
 
 ### 📍 Localização e Mapa
 - **Integração com Google Maps API**
@@ -40,15 +47,44 @@ Sistema completo de adoção de pets desenvolvido com Django, incluindo autentic
 - **Histórico de solicitações** e status
 - **Notificações e feedback** do processo
 
+## 🏗️ Arquitetura do Projeto
+
+Este projeto segue o padrão **MVT (Model-View-Template)** do Django:
+
+- **Model (Modelo)**: Define a estrutura de dados e regras de negócio
+  - Localização: `harmony_pets/core/models.py`
+  - Exemplos: `Pet`, `InteressadoAdocao`, `LocalAdocao`, `SolicitacaoAdocao`, `TwoFactorAuth`
+  - Responsabilidades: Validações, relacionamentos, métodos de negócio
+
+- **View (Visão)**: Contém a lógica de processamento e controle
+  - Localização: `harmony_pets/core/views.py`
+  - Exemplos: `login_view`, `listar_pets`, `solicitar_adocao`, `dashboard_admin`
+  - Responsabilidades: Receber requisições, processar dados, retornar respostas
+
+- **Template (Modelo de apresentação)**: Define a interface do usuário
+  - Localização: `harmony_pets/core/templates/`
+  - Exemplos: `base.html`, `pets_list.html`, `login.html`, `perfil.html`
+  - Responsabilidades: Renderização HTML, apresentação de dados
+
+### Componentes Adicionais
+
+- **Forms**: Validação e processamento de formulários (`forms.py`)
+- **URLs**: Roteamento de requisições (`urls.py`)
+- **Middleware**: Interceptadores de requisição/resposta (`middleware.py`)
+- **Static Files**: CSS, JavaScript, imagens (`static/`)
+- **Template Tags**: Filtros e tags customizadas (`templatetags/`)
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **Backend**: Django 5.2.5, Python 3.12
 - **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
-- **Banco de dados**: PostgreSQL
+- **Banco de dados**: PostgreSQL (produção), SQLite (desenvolvimento/testes)
 - **Autenticação**: Microsoft Authenticator (TOTP)
 - **Mapas**: Google Maps API
+- **Emojis**: API Ninjas (opcional)
 - **Validações**: CPF/CNPJ, e-mail, telefone
 - **Segurança**: Middleware personalizado, LGPD compliance
+- **Testes**: Django TestCase, unittest, coverage, pytest
 
 ## 🚀 Instalação e Configuração
 
@@ -92,7 +128,34 @@ python manage.py createsuperuser
 - Obtenha uma API key do Google Maps
 - Adicione em `core/config_maps.py`
 
-### 7. Execute o servidor
+### 7. Variáveis de ambiente (.env) básicas
+
+Crie um arquivo `.env` dentro de `harmony_pets/` (mesmo nível de `manage.py`, não versione) com ao menos:
+```
+SECRET_KEY=defina-uma-chave-segura
+DEBUG=True
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=
+# Para Google Maps (opcional)
+GOOGLE_MAPS_API_KEY=
+# Sugestão de emoji (opcional)
+API_NINJAS_KEY=
+# Seleção de banco: local=SQLite, web=Postgres
+USE_DB=local
+# Se for usar Postgres externo (não coloque credenciais em commits)
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=5432
+```
+Nunca faça commit de credenciais reais. Para produção, use secret manager ou variáveis injetadas pelo ambiente.
+
+### 8. Execute o servidor
 ```bash
 python manage.py runserver
 ```
@@ -115,44 +178,126 @@ python manage.py runserver
 5. **Atualize status** dos pets
 6. **Comunique-se** com interessados
 
-## 🗂️ Estrutura do Projeto
+## 📚 Documentação e Scripts
+
+### Documentação (`docs/`)
+Todos os guias e documentação técnica estão organizados na pasta `docs/`:
+- Guias de configuração (2FA, Google Maps, variáveis de ambiente)
+- Lista de implementações e funcionalidades
+- Consulte `docs/README.md` para mais detalhes
+
+### Scripts (`scripts/`)
+Scripts utilitários e ferramentas de automação estão na pasta `scripts/`:
+- Scripts de população de dados
+- Scripts de teste e cobertura
+- Ferramentas de debug e manutenção
+- Consulte `scripts/README.md` para instruções de uso
+
+## 🗂️ Estrutura do Projeto (MVT)
 
 ```
 harmony-pets-system/
-├── harmony_pets/
-│   ├── core/                    # App principal
-│   │   ├── models.py           # Modelos de dados
-│   │   ├── views.py            # Lógica de negócio
-│   │   ├── forms.py            # Formulários e validações
-│   │   ├── urls.py             # URLs da aplicação
-│   │   ├── middleware.py       # Middleware personalizado
-│   │   ├── templates/          # Templates HTML
-│   │   └── static/             # Arquivos estáticos
-│   ├── harmony_pets/           # Configurações do projeto
-│   ├── manage.py               # Gerenciador Django
-│   └── populate_pets.py        # Script para popular dados
-├── venv/                       # Ambiente virtual
-├── README.md                   # Este arquivo
-└── .gitignore                  # Arquivos ignorados pelo Git
+├── harmony_pets/               # Projeto Django principal
+│   ├── core/                   # App principal (MVT)
+│   │   ├── models.py           # 📊 MODEL: Modelos de dados e regras de negócio
+│   │   ├── views.py            # 🎯 VIEW: Lógica de controle e processamento
+│   │   ├── forms.py            # 📝 Formulários e validações
+│   │   ├── urls.py             # 🔗 Roteamento de URLs
+│   │   ├── middleware.py       # 🛡️ Interceptadores de requisição
+│   │   ├── templates/          # 🎨 TEMPLATE: Interface do usuário (HTML)
+│   │   │   ├── core/           # Templates da aplicação
+│   │   │   └── registration/   # Templates de autenticação
+│   │   ├── static/             # 📁 Arquivos estáticos (CSS, JS, imagens)
+│   │   │   └── core/
+│   │   │       ├── css/        # Estilos CSS
+│   │   │       ├── js/         # Scripts JavaScript
+│   │   │       └── img/        # Imagens
+│   │   ├── tests/              # 🧪 Testes automatizados (15 arquivos)
+│   │   ├── templatetags/       # 🏷️ Filtros e tags customizadas
+│   │   └── management/         # ⚙️ Comandos Django customizados
+│   │       └── commands/
+│   ├── harmony_pets/           # ⚙️ Configurações do projeto Django
+│   │   ├── settings.py         # Configurações principais
+│   │   ├── urls.py             # URLs do projeto
+│   │   └── wsgi.py             # Interface WSGI
+│   ├── manage.py               # 🔧 Gerenciador Django
+│   ├── logs/                   # 📋 Logs do sistema
+│   ├── htmlcov/                # 📊 Relatório HTML de coverage (gerado)
+│   └── coverage.xml            # 📊 Relatório XML de coverage (gerado)
+├── scripts/                    # 🛠️ Scripts utilitários
+│   ├── populate_pets.py        # Popular banco com dados de teste
+│   ├── populate_pets_sp.py     # Popular com dados geográficos SP
+│   ├── test_email_debug.py     # Teste de configuração de email
+│   └── run_tests_coverage.sh   # Execução de testes com cobertura
+├── docs/                       # 📚 Documentação e guias
+│   ├── GUIA_2FA.md            # Guia de autenticação 2FA
+│   ├── GUIA_GOOGLE_MAPS.md    # Guia de configuração do Maps
+│   ├── GUIA_TESTES.md         # Guia completo de testes
+│   ├── ENV_README.md          # Documentação de variáveis de ambiente
+│   ├── implementacoes.txt     # Lista de implementações
+│   └── README.md              # Índice da documentação
+├── .venv/                      # 🐍 Ambiente virtual Python
+├── README.md                   # 📖 Este arquivo
+├── requirements.txt            # 📦 Dependências principais
+├── requirements-dev.txt        # 📦 Dependências de desenvolvimento
+├── Makefile                    # ⚡ Comandos úteis make
+└── .gitignore                  # 🚫 Arquivos ignorados pelo Git
 ```
+
+### Fluxo MVT no Projeto
+
+1. **Requisição do usuário** → `urls.py` (roteamento)
+2. **View processa** → `views.py` (lógica de negócio)
+3. **Model consulta/salva** → `models.py` (banco de dados)
+4. **View prepara contexto** → Dados para o template
+5. **Template renderiza** → `templates/` (HTML final)
+6. **Resposta HTTP** → Enviada ao navegador
 
 ## 🔒 Segurança e LGPD
 
 - **Termos de uso** em conformidade com a LGPD
 - **Coleta de dados** transparente e consentida
 - **Direitos do usuário** respeitados (acesso, retificação, exclusão)
-- **Autenticação robusta** com 2FA obrigatório
+- **Autenticação robusta** com 2FA opcional (ativável pelo usuário, middleware exige quando configurado)
 - **Validação de dados** rigorosa
 
-## 📋 Modelos de Dados
+## 📋 Modelos de Dados (Model - MVT)
 
-- **User**: Usuários do sistema (Django padrão)
-- **InteressadoAdocao**: Pessoas interessadas em adotar
-- **LocalAdocao**: Organizações/locais que oferecem pets
+### Principais Models em `core/models.py`
+
+- **User**: Usuários do sistema (Django padrão - `django.contrib.auth`)
+  - Base para autenticação e permissões
+
+- **InteressadoAdocao**: Pessoas interessadas em adotar pets
+  - Campos: CPF, telefone, endereço, latitude, longitude
+  - Relacionamento: OneToOne com User
+
+- **LocalAdocao**: Organizações/locais que oferecem pets para adoção
+  - Campos: CNPJ, telefone, endereço, latitude, longitude
+  - Relacionamento: OneToOne com User
+
 - **Pet**: Animais disponíveis para adoção
-- **SolicitacaoAdocao**: Solicitações de adoção
-- **TwoFactorAuth**: Configurações de 2FA
+  - Campos: nome, espécie, porte, sexo, idade, descrição, foto, emoji, coordenadas
+  - Status: disponível, em processo, adotado
+  - Relacionamento: ForeignKey com LocalAdocao
+
+- **SolicitacaoAdocao**: Registro de solicitações de adoção
+  - Campos: motivo, status, data_solicitacao
+  - Relacionamentos: ForeignKey com Pet e InteressadoAdocao
+
+- **TwoFactorAuth**: Configurações de autenticação 2FA
+  - Campos: secret_key, método preferido (authenticator/sms), códigos de backup
+  - Relacionamento: OneToOne com User
+
 - **AceitacaoTermos**: Controle de aceitação LGPD
+  - Campos: data_aceitacao, ip_address, versao_termos
+  - Relacionamento: ForeignKey com User
+
+- **UserLoginAttempt**: Registro de tentativas de login (segurança)
+  - Campos: username, ip_address, success, timestamp
+
+- **AuditLog**: Logs de auditoria de ações críticas
+  - Campos: user, action, model, timestamp, details
 
 ## 🤝 Contribuindo
 
@@ -181,3 +326,45 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 ---
 
 ⭐ **Se este projeto foi útil, considere dar uma estrela!**
+
+## 🧪 Testes e Cobertura
+
+Executar todos os testes (usa SQLite automaticamente, não requer Postgres):
+```bash
+cd harmony_pets
+python manage.py test core.tests -v 2
+```
+
+Gerar cobertura (HTML + XML):
+```bash
+bash scripts/run_tests_coverage.sh
+```
+Saída:
+- HTML: `harmony_pets/htmlcov/index.html`
+- XML:  `harmony_pets/coverage.xml`
+
+Principais áreas cobertas: modelos (CPF/CNPJ, Pets, 2FA), formulários, views básicas, middleware (termos/2FA). Espaço para ampliar cobertura em views avançadas e templatetags.
+
+## 🛠 Troubleshooting
+
+| Problema | Possível causa | Solução rápida |
+|----------|----------------|----------------|
+| Erro de conexão Postgres (IPv6 unreachable) | Rede sem rota IPv6 para host Supabase | Usar IPv4 explícito em `DB_HOST` ou VPN; ajustar DNS local. |
+| Testes tentando usar Postgres | Execução fora de `manage.py test` ou variável ambiente interferindo | Execute exatamente `python manage.py test core.tests`; verifique se `test` está em `sys.argv`. |
+| Cobertura abaixo do esperado | Faltam testes de views/paginação | Criar casos adicionais em `core/tests/test_views_*`. |
+| QR Code 2FA não aparece | Falta Pillow ou qrcode | Instalar via `pip install -r requirements.txt` novamente. |
+
+## 🧩 Próximos Passos (Sugestões)
+
+- Adicionar testes para AuditLog (middleware) mascarando payload sensível.
+- Criar teste de expiração de sessão 2FA (>4h) para garantir revalidação.
+- Testar filtros personalizados em `templatetags/formatters.py`.
+- Adicionar `README_EN.md` para internacionalização.
+- Criar testes para o endpoint `/api/emoji/sugerir/` (mock da API e fallback local).
+
+## 😊 Emojis Inteligentes
+
+- No formulário de pet, ao selecionar a espécie, o sistema tenta sugerir um emoji via API Ninjas e, se indisponível, usa mapeamento local (🐶, 🐱, 🐰, 🐹, 🐦, 🐾).
+- Há um botão "Sugerir" ao lado do campo de emoji que consulta a API com base no nome do pet e/ou espécie.
+- Endpoint utilitário público: `GET /api/emoji/sugerir/?termo=dog` → `{ ok: true|false, emoji: "..." }`.
+

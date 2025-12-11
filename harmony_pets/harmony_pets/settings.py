@@ -1,4 +1,8 @@
-
+# Corrige o redirecionamento de login padrão do Django
+LOGIN_URL = '/login/'
+import os
+# Chave da API do Google Maps
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
 # Permite ativar/desativar a população automática de imagens reais nos pets
 POPULATE_PETS_WITH_IMAGES = True
@@ -18,16 +22,21 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# Diretório de logs de aplicação
+LOG_DIR = BASE_DIR / 'logs'
+os.makedirs(LOG_DIR, exist_ok=True)
 
 
 
 # Configurações de e-mail para redefinição de senha (usando variáveis de ambiente)
 import os
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
@@ -42,38 +51,57 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4_k#b82vkh5mgejbm#+wj6^7)ar2jhs#^oq1xx_=+^w$kbps9@')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+
+# ALLOWED_HOSTS via variável de ambiente (separado por vírgula)
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_ENV.split(',') if h.strip()]
+    # Sempre permitir localhost e 127.0.0.1 em desenvolvimento
+    if DEBUG:
+        for dev_host in ['localhost', '127.0.0.1', 'testserver']:
+            if dev_host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(dev_host)
+else:
+    # Padrão seguro para desenvolvimento
+    ALLOWED_HOSTS = []
+    if DEBUG:
+        ALLOWED_HOSTS.extend(['127.0.0.1','localhost','testserver'])
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    # IMPORTANTE: Apps customizados devem vir ANTES dos apps do Django
+    # Isso garante que templates personalizados (ex: registration/*) tenham prioridade
+    # sobre templates padrão do django.contrib.admin e django.contrib.auth
+    'core',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
     ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.AdminAccessRedirectMiddleware',
     'core.middleware.TermsAcceptanceMiddleware',
     'core.middleware.TwoFactorMiddleware',
+    'core.middleware.AuditLogMiddleware',
 ]
 
 ROOT_URLCONF = 'harmony_pets.urls'
@@ -88,6 +116,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
+            ],
+            # Torna disponíveis globalmente os filtros customizados de formatação
+            'builtins': [
+                'core.templatetags.formatters',
             ],
         },
     },
@@ -99,20 +132,47 @@ WSGI_APPLICATION = 'harmony_pets.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'postgres'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',  # Obrigatório para Supabase
-        },
-        'CONN_MAX_AGE': 600,  # Mantém conexão por 10 minutos
+# Seleção de banco de dados:
+# - USE_DB=local -> SQLite (útil para apresentação/offline)
+# - USE_DB=web   -> Postgres/Supabase (usa DB_* do ambiente)
+USE_DB = (os.environ.get('USE_DB') or '').lower()
+
+if 'test' in sys.argv:
+    # Durante testes: usar SQLite isolado
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db_test.sqlite3'),
+        }
     }
-}
+elif USE_DB == 'local':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+else:
+    # Padrão (ou USE_DB=web): Postgres/Supabase
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'postgres'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': os.environ.get('DB_SSLMODE', 'require'),  # Supabase requer SSL
+                'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '5')),
+                'keepalives': 1,
+                'keepalives_idle': int(os.environ.get('DB_KEEPALIVES_IDLE', '20')),
+                'keepalives_interval': int(os.environ.get('DB_KEEPALIVES_INTERVAL', '10')),
+                'keepalives_count': int(os.environ.get('DB_KEEPALIVES_COUNT', '3')),
+            },
+            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600')),
+        }
+    }
 
 
 # Password validation
@@ -137,13 +197,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
 USE_TZ = True
+
+# Idiomas suportados
+LANGUAGES = [
+    ('pt-br', 'Português (Brasil)'),
+    ('en', 'English'),
+]
+
+# Expiração do link de redefinição de senha (em segundos)
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hora
 
 
 
@@ -162,3 +231,43 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuração de logging para arquivo rotativo acessível pelo admin
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'app_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'maxBytes': 1024*1024*5,  # 5MB
+            'backupCount': 3,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['app_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'core': {
+            'handlers': ['app_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Política de exclusão de conta (tornar opcional via ambiente)
+# Quando False, a exclusão de conta é desativada para os usuários finais.
+ACCOUNT_DELETION_ENABLED = os.environ.get('ACCOUNT_DELETION_ENABLED', 'True') == 'True'

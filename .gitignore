@@ -1,6 +1,8 @@
 # Nunca suba arquivos de variáveis sensíveis para o controle de versão!
 .env
 *.env
+# .env específico do projeto (mesmo nível de manage.py)
+harmony_pets/.env
 # Python
 __pycache__/
 *.py[cod]
@@ -31,6 +33,8 @@ MANIFEST
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+# Banco de testes (criado pelas settings durante `manage.py test`)
+db_test.sqlite3
 media/
 staticfiles/
 static_root/
@@ -156,3 +160,6 @@ dmypy.json
 
 # Redis
 dump.rdb
+
+# Adicionado para evitar subir o arquivo de guia ao repositório
+COMO_RODAR.md

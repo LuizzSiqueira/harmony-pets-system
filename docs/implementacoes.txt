@@ -1,0 +1,107 @@
+
+
+
+==============================
+Regras de Negócio Implementadas
+==============================
+
+
+1. Cadastro de usuários com perfis diferenciados (Interessado e Local de Adoção)
+   - Validação de CPF/CNPJ, e-mail e telefone
+   - Aceite obrigatório dos Termos de Uso e LGPD
+   - Local: harmony_pets/core/forms.py, harmony_pets/core/views.py
+
+2. Autenticação robusta com 2FA (Microsoft Authenticator)
+   - Login, logout, bloqueio automático após tentativas inválidas
+   - Reset e desativação de 2FA pelo usuário
+   - Local: harmony_pets/core/views.py, harmony_pets/core/models.py
+
+3. Cadastro e associação de pets a locais de adoção com latitude/longitude
+   - Permite localização individual ou herdada do local
+   - Emoji automático por espécie
+   - Local: harmony_pets/core/models.py, harmony_pets/core/forms.py, harmony_pets/populate_pets.py
+
+4. Filtros avançados por status, espécie, porte, sexo e localização
+   - Apenas pets disponíveis exibidos por padrão
+   - Local: harmony_pets/core/views.py
+
+5. Navegação adaptada ao tipo de usuário
+   - Menus e botões contextuais para Interessado ou Local
+   - Templates: harmony_pets/core/templates/core/base.html, pets_proximos.html
+
+6. Gerenciamento completo de pets (CRUD, status, fotos, exclusão)
+   - Local: harmony_pets/core/views.py, harmony_pets/core/templates/core/gerenciar_pets.html
+
+7. Solicitação e gerenciamento de processos de adoção
+   - Comunicação entre interessados e locais
+   - Histórico e status das solicitações
+   - Local: harmony_pets/core/views.py, harmony_pets/core/templates/core/solicitacoes_adocao.html
+
+8. Conformidade total com LGPD
+   - Controle de aceitação, exclusão definitiva de dados
+   - Transparência na coleta e uso de dados
+   - Templates: harmony_pets/core/templates/core/termos_uso.html, aceitar_termos.html
+
+9. Row Level Security (RLS) no banco Supabase
+   - Script SQL fornecido na documentação
+
+==============================
+Funcionalidades Implementadas
+==============================
+
+
+1. Cálculo de distância geográfica (Haversine)
+   - Local: harmony_pets/core/utils.py
+   - Usado em pets próximos, API e mapa
+
+2. API JSON para pets disponíveis no mapa
+   - Endpoint otimizado para localização e filtros
+   - Local: harmony_pets/core/views.py (pets_mapa_api), harmony_pets/core/urls.py
+
+3. Interface responsiva e moderna com Bootstrap
+   - Templates: harmony_pets/core/templates/core/base.html, pets_proximos.html, home.html
+   - CSS customizado: harmony_pets/core/static/core/css/
+
+4. Visualização detalhada dos pets
+   - Foto, emoji, nome, espécie, raça, porte, cor, sexo, idade, peso, distância
+   - Template: harmony_pets/core/templates/core/pets_proximos.html, pet_detail.html
+
+5. Filtros inteligentes por localização e atualização automática
+   - Botão para capturar localização via navegador
+   - Local: harmony_pets/core/views.py, templates
+
+6. Preview de emoji no cadastro de pets
+   - Emoji exibido em tempo real conforme preenchimento
+   - Template: harmony_pets/core/templates/core/pet_form.html
+
+7. População de pets de teste com dados realistas
+   - Script: harmony_pets/populate_pets.py
+
+8. Variáveis de ambiente centralizadas e seguras
+   - Arquivo: harmony_pets/.env (protegido por .gitignore)
+
+9. Administração avançada via Django Admin
+   - Gerenciamento de usuários, pets, solicitações, tentativas de login, 2FA, aceitação LGPD
+   - Local: harmony_pets/core/admin.py
+
+10. Segurança aprimorada
+    - Middleware personalizado
+    - Logs de acesso e tentativas de login
+    - Bloqueio automático após múltiplas tentativas
+    - Controle de sessão e permissões
+
+11. Integração com Google Maps API
+    - Visualização de pets próximos no mapa
+    - Geocodificação de endereços
+    - Local: harmony_pets/core/config_maps.py, templates, utils
+
+12. Termos de uso e política de privacidade
+    - Templates dedicados e aceitação obrigatória
+    - Local: harmony_pets/core/templates/core/termos_uso.html, aceitar_termos.html
+
+13. Responsividade e experiência mobile
+    - Layout adaptado para celulares e tablets
+    - Bootstrap 5
+
+14. Scripts de inicialização e documentação
+    - populate_pets.py, GUIA_GOOGLE_MAPS.md

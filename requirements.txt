@@ -1,7 +1,24 @@
-asgiref==3.9.1
-Django==5.2.5
-pillow==11.3.0
-psycopg2-binary==2.9.10
-pyotp==2.9.0
-qrcode==8.2
-sqlparse==0.5.3
+# Dependências principais do projeto Harmony Pets
+# Para instalar: pip install -r requirements.txt
+
+# Framework Django
+asgiref==3.9.1           # Suporte ASGI para Django
+Django==5.2.5            # Framework web principal
+sqlparse==0.5.3          # Parser SQL para Django
+
+# Banco de dados
+psycopg2-binary==2.9.10  # Driver PostgreSQL
+
+# Imagens e mídia
+pillow==11.3.0           # Processamento de imagens (fotos de pets)
+
+# Autenticação e segurança
+pyotp==2.9.0             # Geração de códigos TOTP para 2FA
+qrcode==8.2              # Geração de QR codes para configuração 2FA
+
+# Configuração
+python-decouple==3.8     # Gerenciamento de configurações
+python-dotenv==1.1.1     # Carregamento de variáveis de ambiente
+
+# Integrações externas
+requests==2.32.3         # Cliente HTTP (Google Maps API, API Ninjas)

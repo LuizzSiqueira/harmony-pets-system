@@ -1,0 +1,81 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Qualidade & Cobertura - Harmony Pets{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Qualidade do Projeto</h2>
+    <div class="btn-group">
+      <a href="{% url 'admin_logs' %}" class="btn btn-outline-secondary"><i class="fas fa-list"></i> Logs</a>
+      <a href="/admin/" class="btn btn-outline-secondary"><i class="fas fa-tools"></i> Admin</a>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">Cobertura de Testes</h5>
+      {% if error %}
+        <div class="alert alert-warning">{{ error }}</div>
+      {% endif %}
+      {% if timestamp_str %}
+        <p class="text-muted">Última execução: <strong>{{ timestamp_str }}</strong></p>
+      {% endif %}
+      <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Cobertura Global
+          <span class="badge rounded-pill {% if threshold_ok %}bg-success{% else %}bg-danger{% endif %}">{% if global_rate is not None %}{{ global_rate }}%{% else %}-{% endif %}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          App core
+          <span class="badge bg-info rounded-pill">{% if core_rate is not None %}{{ core_rate }}%{% else %}-{% endif %}</span>
+        </li>
+      </ul>
+      <div class="mt-3">
+        <small class="text-muted">Linhas: {% if lines_covered is not None and lines_valid is not None %}{{ lines_covered }}/{{ lines_valid }} ({% if missing_lines is not None %}faltam {{ missing_lines }}{% endif %}){% else %}-{% endif %}</small>
+        {% if delta_global is not None %}
+          <small class="ms-3 {% if delta_global >= 0 %}text-success{% else %}text-danger{% endif %}">Δ Global: {% if delta_global > 0 %}+{% endif %}{{ delta_global }} p.p.</small>
+        {% endif %}
+        {% if delta_core is not None %}
+          <small class="ms-3 {% if delta_core >= 0 %}text-success{% else %}text-danger{% endif %}">Δ Core: {% if delta_core > 0 %}+{% endif %}{{ delta_core }} p.p.</small>
+        {% endif %}
+      </div>
+      <small class="text-muted d-block mt-2">Fonte: {{ coverage_path }}</small>
+      <hr>
+      <p class="mb-1">Como atualizar:</p>
+      <ol class="mb-0">
+        <li>Execute os testes com cobertura: <code>scripts/run_tests_coverage.sh</code></li>
+        <li>Recarregue esta página para ver os percentuais atualizados.</li>
+        <li>Relatório detalhado HTML: <code>harmony_pets/htmlcov/index.html</code></li>
+      </ol>
+      {% if history and history|length > 1 %}
+      <hr>
+      <h6>Histórico recente</h6>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Global</th>
+              <th>Core</th>
+              <th>Linhas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in history|slice:':5'|dictsortreversed:'timestamp' %}
+            <tr>
+              <td>{{ h.timestamp }}</td>
+              <td>{{ h.global_rate }}%</td>
+              <td>{% if h.core_rate is not None %}{{ h.core_rate }}%{% else %}-{% endif %}</td>
+              <td>{% if h.lines_covered is not None and h.lines_valid is not None %}{{ h.lines_covered }}/{{ h.lines_valid }}{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
