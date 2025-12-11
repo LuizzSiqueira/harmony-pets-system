@@ -103,9 +103,9 @@
     </div>
 
     {% if solicitacoes %}
-        <div class="row">
+        <div class="row g-3">
             {% for solicitacao in solicitacoes %}
-            <div class="col-md-6 mb-4">
+            <div class="col-12 col-md-6 mb-4 d-flex">
                 <div class="card solicitation-card h-100">
                     <div class="card-header-custom">
                         <div class="d-flex justify-content-between align-items-center">
@@ -313,10 +313,10 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="text-center py-5">
-            <h3>📭 Nenhuma solicitação encontrada</h3>
+        <div class="text-center py-5 px-2">
+            <h3 style="font-size:1.5rem;">📭 Nenhuma solicitação encontrada</h3>
             <p class="text-muted">Você ainda não fez nenhuma solicitação de adoção.</p>
-            <a href="{% url 'pets_list' %}" class="btn btn-primary mt-3">
+            <a href="{% url 'pets_list' %}" class="btn btn-primary mt-3 w-100 w-md-auto">
                 <i class="fas fa-search"></i> Buscar Pets para Adotar
             </a>
         </div>

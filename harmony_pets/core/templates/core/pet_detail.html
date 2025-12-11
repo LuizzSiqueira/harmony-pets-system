@@ -232,7 +232,7 @@
                         <i class="fas fa-paw"></i> {{ pet.get_especie_display }} • 
                         <i class="fas fa-calendar"></i> {{ pet.get_idade_display }}
                     </p>
-                    <div class="mb-3">
+                    <div class="mb-3 d-flex flex-wrap gap-2 justify-content-center" style="row-gap:8px;">
                         {% if pet.status == 'disponivel' %}
                             <span class="badge-custom"><i class="fas fa-check-circle"></i> Disponível para Adoção</span>
                         {% elif pet.status == 'adotado' %}
