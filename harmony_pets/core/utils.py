@@ -202,3 +202,16 @@ def obter_emoji_animal(termo: str) -> str:
     except EmojiAPIError as e:
         print(f"[WARN] Falha ao buscar emoji para '{termo}': {e}")
         return ''
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+
+def enviar_email_notificacao(destinatario, assunto, mensagem, template_html, context):
+    """
+    Envia um e-mail de notificação usando um template HTML.
+    """
+    text_body = mensagem
+    html_body = render_to_string(template_html, context)
+    email = EmailMultiAlternatives(assunto, text_body, to=[destinatario])
+    email.attach_alternative(html_body, "text/html")
+    email.send()

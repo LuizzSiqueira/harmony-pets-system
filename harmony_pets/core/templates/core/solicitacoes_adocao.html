@@ -58,7 +58,7 @@
             <h2>📨 Solicitações de Adoção</h2>
             <p class="text-muted">Gerencie as solicitações recebidas</p>
         </div>
-        <a href="{% url 'gerenciar_pets' %}" class="btn btn-outline-primary">
+        <a href="{% url 'core:gerenciar_pets' %}" class="btn btn-outline-primary">
             <i class="fas fa-paw"></i> Meus Pets
         </a>
     </div>
@@ -96,22 +96,22 @@
     <!-- Filtros -->
     <div class="mb-4">
         <div class="btn-group flex-wrap" role="group">
-            <a href="{% url 'solicitacoes_adocao' %}" class="btn {% if not status_atual %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}" class="btn {% if not status_atual %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Todas
             </a>
-            <a href="{% url 'solicitacoes_adocao' %}?status=pendente" class="btn {% if status_atual == 'pendente' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}?status=pendente" class="btn {% if status_atual == 'pendente' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Pendentes
             </a>
-            <a href="{% url 'solicitacoes_adocao' %}?status=em_entrevista" class="btn {% if status_atual == 'em_entrevista' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}?status=em_entrevista" class="btn {% if status_atual == 'em_entrevista' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Em Entrevista
             </a>
-            <a href="{% url 'solicitacoes_adocao' %}?status=entrevista_aprovada" class="btn {% if status_atual == 'entrevista_aprovada' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}?status=entrevista_aprovada" class="btn {% if status_atual == 'entrevista_aprovada' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Aprovadas
             </a>
-            <a href="{% url 'solicitacoes_adocao' %}?status=agendado" class="btn {% if status_atual == 'agendado' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}?status=agendado" class="btn {% if status_atual == 'agendado' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Agendadas
             </a>
-            <a href="{% url 'solicitacoes_adocao' %}?status=concluida" class="btn {% if status_atual == 'concluida' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <a href="{% url 'core:solicitacoes_adocao' %}?status=concluida" class="btn {% if status_atual == 'concluida' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                 Concluídas
             </a>
         </div>
@@ -246,7 +246,7 @@
                             </div>
                             {% endif %}
                             
-                            <form method="post" action="{% url 'confirmar_adocao' solicitacao.id %}">
+                            <form method="post" action="{% url 'core:confirmar_adocao' solicitacao.id %}">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-success w-100" 
                                         {% if not solicitacao.termo_aceito %}disabled 
@@ -330,7 +330,7 @@
                     Não há solicitações com o status "{{ status_atual }}".
                 {% endif %}
             </p>
-            <a href="{% url 'gerenciar_pets' %}" class="btn btn-primary">
+            <a href="{% url 'core:gerenciar_pets' %}" class="btn btn-primary">
                 <i class="fas fa-paw"></i> Ver Meus Pets
             </a>
         </div>
@@ -347,7 +347,7 @@
                     <h5 class="modal-title">⏰ Agendar Entrevista</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="post" action="{% url 'agendar_entrevista' solicitacao.id %}">
+                <form method="post" action="{% url 'core:agendar_entrevista' solicitacao.id %}">
                     {% csrf_token %}
                     <div class="modal-body">
                         <div class="mb-3">
@@ -388,7 +388,7 @@
                     <h5 class="modal-title">✅ Aprovar Entrevista</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="post" action="{% url 'responder_entrevista' solicitacao.id %}">
+                <form method="post" action="{% url 'core:responder_entrevista' solicitacao.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="resultado" value="aprovar">
                     <div class="modal-body">
@@ -415,7 +415,7 @@
                     <h5 class="modal-title">❌ Reprovar Entrevista</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="post" action="{% url 'responder_entrevista' solicitacao.id %}">
+                <form method="post" action="{% url 'core:responder_entrevista' solicitacao.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="resultado" value="rejeitar">
                     <div class="modal-body">
@@ -445,7 +445,7 @@
                     <h5 class="modal-title">📅 Agendar Retirada do Pet</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="post" action="{% url 'agendar_retirada' solicitacao.id %}">
+                <form method="post" action="{% url 'core:agendar_retirada' solicitacao.id %}">
                     {% csrf_token %}
                     <div class="modal-body">
                         <div class="alert alert-info">

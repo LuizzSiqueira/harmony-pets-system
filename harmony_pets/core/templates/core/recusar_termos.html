@@ -30,25 +30,25 @@
             Você pode:
           </p>
           <ul>
-            <li>Revisar os <a href="{% url 'termos_uso' %}" target="_blank">Termos de Uso e a Política de Privacidade</a> novamente</li>
-            <li>Voltar e <a href="{% url 'aceitar_termos' %}">aceitar os termos</a> para continuar</li>
+            <li>Revisar os <a href="{% url 'core:termos_uso' %}" target="_blank">Termos de Uso e a Política de Privacidade</a> novamente</li>
+            <li>Voltar e <a href="{% url 'core:aceitar_termos' %}">aceitar os termos</a> para continuar</li>
             {% if user.is_authenticated %}
             <li>Encerrar sua sessão com segurança</li>
             {% endif %}
-            <li>Falar com o <a href="{% url 'contato' %}">atendimento</a> em caso de dúvidas</li>
+            <li>Falar com o <a href="{% url 'core:contato' %}">atendimento</a> em caso de dúvidas</li>
           </ul>
 
           <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-            <a href="{% url 'termos_uso' %}" class="btn btn-outline-primary">
+            <a href="{% url 'core:termos_uso' %}" class="btn btn-outline-primary">
               <i class="fas fa-book me-2"></i>
               Ler Termos novamente
             </a>
-            <a href="{% url 'aceitar_termos' %}" class="btn btn-success">
+            <a href="{% url 'core:aceitar_termos' %}" class="btn btn-success">
               <i class="fas fa-check me-2"></i>
               Aceitar e continuar
             </a>
             {% if user.is_authenticated %}
-            <form method="post" action="{% url 'revogar_termos' %}">
+            <form method="post" action="{% url 'core:revogar_termos' %}">
               {% csrf_token %}
               <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja revogar seu aceite? Você ficará impedido de usar a plataforma até aceitar novamente.');">
                 <i class="fas fa-user-slash me-2"></i>
@@ -65,7 +65,7 @@
               </button>
             </form>
             {% endif %}
-            <a href="{% url 'home' %}" class="btn btn-outline-dark">
+            <a href="{% url 'core:home' %}" class="btn btn-outline-dark">
               <i class="fas fa-home me-2"></i>
               Ir para a página inicial
             </a>

@@ -134,18 +134,19 @@
                             <i class="fas fa-cog me-2"></i>Ações
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><a class="dropdown-item" href="{% url 'edit_profile' %}"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
-                            <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:edit_profile' %}"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:change_password' %}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
                             <li><hr class="dropdown-divider"></li>
                             {% if interessado %}
-                                <li><a class="dropdown-item" href="{% url 'minhas_solicitacoes_adocao' %}"><i class="fas fa-list me-2"></i>Minhas Solicitações</a></li>
-                                <li><a class="dropdown-item" href="{% url 'meus_pets_adotados' %}"><i class="fas fa-paw me-2"></i>Meus Pets Adotados</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:minhas_solicitacoes_adocao' %}"><i class="fas fa-list me-2"></i>Minhas Solicitações</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:meus_pets_adotados' %}"><i class="fas fa-paw me-2"></i>Meus Pets Adotados</a></li>
                             {% elif local %}
-                                <li><a class="dropdown-item" href="{% url 'gerenciar_pets' %}"><i class="fas fa-dog me-2"></i>Meus Pets</a></li>
-                                <li><a class="dropdown-item" href="{% url 'solicitacoes_adocao' %}"><i class="fas fa-inbox me-2"></i>Solicitações Recebidas</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:gerenciar_pets' %}"><i class="fas fa-dog me-2"></i>Meus Pets</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:solicitacoes_adocao' %}"><i class="fas fa-inbox me-2"></i>Solicitações Recebidas</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-home me-2"></i>Voltar ao Início</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:home' %}"><i class="fas fa-home me-2"></i>Voltar ao Início</a></li>
+                                                    <li><a class="dropdown-item" href="{% url 'core:home' %}"><i class="fas fa-home me-2"></i>Voltar ao Início</a></li>
                         </ul>
                     </div>
                 </div>
@@ -309,7 +310,7 @@
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     <strong>Inativo</strong> - Adicione proteção extra
                                 </div>
-                                <a href="{% url 'setup_2fa' %}" class="btn btn-primary rounded-pill px-4 w-100">
+                                <a href="{% url 'core:setup_2fa' %}" class="btn btn-primary rounded-pill px-4 w-100">
                                     <i class="fas fa-shield-alt"></i> Ativar 2FA
                                 </a>
                             {% endif %}
@@ -407,7 +408,7 @@
                                         </div>
                                     </div>
                                     <div class="card-footer py-2 text-end">
-                                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_logs' %}"><i class="fas fa-file-alt"></i> Ver logs</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'core:admin_logs' %}"><i class="fas fa-file-alt"></i> Ver logs</a>
                                         <a class="btn btn-sm btn-outline-secondary" href="/admin/"><i class="fas fa-tools"></i> Admin</a>
                                     </div>
                                 </div>
@@ -433,7 +434,7 @@
                                         </div>
                                     </div>
                                     <div class="card-footer py-2 text-end">
-                                        <a class="btn btn-sm btn-outline-warning" href="{% url 'admin_logs' %}"><i class="fas fa-eye"></i> Acompanhar</a>
+                                        <a class="btn btn-sm btn-outline-warning" href="{% url 'core:admin_logs' %}"><i class="fas fa-eye"></i> Acompanhar</a>
                                     </div>
                                 </div>
                             </div>
@@ -452,7 +453,7 @@
                                     <div class="card-body d-flex flex-column justify-content-between">
                                         <div class="mb-3">
                                             <h5 class="card-title mb-1 text-secondary"><i class="fas fa-user-shield"></i> Remoção de Conta conforme Termos</h5>
-                                            <p class="card-text text-muted mb-2">A remoção segue as diretrizes dos <a href="{% url 'termos_uso' %}" target="_blank">Termos de Uso</a> e Política de Privacidade (LGPD). Revise antes de prosseguir.</p>
+                                            <p class="card-text text-muted mb-2">A remoção segue as diretrizes dos <a href="{% url 'core:termos_uso' %}" target="_blank">Termos de Uso</a> e Política de Privacidade (LGPD). Revise antes de prosseguir.</p>
                                             <div class="alert alert-secondary small" role="alert">
                                                 <ul class="mb-0">
                                                     <li>Requer aceitação prévia dos termos.</li>
@@ -463,16 +464,16 @@
                                             </div>
                                         </div>
                                         <div class="text-center d-flex flex-column gap-2">
-                                            <a href="{% url 'termos_uso' %}" target="_blank" class="btn btn-info btn-sm">
+                                            <a href="{% url 'core:termos_uso' %}" target="_blank" class="btn btn-info btn-sm">
                                                 <i class="fas fa-file-alt"></i> Revisar Termos de Uso
                                             </a>
-                                            <a href="{% url 'termos_uso' %}#politica-privacidade" target="_blank" class="btn btn-info btn-sm">
+                                            <a href="{% url 'core:termos_uso' %}#politica-privacidade" target="_blank" class="btn btn-info btn-sm">
                                                 <i class="fas fa-shield-alt"></i> Revisar Política de Privacidade
                                             </a>
                                             <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalRevogarTermos">
                                                 <i class="fas fa-times-circle"></i> Revogar Aceitação dos Termos
                                             </button>
-                                            <a href="{% url 'contato' %}" class="btn btn-outline-primary btn-sm">
+                                            <a href="{% url 'core:contato' %}" class="btn btn-outline-primary btn-sm">
                                                 <i class="fas fa-question-circle"></i> Suporte
                                             </a>
                                         </div>
@@ -553,7 +554,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
-                <form method="POST" action="{% url 'revogar_termos' %}" style="display: inline;">
+                <form method="POST" action="{% url 'core:revogar_termos' %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-ban"></i> Confirmar Revogação

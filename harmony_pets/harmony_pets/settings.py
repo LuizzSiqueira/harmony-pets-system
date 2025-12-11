@@ -1,3 +1,5 @@
+# Corrige o redirecionamento de login padrão do Django
+LOGIN_URL = '/login/'
 import os
 # Chave da API do Google Maps
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
@@ -49,7 +51,6 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 

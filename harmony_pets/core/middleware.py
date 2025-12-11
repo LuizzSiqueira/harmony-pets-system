@@ -20,15 +20,15 @@ class TermsAcceptanceMiddleware:
         # URLs que não precisam de verificação de termos
         self.excluded_urls = [
             '/admin/',
-            reverse('login'),
-            reverse('logout'),
-            reverse('termos_uso'),
-            reverse('aceitar_termos'),
-            reverse('recusar_termos'),
-            reverse('revogar_termos'),
-            reverse('register'),
-            reverse('register_interessado'),
-            reverse('register_local'),
+            reverse('core:login'),
+            reverse('core:logout'),
+            reverse('core:termos_uso'),
+            reverse('core:aceitar_termos'),
+            reverse('core:recusar_termos'),
+            reverse('core:revogar_termos'),
+            reverse('core:register'),
+            reverse('core:register_interessado'),
+            reverse('core:register_local'),
         ]
     
     def __call__(self, request):
@@ -64,16 +64,16 @@ class TwoFactorMiddleware:
         self.get_response = get_response
         # URLs que não precisam de verificação 2FA
         self.excluded_urls = [
-            reverse('login'),
-            reverse('logout'),
-            reverse('verify_2fa'),
-            reverse('setup_2fa'),
-            reverse('disable_2fa'),
-            reverse('register'),
-            reverse('register_interessado'),
-            reverse('register_local'),
-            reverse('termos_uso'),
-            reverse('aceitar_termos'),
+            reverse('core:login'),
+            reverse('core:logout'),
+            reverse('core:verify_2fa'),
+            reverse('core:setup_2fa'),
+            reverse('core:disable_2fa'),
+            reverse('core:register'),
+            reverse('core:register_interessado'),
+            reverse('core:register_local'),
+            reverse('core:termos_uso'),
+            reverse('core:aceitar_termos'),
         ]
     
     def __call__(self, request):
@@ -99,7 +99,7 @@ class TwoFactorMiddleware:
                     
                     # Se não foi verificado e não está em uma URL excluída
                     if not is_verified and request.path not in self.excluded_urls:
-                        return redirect(f"{reverse('verify_2fa')}?next={request.path}")
+                        return redirect(f"{reverse('core:verify_2fa')}?next={request.path}")
                         
             except TwoFactorAuth.DoesNotExist:
                 # Usuário não tem 2FA configurado; sem preferência persistida, não exige 2FA

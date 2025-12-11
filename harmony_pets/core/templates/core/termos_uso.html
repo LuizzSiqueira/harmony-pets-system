@@ -180,7 +180,7 @@
                                         </h5>
                                         <p class="card-text">
                                             <strong>E-mail:</strong> central.seguranca.app@gmail.com<br>
-                                            <strong>Suporte:</strong> <a href="{% url 'contato' %}">Formulário de Contato</a><br>
+                                            <strong>Suporte:</strong> <a href="{% url 'core:contato' %}">Formulário de Contato</a><br>
                                             <strong>Resposta:</strong> Em até 48 horas úteis
                                         </p>
                                     </div>
@@ -217,11 +217,11 @@
                     <!-- Botões de ação -->
                     {% if not user.is_authenticated %}
                     <div class="text-center mt-4">
-                        <a href="{% url 'aceitar_termos' %}" class="btn btn-primary btn-lg">
+                        <a href="{% url 'core:aceitar_termos' %}" class="btn btn-primary btn-lg">
                             <i class="fas fa-check me-2"></i>
                             Aceitar Termos e Continuar
                         </a>
-                        <a href="{% url 'recusar_termos' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                        <a href="{% url 'core:recusar_termos' %}" class="btn btn-outline-secondary btn-lg ms-2">
                             <i class="fas fa-times me-2"></i>
                             Não Aceitar
                         </a>
@@ -234,11 +234,11 @@
                         </div>
                         {% else %}
                         <div class="text-center mt-4">
-                            <a href="{% url 'aceitar_termos' %}" class="btn btn-primary btn-lg">
+                            <a href="{% url 'core:aceitar_termos' %}" class="btn btn-primary btn-lg">
                                 <i class="fas fa-check me-2"></i>
                                 Aceitar Termos e Continuar
                             </a>
-                            <a href="{% url 'recusar_termos' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                            <a href="{% url 'core:recusar_termos' %}" class="btn btn-outline-secondary btn-lg ms-2">
                                 <i class="fas fa-times me-2"></i>
                                 Não Aceitar
                             </a>

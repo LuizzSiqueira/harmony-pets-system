@@ -518,8 +518,14 @@ class TwoFactorLoginForm(forms.Form):
 
         # Se chegou aqui, valida token do autenticador (TOTP/backup)
         if auth_token:
+            if not self.user:
+                self.add_error('authenticator_token', 'Usuário não autenticado. Faça login novamente.')
+                return cleaned
             try:
                 two_factor = self.user.two_factor_auth
+            except AttributeError:
+                self.add_error('authenticator_token', 'Usuário não autenticado. Faça login novamente.')
+                return cleaned
             except TwoFactorAuth.DoesNotExist:
                 self.add_error('authenticator_token', '2FA por autenticador não está configurado para este usuário.')
                 return cleaned

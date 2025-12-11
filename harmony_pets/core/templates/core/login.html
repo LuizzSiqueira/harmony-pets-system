@@ -13,7 +13,7 @@
                 <strong>{{ blocked_message }}</strong>
             </div>
         {% endif %}
-        <form method="post" action="{% url 'login' %}">
+        <form method="post" action="{% url 'core:login' %}">
             {% csrf_token %}
             <div class="form-group">
                 <label for="{{ form.username.id_for_label }}" class="form-label">
@@ -46,12 +46,12 @@
                 Entrar
             </button>
             <div class="text-center mt-3">
-                <a href="{% url 'password_reset' %}" class="link-forgot">Esqueci minha senha</a>
+                <a href="{% url 'core:password_reset' %}" class="link-forgot">Esqueci minha senha</a>
             </div>
         </form>
         <div class="back-link">
-            <a href="{% url 'register' %}">Não tem conta? Cadastre-se</a><br>
-            <a href="{% url 'home' %}">← Voltar para o início</a><br>
+            <a href="{% url 'core:register' %}">Não tem conta? Cadastre-se</a><br>
+            <a href="{% url 'core:home' %}">← Voltar para o início</a><br>
             {% if user.is_authenticated and user.is_staff %}
             <a href="{% url 'admin:index' %}">Acessar painel administrativo</a>
             {% endif %}

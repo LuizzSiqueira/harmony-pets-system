@@ -92,7 +92,7 @@
                                 <small class="text-muted">
                                     Li e concordo com as condições de uso da plataforma, incluindo responsabilidades 
                                     e limitações do serviço.
-                                    <a href="{% url 'termos_uso' %}" target="_blank" class="text-primary">
+                                    <a href="{% url 'core:termos_uso' %}" target="_blank" class="text-primary">
                                         <i class="fas fa-external-link-alt"></i> Ler termos completos
                                     </a>
                                 </small>
@@ -107,7 +107,7 @@
                                 <small class="text-muted">
                                     Autorizo o tratamento dos meus dados pessoais conforme descrito na Política de 
                                     Privacidade, em conformidade com a Lei Geral de Proteção de Dados (LGPD).
-                                    <a href="{% url 'termos_uso' %}#lgpd" target="_blank" class="text-primary">
+                                    <a href="{% url 'core:termos_uso' %}#lgpd" target="_blank" class="text-primary">
                                         <i class="fas fa-external-link-alt"></i> Ler política completa
                                     </a>
                                 </small>
@@ -147,7 +147,7 @@
                                 <i class="fas fa-check-circle me-2"></i>
                                 Aceitar e Continuar
                             </button>
-                            <a href="{% url 'recusar_termos' %}" class="btn btn-outline-danger btn-lg">
+                            <a href="{% url 'core:recusar_termos' %}" class="btn btn-outline-danger btn-lg">
                                 <i class="fas fa-times-circle me-2"></i>
                                 Não Aceitar
                             </a>

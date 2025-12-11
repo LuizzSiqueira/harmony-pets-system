@@ -92,7 +92,7 @@
                             <strong>Distância:</strong> {{ item.distancia }} km<br>
                             <strong>Local:</strong> {{ item.local.nome_fantasia|default:item.local.usuario.username }}
                         </p>
-                        <a href="{% url 'pet_detail' item.pet.id %}" class="btn btn-primary btn-sm">Ver Detalhes</a>
+                        <a href="{% url 'core:pet_detail' item.pet.id %}" class="btn btn-primary btn-sm">Ver Detalhes</a>
                     </div>
                 </div>
             </div>

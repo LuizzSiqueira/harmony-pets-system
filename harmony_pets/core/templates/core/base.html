@@ -78,7 +78,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
+            <a class="navbar-brand" href="{% url 'core:home' %}">
                 <img src="{% static 'core/images/harmony_pets_logo.png' %}" alt="Harmony Pets Logo" class="logo">
                 <strong style="color: #667eea;">Harmony Pets</strong>
             </a>
@@ -88,23 +88,23 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">
+                        <a class="nav-link" href="{% url 'core:home' %}">
                             <i class="fas fa-home"></i> Início
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'pets_list' %}">
+                        <a class="nav-link" href="{% url 'core:pets_list' %}">
                             <i class="fas fa-paw"></i> Pets para Adoção
                         </a>
                     </li>
                     {% if user.is_authenticated and user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin_logs' %}">
+                        <a class="nav-link" href="{% url 'core:admin_logs' %}">
                             <i class="fas fa-file-alt"></i> Logs
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <a class="nav-link" href="{% url 'core:admin_dashboard' %}">
                             <i class="fas fa-chart-line"></i> Dashboard
                         </a>
                     </li>
@@ -114,29 +114,29 @@
                     {% if user.is_authenticated %}
                         {% if user.localadocao %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'gerenciar_pets' %}">
+                                <a class="nav-link" href="{% url 'core:gerenciar_pets' %}">
                                     <i class="fas fa-paw"></i> Meus Pets
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'solicitacoes_adocao' %}">
+                                <a class="nav-link" href="{% url 'core:solicitacoes_adocao' %}">
                                     <i class="fas fa-envelope"></i> Solicitações
                                 </a>
                             </li>
                         {% elif user.interessadoadocao %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'minhas_solicitacoes_adocao' %}">
+                                <a class="nav-link" href="{% url 'core:minhas_solicitacoes_adocao' %}">
                                     <i class="fas fa-clipboard-list"></i> Minhas Solicitações
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'pets_list' %}?adotados=true">
+                                <a class="nav-link" href="{% url 'core:pets_list' %}?adotados=true">
                                     <i class="fas fa-heart"></i> Pets Adotados
                                 </a>
                             </li>
                         {% endif %}
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link" href="{% url 'profile' %}">
+                            <a class="nav-link" href="{% url 'core:profile' %}">
                                 <i class="fas fa-user"></i> Meu Perfil
                             </a>
                             <span class="ms-2 fw-bold text-primary" style="font-size: 1rem;">
@@ -149,18 +149,18 @@
                             {% endif %}
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
+                            <a class="nav-link" href="{% url 'core:logout' %}">
                                 <i class="fas fa-sign-out-alt"></i> Sair
                             </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
+                            <a class="nav-link" href="{% url 'core:login' %}">
                                 <i class="fas fa-sign-in-alt"></i> Entrar
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
+                            <a class="nav-link" href="{% url 'core:register' %}">
                                 <i class="fas fa-user-plus"></i> Cadastrar
                             </a>
                         </li>
@@ -211,17 +211,17 @@
                     <h6 class="fw-bold mb-3" style="color: #667eea;">Links Úteis</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <a href="{% url 'termos_uso' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                            <a href="{% url 'core:termos_uso' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
                                 <i class="fas fa-file-contract me-2"></i>Termos de Uso
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="{% url 'termos_uso' %}#politica-privacidade" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                            <a href="{% url 'core:termos_uso' %}#politica-privacidade" class="text-decoration-none text-dark" style="transition: color 0.3s;">
                                 <i class="fas fa-shield-alt me-2"></i>Política de Privacidade
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="{% url 'contato' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
+                            <a href="{% url 'core:contato' %}" class="text-decoration-none text-dark" style="transition: color 0.3s;">
                                 <i class="fas fa-envelope me-2"></i>Contato
                             </a>
                         </li>
